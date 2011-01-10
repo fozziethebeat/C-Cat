@@ -95,6 +95,15 @@ if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite
     </javac>
   </target>
 
+  <!--  =================================================================== -->
+  <target name="wordnet" depends="prepare">
+    <!-- Compile the java code -->
+    <javac destdir="${buildDir}" debug="${debug}" deprecation="${deprecation}" optimize="${optimize}" source="${source_java_version}" target="${target_java_version}" fork="true" memoryMaximumSize="1200M">
+      <classpath refid="classpath" />
+      <src path="${srcDir}/gov/llnl/ontology/wordnet"/>
+    </javac>
+  </target>
+
   <!--  build targets
   Builds all of the code in the Testing directory
   -->
