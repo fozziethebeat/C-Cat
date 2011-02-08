@@ -15,12 +15,12 @@ import gov.llnl.ontology.wordnet.Synset;
  */
 public class Node {
 
-    private Object value;
+    private Synset value;
     private List children;
     private Node parent;
     
 
-    public Node(Object value, Node parent, List children){
+    public Node(Synset value, Node parent, List children){
 	this.value = value;
 	this.parent = parent;
 
@@ -31,12 +31,12 @@ public class Node {
 
     }
 
-    public Node(Object value, Node parent){
+    public Node(Synset value, Node parent){
 	this(value, parent, null);
     }
 
     
-    public Node(Object value)
+    public Node(Synset value)
     {
 	this(value, null, null);
     }
@@ -60,7 +60,7 @@ public class Node {
 	return parent;
     } 
 
-    public Object nodeValue (){
+    public Synset nodeValue (){
 	return value;
 
     }
@@ -73,6 +73,21 @@ public class Node {
 
     public void setParent(Node new_parent) {
 	parent = new_parent;
+    }
+
+    /** Equals will check that the Synset have the same sense and lemma */
+    public boolean equals (Object other) {
+	return this.nodeValue().getName().equals(((Node)other).nodeValue().getName());
+
+    }
+
+    public int compareTo(Node n1, Node n2) {
+	return n1.nodeValue().toString().compareTo(n2.nodeValue().toString());
+    }
+
+
+    public String toString() {
+	return nodeValue().toString();
     }
 
 }
