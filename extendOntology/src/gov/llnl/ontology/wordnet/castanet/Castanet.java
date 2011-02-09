@@ -9,7 +9,7 @@ import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 
 import java.util.List;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.Map;
 
@@ -31,15 +31,49 @@ public class Castanet {
     }
     
 
+
+    private Node eliminateSingleParents(Node root) {
+	
+	if(root.getChildren().size() == 0) return root;
+
+	if(root.getChildren().size() == 1 && root.getParent() != null ) {
+	    
+	    
+	    Node child = (Node) root.getChildren().get(0);
+	    Node parent = root.getParent();
+
+	    return eliminateSingleParents(child);
+	}else {
+	    
+	    Iterator child_iter = root.getChildren().iterator();
+	    List new_children = new ArrayList();
+	    
+	    while(child_iter.hasNext()) {
+
+
+		Node child = (Node) child_iter.next();
+		new_children.add(eliminateSingleParents(child));
+		
+	    }
+
+	    
+	    root.setChildren(new_children);
+	    return root;
+	}
+
+
+    }
+
+
     /** Returns a Map that has three lists. 
      *  first - Child nodes only found in first.
      *  second - Child nodes only found in second.
      *  both - Chld nodes found in both node childs.
      */
-    private Map getVennList(Node first, Node second) {
-	LinkedList first = new LinkedList();
-	LinkedList second = new LinkedList();
-	LinkedList both = new LinkedList;
+    private Map getVennMap(Node first, Node second) {
+	List first_list = new ArrayList();
+	List second_list = new ArrayList();
+	List both_list = new ArrayList();
 
 	List<Node> second_node_list = second.getChildren();
 	
@@ -51,11 +85,11 @@ public class Castanet {
 	    if (second_node_list.contains(node)) {
 		
 		// both = first U second
-		both.add(node);
+		both_list.add(node);
 	    }else{
 
 		// found only in first
-		first.add(node);
+		first_list.add(node);
 
 	    }
 
@@ -69,8 +103,8 @@ public class Castanet {
 	while(second_iter.hasNext()) {
 	    Node second_node = (Node)second_iter.next();
 	    
-	    if(!both.contains(second_node)){
-		second.add(second_node);
+	    if(!both_list.contains(second_node)){
+		second_list.add(second_node);
 	    }
 	}
 
@@ -78,9 +112,9 @@ public class Castanet {
 
 	TreeMap result = new TreeMap();
 
-	result.put("first",first);
-	result.put("second", second);
-	result.put("both",both);
+	result.put("first",first_list);
+	result.put("second", second_list);
+	result.put("both",both_list);
 
 	return result;
 
@@ -97,16 +131,42 @@ public class Castanet {
 	if (second == null && first != null) return first;
 	if (first == null && second == null) return null;
 
+	
 
 
 	if (first.nodeValue().equals(second.nodeValue())) {
 
-	    // Keep going down a level
-	    for(Node first_child : first.getChildren()) {
-		// Find a child that matches
+	    Map vennMap = getVennMap(first,second);
+	    
+	    List first_only = (List)vennMap.get("first");
+	    List second_only = (List)vennMap.get("second");
+	    List both = (List)vennMap.get("both");
+	    
+	    // new_children is the new list that will replace the first's current children list.
+	    // Add children that the first does not already have yet.
+	    List new_children = new ArrayList(first_only);
+	    new_children.addAll(second_only);
+	    
+	    Iterator both_iter = both.iterator();
+	    
+	    while(both_iter.hasNext()){
+		
+		Node commonNode = (Node)both_iter.next();
+		
+		// Find the node in the second's children list.
+		Node nodeInSecond = (Node) second.getChildren().get(second.getChildren().indexOf(commonNode));
+
+		new_children.add(mergeOntologyGraphs(commonNode, nodeInSecond));
+		
 
 	    }
 
+	    
+	    first.setChildren(new_children);
+
+	    return first;
+	    
+	    
 	}else {
 	    return null;
 
@@ -129,22 +189,25 @@ public class Castanet {
     }
 
     private void printGraph(Node root) {
-
-	System.out.println(root.nodeValue());
+	
+	System.out.print("[");
+	System.out.print(root.nodeValue());
 
 	Iterator child_iter = root.getChildren().iterator();
+
 
 	while (child_iter.hasNext()) {
 	    Node next_child = (Node) child_iter.next();
 
 	    // Use tabs to make it easier to read.
-	    System.out.print(" ");
+	    System.out.print("<");
 
 	    printGraph(next_child);
 
+	    System.out.print(">");
+
 	}
-
-
+       System.out.print("]");
     }
 
     /** 
@@ -168,11 +231,30 @@ public class Castanet {
 
     public static void main (String[] args) {
 
+
+	// 
+
+
+
 	Castanet cnet = new Castanet(args[0]);
 
 	Node pig_graph = cnet.getOntologyGraph("pig", PartsOfSpeech.NOUN, 1);
+	Node computer = cnet.getOntologyGraph("computer", PartsOfSpeech.NOUN, 1);
 
+	Node merged = cnet.mergeOntologyGraphs(pig_graph, computer);
+	
+
+	/*
+	System.out.println("====COMPUTER===");
+	cnet.printGraph(computer);
+
+	System.out.println("====PIG===");
 	cnet.printGraph(pig_graph);
+	*/
+
+	System.out.println("====MERGED====");
+	cnet.eliminateSingleParents(merged);
+	cnet.printGraph(merged);
 
     }
 
