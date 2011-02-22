@@ -12,7 +12,15 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.Map;
+import java.util.*;
 
+
+import edu.ucla.sspace.vsm.VectorSpaceModel;
+import edu.ucla.sspace.text.FileDocument;
+import edu.ucla.sspace.common.*;
+
+
+import java.io.*;
 
 /**
  *
@@ -30,6 +38,51 @@ public class Castanet {
 
     }
     
+    public void extractKeywordsFromDocument(String folderLocation) {
+	
+
+	File dir = new File(folderLocation);
+	
+
+	// Make sure folderLocation is a working directory
+	if(!dir.isDirectory() || !dir.exists()) {
+	    System.err.println("extractKeywordsFromDocument: Invalid Directory!");
+	    return;
+	}
+
+	try{
+
+	    
+	    SemanticSpace vsm = new VectorSpaceModel();
+	    
+	    // Get the list of files and process them
+	    for(File doc : dir.listFiles()) {
+		
+		FileDocument fileDocument = new FileDocument(doc.getCanonicalPath());
+		vsm.processDocument(fileDocument.reader());
+		
+		
+	    }
+
+	    System.setProperty(VectorSpaceModel.MATRIX_TRANSFORM_PROPERTY, "edu.ucla.sspace.matrix.TfIdfTransform");
+	     vsm.processSpace(System.getProperties());
+	
+
+	     for (String term : vsm.getWords()) {
+		edu.ucla.sspace.vector.Vector termVector = vsm.getVector(term);
+		System.out.println(termVector);
+	    }
+
+
+	}catch(SecurityException se){
+	    System.err.println("extractKeywordsFromDocument: Could not read the file because, we have no access!");
+	    
+	}catch(IOException e){
+	    //DEBUG 
+	    System.err.println("extractKeywordsFromDocuments: IO ERROR!");
+	}
+	
+    }
 
 
     private Node eliminateSingleParents(Node root) {
@@ -231,11 +284,6 @@ public class Castanet {
 
     public static void main (String[] args) {
 
-
-	// 
-
-
-
 	Castanet cnet = new Castanet(args[0]);
 
 	Node pig_graph = cnet.getOntologyGraph("pig", PartsOfSpeech.NOUN, 1);
@@ -243,19 +291,23 @@ public class Castanet {
 
 	Node merged = cnet.mergeOntologyGraphs(pig_graph, computer);
 	
+	File testFile = new File("/Users/thuang513/Projects/research/C-Cat/extendOntology/test-docs/");
+	
+	try{
 
-	/*
-	System.out.println("====COMPUTER===");
-	cnet.printGraph(computer);
+	    if(testFile.exists()){
+		System.out.println(testFile);
 
-	System.out.println("====PIG===");
-	cnet.printGraph(pig_graph);
-	*/
+		cnet.extractKeywordsFromDocument(testFile.getCanonicalPath());
+	    }else{
+		throw new IOException();
 
-	System.out.println("====MERGED====");
-	cnet.eliminateSingleParents(merged);
-	cnet.printGraph(merged);
+	    }
+	}catch(IOException ioe){
+	    
+	    System.err.println("Could not find test file!!!");
 
+	}
     }
 
 }
