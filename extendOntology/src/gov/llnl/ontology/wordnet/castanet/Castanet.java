@@ -18,7 +18,10 @@ import java.util.*;
 import edu.ucla.sspace.vsm.VectorSpaceModel;
 import edu.ucla.sspace.text.FileDocument;
 import edu.ucla.sspace.common.*;
+import edu.ucla.sspace.vector.VectorIO;
 
+
+import edu.ucla.sspace.text.IteratorFactory;
 
 import java.io.*;
 
@@ -65,12 +68,35 @@ public class Castanet {
 	    }
 
 	    System.setProperty(VectorSpaceModel.MATRIX_TRANSFORM_PROPERTY, "edu.ucla.sspace.matrix.TfIdfTransform");
-	     vsm.processSpace(System.getProperties());
-	
+	    vsm.processSpace(System.getProperties());
 
-	     for (String term : vsm.getWords()) {
+
+	    //vsm.processSpace(System.getProperties());
+	    // for (String term : vsm.getWords())
+	    //	 System.out.println(VectorIO.toString(vsm.getVector(term)));
+				    
+
+	    for (String term : vsm.getWords()) {
 		edu.ucla.sspace.vector.Vector termVector = vsm.getVector(term);
-		System.out.println(termVector);
+		
+		// Find out if we should print out the values
+
+		boolean toPrint = true;
+		String whatPrint = "";
+		for(int i = 0; i < termVector.length(); i++) {
+
+		    if(termVector.getValue(i).doubleValue() >= 0.0){
+			
+		    }
+		    
+		    whatPrint = whatPrint + termVector.getValue(i)+"\t";
+		}
+		
+		
+		System.out.println(term+"\t"+whatPrint);
+
+
+	
 	    }
 
 
@@ -309,5 +335,27 @@ public class Castanet {
 
 	}
     }
+
+}
+
+
+// A Data structure used to figure out what the keyword of a document is
+class Keyword implements Comparable<Keyword> {
+
+    private double value;
+    private String word;
+    
+    Keyword(double tfidf, String theWord) {
+	value = tfidf;
+	word = theWord;
+    }
+
+    int compareTo(Keyword other){
+	return Double.compare(getValue(), other.getValue());
+    }
+
+    double getValue() { return value; }
+    String getWord() { return word; }
+
 
 }
