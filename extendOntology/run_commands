@@ -4,6 +4,7 @@ for jar in lib/*.jar; do export cp=$cp:$jar; done
 
 
 ant wordnet &&
+java -cp build:$cp -Xmx1g gov.llnl.ontology.wordnet.castanet.Castanet ../../WordNet-3.0/dict/ data/english-stop-words-large.txt 
 
-java -cp build:$cp -Xmx1g gov.llnl.ontology.wordnet.castanet.Castanet ../../WordNet-3.0/dict/
+# java -cp build:$cp -Xmx1g gov.llnl.ontology.wordnet.castanet.Castanet ../../WordNet-3.0/dict/
 
