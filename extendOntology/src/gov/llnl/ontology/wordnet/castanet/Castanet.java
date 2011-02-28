@@ -23,41 +23,7 @@ import edu.ucla.sspace.vector.VectorIO;
 
 import edu.ucla.sspace.text.IteratorFactory;
 
-
-import java.util.logging.Logger;
-
 import java.io.*;
-
-
-
-
-/**
- *  A Data structure used to figure out what the keyword of a document is.
- * 
- */
-class Keyword implements Comparable<Keyword> {
-
-    private double value;
-    private String word;
-    
-    Keyword(String theWord, double tfidf) {
-	value = tfidf;
-	word = theWord;
-    }
-
-    public int compareTo(Keyword other){
-	return Double.compare(getValue(), other.getValue());
-    }
-
-    public double getValue() { return value; }
-    public String getWord() { return word; }
-
-
-    public String toString() { return word + " - "+value; } 
-
-}
-
-
 
 /**
  *
@@ -67,104 +33,48 @@ class Keyword implements Comparable<Keyword> {
  */
 public class Castanet {
     
-    private WordNetCorpusReader reader;
-    private String stopWordsFile;
-    
-    /**
-     * The logger used to record all output
-     */
-    private static final Logger LOGGER = 
-        Logger.getLogger(Castanet.class.getName());
+    WordNetCorpusReader reader;
 
 
     public Castanet (String wordnet_file_path) {
-	this(wordnet_file_path, "");
-    }
-
-
-    public Castanet (String wordnet_file_path, String stopWordFile) {
 	reader = WordNetCorpusReader.initialize(wordnet_file_path);
-	stopWordsFile = stopWordFile;
+
     }
-
-
-    /*** 
-     *  Extracts keywords for all documents in {@code folderLocation}. It returns a Map with two
-     *  key/value pairs.
-     * @return - The key {@code files} returns a list of File objects of all the documents in the folder.
-     *  - The key {@code keywords} returns a list of lists that each contain extracted keywords for each document (in ranked order based off TFIDF and other transforms).
-     *    The order of the list of lists is in the same order as the list of documents.
-     *   - Returns null if failed.
-     * @param folderLocation The directory that contains all the documents
-     * @param topN The top N keywords after TFIDF transformation..
-     * 
-     */
-    public Map extractKeywordsFromDocument(String folderLocation, int topN) {
+    
+    public void extractKeywordsFromDocument(String folderLocation) {
 	
-	
-	if(folderLocation.equals("")) return null;
-
 
 	File dir = new File(folderLocation);
 	
+
 	// Make sure folderLocation is a working directory
 	if(!dir.isDirectory() || !dir.exists()) {
 	    System.err.println("extractKeywordsFromDocument: Invalid Directory!");
-	    return null;
+	    return;
 	}
-	
-	Map<String, List> results = new TreeMap<String, List>();
-	
-	// Put the list of documents into the map.
-	results.put("files", Arrays.asList(dir.listFiles()) );
 
-	
 	try{
 
 	    
 	    SemanticSpace vsm = new VectorSpaceModel();
-
-	    // We want to keep track of all the keywords extracted from each document.
-	    // This contains a list of list. All the elements are lists of top keywords
-	    // for a document.
-	    // The list (not the element list) is in the same order as dir.listFiles().
-	    // This is eventually used to rank what are the top keywords.
-	    List<List> listOfDocs = new ArrayList<List>(dir.listFiles().length);
 	    
-	    
-	    // If we have a stop word list, then use it.
-	    if(!stopWordsFile.equals("")){
-
-		LOGGER.info("setting the stop word file = "+stopWordsFile);
-		System.setProperty(IteratorFactory.TOKEN_FILTER_PROPERTY, "exclude="+stopWordsFile);
-		IteratorFactory.setProperties(System.getProperties());
-	    }
-
 	    // Get the list of files and process them
 	    for(File doc : dir.listFiles()) {
 		
 		FileDocument fileDocument = new FileDocument(doc.getCanonicalPath());
 		vsm.processDocument(fileDocument.reader());
-	       
-		listOfDocs.add(new ArrayList<Keyword>());
+		
 		
 	    }
-	    
 
-	    
-
-	    // Try out some different matrix transform properties
-	    
-	    String[] matrixTransforms = {"edu.ucla.sspace.matrix.TfIdfTransform"};
-
-	    for (int transform = 0; transform < matrixTransforms.length; transform++){
-		
-		System.setProperty(VectorSpaceModel.MATRIX_TRANSFORM_PROPERTY, matrixTransforms[transform]);
-		vsm.processSpace(System.getProperties());
-	    
-	    }
+	    System.setProperty(VectorSpaceModel.MATRIX_TRANSFORM_PROPERTY, "edu.ucla.sspace.matrix.TfIdfTransform");
+	    vsm.processSpace(System.getProperties());
 
 
+	    //vsm.processSpace(System.getProperties());
+	    // for (String term : vsm.getWords())
+	    //	 System.out.println(VectorIO.toString(vsm.getVector(term)));
+				    
 
 	    for (String term : vsm.getWords()) {
 		edu.ucla.sspace.vector.Vector termVector = vsm.getVector(term);
@@ -174,39 +84,21 @@ public class Castanet {
 		boolean toPrint = true;
 		String whatPrint = "";
 		for(int i = 0; i < termVector.length(); i++) {
+
+		    if(termVector.getValue(i).doubleValue() >= 0.0){
+			
+		    }
 		    
-		    Keyword keyword = new Keyword(term, termVector.getValue(i).doubleValue());
-		    ((List)listOfDocs.get(i)).add(keyword);
+		    whatPrint = whatPrint + termVector.getValue(i)+"\t";
 		}
 		
+		
+		System.out.println(term+"\t"+whatPrint);
+
 
 	
 	    }
-	    
-	    List documentKeywords = new ArrayList(dir.listFiles().length);
-	    
-	    
-	    // Sort all the keywords by the TFIDF Ranking
-	    for(List docTerms : listOfDocs) {
-		Collections.sort(docTerms);
-		Collections.reverse(docTerms);
-		
-		List top_N_terms = new ArrayList(topN);
-		
-		// Print out the top N terms
-		for(int i = 0; i < topN; i++){
-		    
-		    top_N_terms.add(docTerms.get(i));
-		    //System.out.println(i+". "+docTerms.get(i));
-		    
-		}
-		
-		documentKeywords.add(top_N_terms);
 
-		System.out.println("------");
-	    }
-
-	    results.put("keywords", documentKeywords);
 
 	}catch(SecurityException se){
 	    System.err.println("extractKeywordsFromDocument: Could not read the file because, we have no access!");
@@ -215,18 +107,14 @@ public class Castanet {
 	    //DEBUG 
 	    System.err.println("extractKeywordsFromDocuments: IO ERROR!");
 	}
-
 	
-	return results;
-
-
     }
 
 
     private Node eliminateSingleParents(Node root) {
 	
 	if(root.getChildren().size() == 0) return root;
-	
+
 	if(root.getChildren().size() == 1 && root.getParent() != null ) {
 	    
 	    
@@ -420,35 +308,9 @@ public class Castanet {
     }
 
 
-    public void createDirectoryStructure(String targetDirectoryPath, Node graph){
-	
-	if(targetDirectoryPath.equals("")) return;
-	
-	File directory = new File(targetDirectoryPath);
-
-	// If there is a Node, then create the directory.
-	if(graph == null) return;
-	
-	// Move all the files associated with this Node and move them to the current directory.
-	Synset currentSynset = graph.nodeValue();
-	
-
-
-    }
-    
-
     public static void main (String[] args) {
 
-
-	Castanet cnet;
-	
-	if(args.length == 2){
-	    System.out.println("DEBUG: Using STOP FILE = "+args[1]);
-	    
-	    cnet = new Castanet(args[0], args[1]);
-	}
-	else
-	    cnet = new Castanet(args[0]);
+	Castanet cnet = new Castanet(args[0]);
 
 	Node pig_graph = cnet.getOntologyGraph("pig", PartsOfSpeech.NOUN, 1);
 	Node computer = cnet.getOntologyGraph("computer", PartsOfSpeech.NOUN, 1);
@@ -460,21 +322,9 @@ public class Castanet {
 	try{
 
 	    if(testFile.exists()){
-		LOGGER.info("Reading all documents inside: "+ testFile);
+		System.out.println(testFile);
 
-		Map<String, List> keywordResults = cnet.extractKeywordsFromDocument(testFile.getCanonicalPath(), 10);
-		
-		List docs = keywordResults.get("files");
-		List docKeywords = keywordResults.get("keywords");
-
-		// Print out the top keywords for each document
-		for(int i = 0; i < docs.size(); i++) {
-		    
-		    System.out.println("File : " + docs.get(i) +" | top keywords = "+docKeywords.get(i));
-
-		    
-		}
-
+		cnet.extractKeywordsFromDocument(testFile.getCanonicalPath());
 	    }else{
 		throw new IOException();
 
@@ -488,3 +338,24 @@ public class Castanet {
 
 }
 
+
+// A Data structure used to figure out what the keyword of a document is
+class Keyword implements Comparable<Keyword> {
+
+    private double value;
+    private String word;
+    
+    Keyword(double tfidf, String theWord) {
+	value = tfidf;
+	word = theWord;
+    }
+
+    int compareTo(Keyword other){
+	return Double.compare(getValue(), other.getValue());
+    }
+
+    double getValue() { return value; }
+    String getWord() { return word; }
+
+
+}

@@ -1,5 +1,3 @@
-# /usr/bin
-
 for jar in lib/*.jar; do export cp=$cp:$jar; done
 
 
