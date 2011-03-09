@@ -68,8 +68,10 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import org.apache.mahout.classifier.sgd.OnlineLogisticRegression;
-import org.apache.mahout.classifier.sgd.LogisticModelParameters;
+import org.apache.mahout.classifier.classifier.AbstractVectorClassifier;
+
+import org.apache.mahout.classifier.sgd.AbstractOnlineLogisticRegression;
+import org.apache.mahout.classifier.sgd.ModelSerializer;
 
 import org.apache.mahout.math.AbstractVector;
 import org.apache.mahout.math.DenseVector;
@@ -81,6 +83,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Reader;
 
 import java.net.URI;
 
@@ -194,8 +197,8 @@ public class FindValidRelations extends Configured implements Tool {
 
     private EvidenceInstanceBuilder hypernymBuilder;
     private EvidenceInstanceBuilder cousinBuilder;
-    private OnlineLogisticRegression hypernymClassifier;
-    private OnlineLogisticRegression cousinClassifier;
+    private AbstractVectorClassifier hypernymClassifier;
+    private AbstractVectorClassifier cousinClassifier;
 
     @Override
     public void setup(Context context) {
@@ -219,9 +222,10 @@ public class FindValidRelations extends Configured implements Tool {
         //    attributeMap, false, conf.get(SOURCE), 7);
 
         // Load up the classifiers.
-        LogisticModelParameters lmp = LogisticModelParameters.loadFrom(
-            new InputStreamReader(fs.open(new Path(conf.get(HYPERNYM_CLASSIFIER)))));
-        hypernymClassifier = lmp.createRegression();
+        Reader hypernymReader = new InputStreamReader(fs.open(new Path(
+                        conf.get(HYPERNYM_CLASSIFIER))));
+        hypernymClassifier = ModelSerializer.loadJsonFrom(
+                hypernymReader, AbstractOnlineLogisticRegression.class);
       } catch (Exception e) {
         e.printStackTrace();
         throw new RuntimeException(e);

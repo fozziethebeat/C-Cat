@@ -23,14 +23,14 @@
 
 package gov.llnl.ontology.mapreduce;
 
-import gov.llnl.ontology.pagerank.ExtendedList;
-import gov.llnl.ontology.pagerank.ExtendedMap;
-import gov.llnl.ontology.pagerank.SynsetPagerank;
+import gov.llnl.ontology.util.ExtendedList;
+import gov.llnl.ontology.util.ExtendedMap;
 
 import gov.llnl.ontology.wordnet.Attribute;
 import gov.llnl.ontology.wordnet.BaseSynset;
 import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
+import gov.llnl.ontology.wordnet.SynsetPagerank;
 import gov.llnl.ontology.wordnet.SynsetRelations;
 import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
@@ -91,7 +91,7 @@ import java.util.Map;
  * Words are disambiguated by using the "Personalizing PageRank for Word Sense
  * Disambiguation" algorithm, which is done by using the {@link SynsetPagerank}
  * implementation.  For a simple example of this algorithm, see {@link
- * gov.llnl.ontology.pagerank.PersonalizedPageRankWSD}.  
+ * gov.llnl.ontology.wordnet.PersonalizedPageRankWSD}.  
  *
  * </p>
  *
