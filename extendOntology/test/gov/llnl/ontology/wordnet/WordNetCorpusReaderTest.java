@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 public class WordNetCorpusReaderTest {
 
     @Test public void testSynsetMerge() {
-        WordNetCorpusReader reader = WordNetCorpusReader.initialize("dict/");
+        OntologyReader reader = WordNetCorpusReader.initialize("dict/");
 
         Synset first = reader.getSynset("cat", PartsOfSpeech.NOUN, 1);
         Synset second = reader.getSynset("feline", PartsOfSpeech.NOUN, 1);
