@@ -92,13 +92,6 @@ public class BaseLemma implements Lemma {
   /**
    * {@inheritDoc}
    */
-  public String getKey() {
-    return key;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public Synset getSynset() {
     return synset;
   }
@@ -129,6 +122,13 @@ public class BaseLemma implements Lemma {
    */
   public int getLexicalId() {
     return lexId;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public String getKey() {
+    return key;
   }
 
   /**

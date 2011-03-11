@@ -69,13 +69,18 @@ import java.util.TreeSet;
  *
  * @author Keith Stevens
  */
-public class WordNetCorpusReader {
+public class WordNetCorpusReader implements OntologyReader {
 
   /**
    *The logger for this class.
    */
   private static final Log LOG =
     LogFactory.getLog(WordNetCorpusReader.class);
+
+  /**
+   * The set of part of speech tags.
+   */
+  public static final String[] POS_TAGS = {"n", "v", "a", "r", "s"};
 
   /**
    * A simple mapping from part of speech characters their respective {@link
@@ -120,11 +125,6 @@ public class WordNetCorpusReader {
     {
     },
   };
-
-  /**
-   * The set of part of speech tags.
-   */
-  public static final String[] POS_TAGS = {"n", "v", "a", "r", "s"};
 
   /**
    * The file extensions for each of the data and index files in the WordNet
@@ -185,14 +185,7 @@ public class WordNetCorpusReader {
   private int finalOffsetSize;
 
   /**
-   * Returns an {@link Iterator} over the possible morphological variations of
-   * the given word {@code form} for all {@link PartsOfSpeech}.  For each part
-   * of speech, if there are any known exceptions for the form, they will be
-   * returned before the part of speech specific replacement rules.  For
-   * example, if "geese" is given, "goose" will be returned first.  Afterwords,
-   * no other variations would be returned.  If "explodes" is given, the
-   * variants would be "explode", "explode", and "explod", based on the rules
-   * specified in {@link MORPHOLOGICAL_SUBSTITUTIONS}.
+   * {@inheritDoc}
    */
   public Iterator<String> morphy(String form) {
     List<Iterator<String>> formIters = new ArrayList<Iterator<String>>();
@@ -202,14 +195,7 @@ public class WordNetCorpusReader {
   }
 
   /**
-   * Returns an {@link Iterator} over the possible morphological variations of
-   * the given word {@code form} for a given {@link PartsOfSpeech}.  If there
-   * are any known exceptions for the form, they will be returned before the
-   * part of speech specific replacement rules.  For example, if "geese" is
-   * given, "goose" will be returned first.  Afterwords, no other variations
-   * would be returned.  If "explodes" is given, the variants would be
-   * "explode", "explode", and "explod", based on the rules specified in {@link
-   * MORPHOLOGICAL_SUBSTITUTIONS}.
+   * {@inheritDoc}
    */
   public Iterator<String> morphy(String form, PartsOfSpeech pos) {
     // Compute the suffix for this term and part of speech.
@@ -563,10 +549,16 @@ public class WordNetCorpusReader {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void addSynset(Synset synset) {
     addSynset(synset, -1);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void addSynset(Synset synset, int index) {
     int pos = synset.getPartOfSpeech().ordinal();
 
@@ -585,7 +577,7 @@ public class WordNetCorpusReader {
             lemmaName + " at position " + index + 
             " .  The index is out of bounds.");
 
-      if (index == -1)
+      if (index == -1 || index > lemmaSynsets[pos].length)
         index = lemmaSynsets[pos].length;
 
       Synset[] newPosSynsets = new Synset[lemmaSynsets[pos].length +1];
@@ -599,9 +591,7 @@ public class WordNetCorpusReader {
   }
 
   /**
-   * Removes the {@link Synset} from the known hierarchy.  All mappings from
-   * lemmas to this {@link Synset} will be removed, along with any stored
-   * details about this particular {@link Synset}.
+   * {@inheritDoc}
    */
   public void replaceSynset(Synset synset, Synset replacement) {
     if (synset.getPartOfSpeech() != replacement.getPartOfSpeech())
@@ -668,16 +658,14 @@ public class WordNetCorpusReader {
   }
 
   /**
-   * Returns a {@link Set} of lemmas that the current word net instance is aware
-   * of.
+   * {@inheritDoc}
    */
   public Set<String> wordnetTerms() {
     return lemmaPosOffsetMap.keySet();
   }
 
   /**
-   * Returns a {@link Set} of lemmas that the current word net instance is aware
-   * of for a particular {@link PartsOfSpeech}.
+   * {@inheritDoc}
    */
   public Set<String> wordnetTerms(PartsOfSpeech pos) {
     Set<String> posLemmas = new HashSet<String>();
@@ -721,7 +709,7 @@ public class WordNetCorpusReader {
   }
 
   /**
-   * Returns all {@link Synset}s that match the given lemma name.
+   * {@inheritDoc}
    */
   public Synset[] getSynsets(String lemma) {
     List<Synset> allSynsets = new ArrayList<Synset>();
@@ -731,10 +719,7 @@ public class WordNetCorpusReader {
   }
 
   /**
-   * Returns all {@link Synset}s that match the given lemma name and part of
-   * speech.  If there is no known mapping for the given word, the {@link
-   * Synset}s for all it's part of speech specific morphological variations will
-   * be returned.
+   * {@inheritDoc}
    */
   public Synset[] getSynsets(String lemma, PartsOfSpeech pos) {
     // Get the synsets for the original form.
@@ -755,8 +740,7 @@ public class WordNetCorpusReader {
   }
 
   /**
-   * Returns the single {@link Synset} specified by the given lemma name, part
-   * of speech tag, and sense number.  Sense numbers start at 1.
+   * {@inheritDoc}
    */
   public Synset getSynset(String lemma, PartsOfSpeech pos, int senseNum) {
     Synset[][] lemmaSynsets = lemmaPosOffsetMap.get(lemma);
@@ -767,6 +751,9 @@ public class WordNetCorpusReader {
     return lemmaSynsets[pos.ordinal()][senseNum-1];
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public int getMaxDepth(PartsOfSpeech pos) {
     int pIndex = pos.ordinal();
     if (maxDepths[pIndex] != 0)
@@ -778,7 +765,8 @@ public class WordNetCorpusReader {
     return maxDepths[pIndex];
   }
 
-  public Synset getSynsetFromOffset(int offset, PartsOfSpeech pos) {
+  /* package private */ Synset getSynsetFromOffset(int offset,
+                                                   PartsOfSpeech pos) {
     return posOffsetToSynsetMap.get(pos.ordinal()).get(offset);
   }
 
@@ -795,7 +783,7 @@ public class WordNetCorpusReader {
       for (Map.Entry<Synset, Integer> content : contentMap.entrySet()) {
         writer.printf(contentFormat,
                       content.getKey().getId(),
-                      content.getKey().getPartOfSpeech().toId(),
+                      content.getKey().getPartOfSpeech(),
                       content.getValue());
       }
       writer.close();
@@ -1259,7 +1247,7 @@ public class WordNetCorpusReader {
   }
 
   public static void main(String[] args) throws Exception {
-    WordNetCorpusReader reader = WordNetCorpusReader.initialize(args[0]);
+    OntologyReader reader = WordNetCorpusReader.initialize(args[0]);
 
     /*
     Synset[] synsets = reader.getSynsets("cat", PartsOfSpeech.NOUN);
@@ -1345,6 +1333,11 @@ public class WordNetCorpusReader {
     System.out.println(Similarity.res(first, second, ic));
     System.out.println(Similarity.jcn(first, second, ic));
     System.out.println(Similarity.lin(first, second, ic));
+
+   first = reader.getSynset("cat", PartsOfSpeech.NOUN, 1);
+   second = reader.getSynset("feline", PartsOfSpeech.NOUN, 1);
+   first.merge(second);
+   System.out.println(first.getParentPaths());
 
     /*
     reader.saveWordNet(args[2]);

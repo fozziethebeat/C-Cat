@@ -54,4 +54,8 @@ public class SoftAssignment implements Assignment {
   public int[] assignments() {
     return assignments;
   }
+
+  public int length() {
+      return assignments.length;
+  }
 }

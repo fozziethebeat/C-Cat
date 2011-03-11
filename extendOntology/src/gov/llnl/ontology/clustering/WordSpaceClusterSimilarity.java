@@ -28,7 +28,9 @@ import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.common.StaticSemanticSpace;
 
 import edu.ucla.sspace.clustering.Assignment;
+import edu.ucla.sspace.clustering.Assignments;
 import edu.ucla.sspace.clustering.Clustering;
+import edu.ucla.sspace.clustering.ClusteringByCommittee;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 import edu.ucla.sspace.util.SerializableUtil;
@@ -71,10 +73,7 @@ public class WordSpaceClusterSimilarity
 
     // Load up the word space and clustering algorithm.
     SemanticSpace sspace = new StaticSemanticSpace(args[0]);
-    //Clustering clustering = ReflectionUtil.getObjectInstance(args[1]);
-    ClusteringByCommittee clustering = ReflectionUtil.getObjectInstance(args[1]);
-    clustering.terms = new ArrayList<String>(sspace.getWords());
-
+    Clustering clustering = ReflectionUtil.getObjectInstance(args[1]);
     // Convert the vectors in the space into a matrix.
     List<SparseDoubleVector> sspaceVectors =
       new ArrayList<SparseDoubleVector>();
@@ -83,7 +82,7 @@ public class WordSpaceClusterSimilarity
       sspaceVectors.add((SparseDoubleVector) sspace.getVector(term));
 
     // Cluster the vectors and create a new WordSpaceClusterSimilarity.
-    Assignment[] assignments = clustering.cluster(
+    Assignments assignments = clustering.cluster(
         Matrices.asSparseMatrix(sspaceVectors), System.getProperties());
     ClusterSimilarity cs = new WordSpaceClusterSimilarity(sspace, assignments);
 
@@ -120,7 +119,7 @@ public class WordSpaceClusterSimilarity
   private final String sspaceName;
 
   public WordSpaceClusterSimilarity(SemanticSpace sspace,
-                                    Assignment[] assignments) {
+                                    Assignments assignments) {
     wordSpace = new HashMap<String, DoubleVector>();
     clusterAssignments = new HashMap<String, Assignment>();
     clusters = new ArrayList<Set<String>>();
@@ -132,7 +131,7 @@ public class WordSpaceClusterSimilarity
     for (String term : words) {
       DoubleVector termVector = Vectors.asDouble(sspace.getVector(term));
       wordSpace.put(term, termVector);
-      Assignment assignment = assignments[index];
+      Assignment assignment = assignments.get(index);
       clusterAssignments.put(term, assignment);
 
       for (int clusterIndex : assignment.assignments()) {

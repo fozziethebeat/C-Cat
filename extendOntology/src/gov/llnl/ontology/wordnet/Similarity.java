@@ -71,7 +71,7 @@ public class Similarity {
   public static double lch(Synset synset1, Synset synset2) {
     if (synset1.getPartOfSpeech() != synset2.getPartOfSpeech())
       return 0;
-    WordNetCorpusReader wordnet = WordNetCorpusReader.getWordNet();
+    OntologyReader wordnet = WordNetCorpusReader.getWordNet();
     int maxDepth = wordnet.getMaxDepth(synset1.getPartOfSpeech());
     int distance = SynsetRelations.shortestPathDistance(synset1, synset2);
     return (distance >= 0 && distance <= Integer.MAX_VALUE)
@@ -88,7 +88,7 @@ public class Similarity {
    * of the hierarchy for that part of speech.
    */
   public static double lchScaled(Synset synset1, Synset synset2) {
-    WordNetCorpusReader wordnet = WordNetCorpusReader.getWordNet();
+    OntologyReader wordnet = WordNetCorpusReader.getWordNet();
     double lchSim = lch(synset1, synset2);
     int maxDepth = wordnet.getMaxDepth(synset1.getPartOfSpeech());
     double maxSim = -1 * Math.log(1/(2d* maxDepth));

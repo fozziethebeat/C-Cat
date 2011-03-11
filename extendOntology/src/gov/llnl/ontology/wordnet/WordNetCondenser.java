@@ -25,6 +25,11 @@ package gov.llnl.ontology.wordnet;
 
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 
+import gov.llnl.ontology.wordnet.feature.ExtendedSnowEtAlFeatureMaker;
+import gov.llnl.ontology.wordnet.feature.OntologicalFeatureMaker;
+import gov.llnl.ontology.wordnet.feature.StandardFeatureMaker;
+import gov.llnl.ontology.wordnet.feature.SynsetPairFeatureMaker;
+
 import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO;

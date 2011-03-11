@@ -69,7 +69,7 @@ public class SynsetRelations {
    */
   public static HypernymStatus getHypernymStatus(String childTerm,
                                                  String ancestorTerm) {
-    WordNetCorpusReader wordnet = WordNetCorpusReader.getWordNet();
+    OntologyReader wordnet = WordNetCorpusReader.getWordNet();
     Synset[] childSynsets = wordnet.getSynsets(childTerm);
     Synset[] ancestorSynsets = wordnet.getSynsets(ancestorTerm);
 
@@ -228,7 +228,7 @@ public class SynsetRelations {
       new HashMap<Synset, Map<Synset, Integer>>();
 
     // Get the synsets for both terms.
-    WordNetCorpusReader wordnet = WordNetCorpusReader.getWordNet();
+    OntologyReader wordnet = WordNetCorpusReader.getWordNet();
     Synset[] term1Synsets = wordnet.getSynsets(term1);
     Synset[] term2Synsets = wordnet.getSynsets(term2);
 
@@ -422,7 +422,7 @@ public class SynsetRelations {
       double[] attachmentScores,
       List<Map<String, Double>> cousinScores,
       double lambda) {
-    WordNetCorpusReader wordnet = WordNetCorpusReader.getWordNet();
+    OntologyReader wordnet = WordNetCorpusReader.getWordNet();
 
     // Create all of the synsets at which a given term may be attached.
     // Computing a mapping from those synsets to the evidence score for that

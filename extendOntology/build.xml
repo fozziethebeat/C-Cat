@@ -30,14 +30,17 @@ if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite
 
   <!--  Directory Declarations -->
   <property environment="env" />
-  <property name="buildDir" value="build" />
-  <property name="srcDir" value="src" />
+  <property name="buildDir" value="classes" />
+  <property name="lib.dir" value="lib" />
+  <property name="src.dir" value="src" />
   <property name="jarVersions" value="jars" />
   <property name="dataDir" value="data" />
-  <property name="srcDir" value="src" />
   <property name="configDir" value="config" />
   <property name="resourceDir" value="resources" />
   <property name="alldir" value="uber" />
+  <property name="test.dir" value="test" />
+  <property name="report.dir" value="reports"/>
+  <property name="coverage.html.dir" value="${report.dir}/cobertura-html"/>
 
   <!--  Run time value Declarations -->
   <property name="source" value="NYT" />
@@ -69,6 +72,19 @@ if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite
     <pathelement path="${env.HADOOP_HOME}/conf/" />
   </path>
 
+  <path id="run-classpath">
+    <path refid="classpath"/>
+    <pathelement location="${buildDir}"/>
+  </path>
+
+  <path id="cobertura.classpath">
+    <fileset dir="${lib.dir}">
+      <include name="cobertura.jar" />
+      <include name="*.jar" />
+    </fileset>
+  </path>
+
+  <taskdef classpathref="cobertura.classpath" resource="tasks.properties"/>
 
   <!--  =================================================================== -->
   <!--  build prep
@@ -89,29 +105,29 @@ if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite
   <!--  =================================================================== -->
   <target name="compile" depends="prepare">
     <!-- Compile the java code -->
-    <javac destdir="${buildDir}" debug="${debug}" deprecation="${deprecation}" optimize="${optimize}" source="${source_java_version}" target="${target_java_version}" fork="true" memoryMaximumSize="1200M">
-      <classpath refid="classpath" />
-      <src path="${srcDir}" />
+    <javac srcdir="./" destdir="${buildDir}" debug="${debug}"
+           classpathref="classpath"
+           deprecation="${deprecation}" optimize="${optimize}"
+           source="${source_java_version}" target="${target_java_version}"
+           fork="true" memoryMaximumSize="1200M">
+      <include name="${src.dir}/**"/>
+      <include name="${lib}/**"/>
+      <include name="${test.dir}/**"/>
+      <exclude name="**/mapreduce/**"/>
     </javac>
   </target>
 
-  <!--  =================================================================== -->
-  <target name="wordnet" depends="prepare">
-    <!-- Compile the java code -->
-    <javac destdir="${buildDir}" debug="${debug}" deprecation="${deprecation}" optimize="${optimize}" source="${source_java_version}" target="${target_java_version}" fork="true" memoryMaximumSize="1200M">
-      <classpath refid="classpath" />
-      <src path="${srcDir}/gov/llnl/ontology/wordnet"/>
-    </javac>
-  </target>
-
-  <!--  build targets
-  Builds all of the code in the Testing directory
+  <!--  ===================================================================
+        Compile only the WordNet code
   -->
-  <!--  =================================================================== -->
-  <target name="Test" depends="compile">
-    <java fork="yes" classname="Test">
-      <classpath refid="classpath"/>
-    </java>
+  <target name="wordnet" depends="prepare">
+    <javac srcdir="./" destdir="${buildDir}" debug="${debug}"
+           classpathref="classname"
+           deprecation="${deprecation}" optimize="${optimize}" 
+           source="${source_java_version}" target="${target_java_version}" 
+           fork="true" memoryMaximumSize="1200M">
+      <src path="${src.dir}/gov/llnl/ontology/wordnet"/>
+    </javac>
   </target>
 
   <!--  =================================================================== -->
@@ -121,7 +137,7 @@ if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite
   <target name="jars" depends="clean, compile">
     <mkdir dir="${jarVersions}" />
     <copy todir="${buildDir}">
-      <fileset dir="${srcDir}" />
+      <fileset dir="${src.dir}" />
       <fileset dir="${resourceDir}" />
     </copy>
     <jar destfile="${jarname}" basedir="${buildDir}" />
@@ -167,6 +183,75 @@ if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite
     <delete>
       <fileset dir="${jarVersions}" includes="**/*.jar" defaultexcludes="no" />
     </delete>
+  </target>
+
+  <!--
+    **
+    ** 
+    ** UNIT TEST XML
+    **
+    **
+    **-->
+
+  <target name="instrument">
+    <delete dir="classes/instrumented" />
+    <cobertura-instrument todir="classes/instrumented">
+      <fileset dir="classes">
+        <include name="gov/**/*.class"/>
+      </fileset>
+    </cobertura-instrument>
+  </target>
+
+  <target name="coverage" depends="instrument">
+    <delete dir="reports" />
+    <mkdir dir="reports" />
+
+    <junit printSummary="yes" fork="true" haltonerror="no">
+      <jvmarg value="-Xmx1g"/>
+      <jvmarg value="-debug"/>
+
+      <classpath location="${build.dir}/instrumented"/>
+      <classpath refid="classpath"/> 
+      <classpath refid="cobertura.classpath" />
+      <formatter type="plain"/>    
+
+      <!-- Example test when doing debugging of single classes 
+      <test name="edu.ucla.sspace.package.Class" todir="${report.dir}"/>
+      -->
+      <batchtest fork="yes" todir="${report.dir}">
+        <fileset dir="${test.dir}">
+          <include name="**/*Test.java"/>
+          <include name="**/*Tests.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+
+  <target name="coverage-report">
+    <cobertura-report srcdir="${src.dir}" destdir="${coverage.html.dir}" />
+  </target>
+
+  <target name="test" depends="compile">
+    <delete dir="reports"/>
+    <mkdir dir="reports"/>
+
+    <junit printsummary="yes" fork="yes" haltonfailure="yes">
+      <jvmarg value="-Xmx1g"/>
+      <jvmarg value="-debug"/>
+      <classpath refid="run-classpath"/>
+      <formatter type="plain"/>
+
+      <!-- Example test when doing debugging of single classes 
+      <test name="gov.llnl.ontology.package.Class" todir="${report.dir}"/>
+      -->
+      <batchtest fork="yes" todir="${report.dir}">
+        <fileset dir="${test.dir}">
+          <include name="**/*Test.java"/>
+          <include name="**/*Tests.java"/>
+        </fileset>
+      </batchtest>
+
+    </junit>
   </target>
 
 

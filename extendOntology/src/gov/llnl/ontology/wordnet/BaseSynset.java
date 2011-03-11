@@ -23,11 +23,16 @@
 
 package gov.llnl.ontology.wordnet;
 
+import edu.ucla.sspace.util.Duple;
+import edu.ucla.sspace.util.HashMultiMap;
+import edu.ucla.sspace.util.MultiMap;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 
 /**
@@ -43,7 +48,7 @@ public class BaseSynset implements Synset {
   /**
    * The {@link Relation}s associated with this {@link Synset}.
    */
-  private Map<String, List<Synset>> relations;
+  private MultiMap<String, Synset> relations;
 
   /**
    * The {@link Attribute}s associated with this {@link Synset}.
@@ -55,11 +60,6 @@ public class BaseSynset implements Synset {
    * others.
    */
   private int numRelations;
-
-  /**
-   * The name, which uniquely identifies the {@link Synset}.
-   */
-  private String name;
 
   /**
    * The sense key which uniquely identifies the {@link Synset}.
@@ -134,7 +134,7 @@ public class BaseSynset implements Synset {
    */
   public BaseSynset(int offset, PartsOfSpeech pos) {
     this.offset = offset;
-    relations = new HashMap<String, List<Synset>>();
+    relations = new HashMultiMap<String, Synset>();
     attributes = new HashMap<String, Attribute>();
     relatedForms = new HashMap<Synset, RelatedForm>();
     examples = new ArrayList<String>();
@@ -144,7 +144,6 @@ public class BaseSynset implements Synset {
 
     this.pos = pos;
     this.definition = "";
-    this.name = "";
     this.senseKey = "";
     this.senseNumber = 0;
     this.numRelations = 0;
@@ -241,16 +240,16 @@ public class BaseSynset implements Synset {
   /**
    * {@inheritDoc}
    */
-  public List<Synset> getRelations(String relation) {
-    List<Synset> r = relations.get(relation);
-    return (r == null) ? new ArrayList<Synset>() : r;
+  public Set<Synset> getRelations(String relation) {
+    Set<Synset> r = relations.get(relation);
+    return (r == null) ? new HashSet<Synset>() : r;
   }
 
   /**
    * {@inheritDoc}
    */
-  public List<Synset> getRelations(Relation relation) {
-    return getRelations(relation.toId());
+  public Set<Synset> getRelations(Relation relation) {
+    return getRelations(relation.toString());
   }
 
   /**
@@ -265,7 +264,7 @@ public class BaseSynset implements Synset {
    */
   public List<List<Synset>> getParentPaths() {
     List<List<Synset>> parentPaths = new ArrayList<List<Synset>>();
-    List<Synset> parents = getParents();
+    Set<Synset> parents = getParents();
     if (parents == null || parents.size() == 0) {
       List<Synset> path = new ArrayList<Synset>();
       path.add(this);
@@ -284,14 +283,14 @@ public class BaseSynset implements Synset {
   /**
    * {@inheritDoc}
    */
-  public List<Synset> getParents() {
+  public Set<Synset> getParents() {
     return getRelations(Relation.HYPERNYM);
   }
 
   /**
    * {@inheritDoc}
    */
-  public List<Synset> getChildren() {
+  public Set<Synset> getChildren() {
     return getRelations(Relation.HYPONYM);
   }
 
@@ -325,42 +324,34 @@ public class BaseSynset implements Synset {
   }
 
   /**
-   * Resets the offset for this synset.
+   * {@inheritDoc}
    */
   public void setId(int newOffset) {
     offset = newOffset;
   }
 
   /**
-   * Sets the dictionary definition for this {@link Synset}.
+   * {@inheritDoc}
    */
   public void setDefinition(String definition) {
     this.definition = definition;
   }
 
   /**
-   * Sets the sense name for this {@link Synset}.
-   */
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  /**
-   * Sets the set of terms associated with this {@link BaseSynset}.
+   * {@inheritDoc}
    */
   public void addLemma(Lemma lemma) {
     lemmas.add(lemma);
   }
   /**
-   * Adds an example sentence for this {@link Synset}.
+   * {@inheritDoc}
    */
   public void addExample(String example) {
     examples.add(example);
   }
 
   /**
-   * Adds the given {@link Synset} as a related {@link Synset} and the lemma
-   * number for that {@link Synset} that irelated to this {@link Synset}.
+   * {@inheritDoc}
    */
   public void addDerivationallyRelatedForm(Synset related, RelatedForm form) {
     relatedForms.put(related, form);
@@ -371,7 +362,7 @@ public class BaseSynset implements Synset {
    * relation.
    */
   public void addRelation(Relation relation, Synset synset) {
-    addRelation(relation.toId(), synset);
+    addRelation(relation.toString(), synset);
   }
 
   /**
@@ -379,12 +370,7 @@ public class BaseSynset implements Synset {
    * relation.
    */
   public void addRelation(String relation, Synset synset) {
-    List<Synset> synsets = relations.get(relation);
-    if (synsets == null) {
-      synsets = new ArrayList<Synset>();
-      relations.put(relation, synsets);
-    }
-    synsets.add(synset);
+    relations.put(relation, synset);
     numRelations++;
   }
 
@@ -467,28 +453,31 @@ public class BaseSynset implements Synset {
       throw new IllegalArgumentException(
           "Cannot merge synsets with different parts of speech.");
 
-    // Remove the other synset from the known hierarchy.
-    WordNetCorpusReader.getWordNet().replaceSynset(synset, this);
+    Set<Duple<String, Synset>> toRemove = new HashSet<Duple<String, Synset>>();
+    for (String relation : getKnownRelationTypes()) {
+        Set<Synset> links = relations.get(relation);
+        if (links.contains(synset))
+            toRemove.add(new Duple<String, Synset>(relation, synset));
+    }
+    for (Duple<String, Synset> r : toRemove)
+        relations.remove(r.x, r.y);
 
     // For any relation held by the other synset, add those relations to the
     // current synset. Also, For any synsets pointing to the other synset,
     // change their relation to point to this synset.
     for (Relation relation : Relation.values()) {
-      // Create the list of related synsets if this synset does not already have
-      // one for this relation.
-      List<Synset> thisRelations = relations.get(relation.toId());
-      if (thisRelations == null) {
-        thisRelations = new ArrayList<Synset>();
-        relations.put(relation.toId(), thisRelations);
-      }
-
       // Iterate through all of the synsets related to the other synset.  Since
       // most relations are reflexive, we can simply inspect the relations for  
       // these related synsets and replace the mapping from the related synset
       // to the other synset with this current synset.
       for (Synset related : synset.getRelations(relation)) {
+          // If the related synset is actuall this synset, don'tmake the link as
+          // it would create a cycle.
+          if (related == this)
+              continue;
+
         // Add the relation to this synset.
-        thisRelations.add(related);
+        relations.put(relation.toString(), related);
         numRelations++;
 
         // If there is no reflexive version, skip inspection.
@@ -498,13 +487,11 @@ public class BaseSynset implements Synset {
         // Find the synsets that the related synset points to for this relation.
         // Replace the mapping from that sysnet to the other synset with this
         // current synset.
-        List<Synset> inwardRelations = related.getRelations(
+        Set<Synset> inwardRelations = related.getRelations(
             relation.reflexive());
-        int i = 0;
-        for (Synset inward : inwardRelations) {
-          if (inward.equals(synset))
-            inwardRelations.set(i, this);
-          i++;
+        if (inwardRelations.contains(synset)) {
+            inwardRelations.remove(synset);
+            inwardRelations.add(this);
         }
       }
     }

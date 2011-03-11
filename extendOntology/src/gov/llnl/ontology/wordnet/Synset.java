@@ -23,6 +23,8 @@
 
 package gov.llnl.ontology.wordnet;
 
+import edu.ucla.sspace.util.MultiMap;
+
 import java.util.List;
 import java.util.Set;
 
@@ -89,17 +91,17 @@ public interface Synset {
     private final String label;
 
     /**
-     * Creates a new {@link Relation} with a specified label.
+     * Creates a new {@link PartsOfSpeech} with a specified label.
      */
     PartsOfSpeech(String label) {
       this.label = label;
     }
 
     /**
-     * The label or identifier for this {@link Relation}
+     * The label or identifier for this {@link PartsOfSpeech}
      */
-    public String toId() {
-      return label;
+    public String toString() {
+        return label;
     }
 
     /**
@@ -259,6 +261,9 @@ public interface Synset {
       return label;
     }
 
+    public String toString() {
+      return label;
+    }
     /**
      * Returns the {@link Relation} corresponding to one of the symbols used in
      * the WordNet dictionary files.
@@ -363,9 +368,6 @@ public interface Synset {
   int[] getFrameIds();
 
   /**
-   * Returns the frame indices for all known verb frames for this synset.
-   */
-  /**
    * Returns the lemma indices for all known verb frames for this synset.
    */
   int[] getLemmaIds();
@@ -391,7 +393,7 @@ public interface Synset {
    * Returns the set of {@link Synset}s that are connected to this {@link
    * Synset} through the specified {@code relation} string.
    */
-  List<Synset> getRelations(String relation);
+  Set<Synset> getRelations(String relation);
 
   /**
    * Connects this {@link Synset} to {@code related} via a link of type {@code
@@ -403,7 +405,7 @@ public interface Synset {
    * Returns the set of {@link Synset}s that are connected to this {@link
    * Synset} through the specified {@link Relation}.
    */
-  List<Synset> getRelations(Relation relation);
+  Set<Synset> getRelations(Relation relation);
 
   /**
    * Connects this {@link Synset} to {@code related} via a link of type {@code
@@ -434,7 +436,7 @@ public interface Synset {
    * Synset}.  This is equivalent to calling {@link getRelations()} with {@link
    * Relation:HYPERNYM}.
    */
-  List<Synset> getParents();
+  Set<Synset> getParents();
 
   /**
    * Returns a list of all paths from the current {@link Synset} to the root of
@@ -450,7 +452,7 @@ public interface Synset {
    * Synset}.  This is equivalent to calling {@link getRelations()} with {@link
    * Relation:HYPONYM}.
    */
-  List<Synset> getChildren();
+  Set<Synset> getChildren();
 
   /**
    * Returns the maximum distance between this {@link Synset} and the root
