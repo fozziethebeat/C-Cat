@@ -4,7 +4,7 @@
   <groupId>gov.llnl.ontology</groupId>
   <artifactId>extendOntology</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
   <name>extendOntology</name>
   <url>http://maven.apache.org</url>
 
@@ -32,11 +32,6 @@
       <groupId>edu.ucla.sspace</groupId>
       <artifactId>sspace</artifactId>
       <version>${sspace.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.berkeley.parser</groupId>
-      <artifactId>berkeleyParser</artifactId>
-      <version>${berkeley.version}</version>
     </dependency>
     <dependency>
       <groupId>gov.llnl.text</groupId>
@@ -128,6 +123,16 @@
             <enabled>true</enabled>
         </releases>
     </repository>
+    <repository>
+        <id>Sonatype Public</id>
+        <url>https://oss.sonatype.org/content/groups/public</url>
+        <snapshots>
+          <enabled>fales</enabled>
+        </snapshots>
+        <releases>
+          <enabled>true</enabled>
+        </releases>
+      </repository>
   </repositories>
  
   <build>

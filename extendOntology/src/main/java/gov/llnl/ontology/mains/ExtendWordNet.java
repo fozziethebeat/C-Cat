@@ -25,8 +25,10 @@ package gov.llnl.ontology.mains;
 
 import gov.llnl.ontology.util.MahoutSparseVector;
 
+import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.SynsetRelations;
 import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
+import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 
 import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.common.SemanticSpace;
@@ -44,7 +46,7 @@ import edu.ucla.sspace.dependency.UniversalPathAcceptor;
 import edu.ucla.sspace.dv.DependencyPathBasisMapping;
 import edu.ucla.sspace.dv.RelationPathBasisMapping;
 
-import edu.ucla.sspace.text.UkWacDependencyFileIterator;
+import edu.ucla.sspace.text.DependencyFileDocumentIterator;
 import edu.ucla.sspace.text.Document;
 
 import edu.ucla.sspace.util.Pair;
@@ -97,7 +99,8 @@ public class ExtendWordNet {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
-            System.out.println("usage: java ExtendWordNet <corpus> <sspace>+");
+            System.out.println(
+                    "usage: java ExtendWordNet <wordnetDir> <corpus> <sspace>+");
             System.exit(1);
         }
 
@@ -106,16 +109,21 @@ public class ExtendWordNet {
                 new RelationPathBasisMapping(),
                 new ConjunctionTransform(),
                 args.length - 1);
-        Iterator<Document> corpusIter = new UkWacDependencyFileIterator(
-                args[0]);
-        while (corpusIter.hasNext())
+        WordNetCorpusReader.initialize(args[0]);
+        Iterator<Document> corpusIter = new DependencyFileDocumentIterator(
+                args[1]);
+        int c = 0;
+        while (corpusIter.hasNext()) {
+            System.err.printf("Processing document %d\n", c);
             builder.gatherEvidence(corpusIter.next().reader());
+            System.err.printf("Processed document %d\n", c++);
+        }
 
         System.err.println("Evidence gathered");
 
-        for (int s = 1; s < args.length; ++s) {
+        for (int s = 2; s < args.length; ++s) {
             SemanticSpace sspace = new StaticSemanticSpace(args[s]);
-            builder.applySimilarityScores(s-1, sspace);
+            builder.applySimilarityScores(s-2, sspace);
         }
 
         System.err.println("Similarity labeled");
@@ -131,7 +139,7 @@ public class ExtendWordNet {
         builder.extendWordNet();
 
         System.err.println("Words added to wordnet");
-
+        System.exit(1);
     }
 
     /**
@@ -150,7 +158,8 @@ public class ExtendWordNet {
                 // class.  Find the positive probability by removing the given
                 // score from 1.
                 double hypernymProb = 1 - hypernymPredictor.classifyScalar(
-                        new MahoutSparseVector(entry.getValue().vector));
+                        new MahoutSparseVector(entry.getValue().vector,
+                                               basis.numDimensions()));
                 double cousinProb = 1 - cousinPredictor.classifyScalar(
                         new DenseVector(entry.getValue().similarityScores));
                 entry.getValue().classScores = new ClassScores(
@@ -160,6 +169,27 @@ public class ExtendWordNet {
     }
 
     public void extendWordNet() {
+        for (Map.Entry<String, Map<String, Evidence>> fe :
+                unknownEvidence.map().entrySet()) {
+            String termToAdd = fe.getKey();
+            Map<String, Evidence> evidenceMap = fe.getValue();
+            String[] attachmentLocations = new String[evidenceMap.size()];
+            double[] attachmentScores = new double[evidenceMap.size()];
+            Map<String, Double> cousinScores = new HashMap<String, Double>();
+
+            int i = 0;
+            for (Map.Entry<String,Evidence> entry : evidenceMap.entrySet()) {
+                attachmentLocations[i] = entry.getKey();
+                ClassScores scores = entry.getValue().classScores;
+                attachmentScores[i] = scores.hypernymScore;
+                if (scores.cousinScore != 0d)
+                    cousinScores.put(entry.getKey(), scores.cousinScore);
+                i++;
+            }
+
+            Synset bestAttachment = SynsetRelations.bestAttachmentPoint(
+                    attachmentLocations, attachmentScores, cousinScores, .05);
+        }
     }
 
     /**
@@ -198,7 +228,7 @@ public class ExtendWordNet {
     public boolean trainModel(int numPasses) {
         // Train the hypernym predictor.
         AdaptiveLogisticRegression model = new AdaptiveLogisticRegression(
-                basis.numDimensions(), 2, new L1());
+                2, basis.numDimensions(), new L1());
         for (int i = 0; i < numPasses; ++i) {
             trainHypernyms(knownPositives.map(), model, 1);
             trainHypernyms(knownNegatives.map(), model, 0);
@@ -213,7 +243,7 @@ public class ExtendWordNet {
 
         // Train the cousin predictor using the similarity scores.
         model = new AdaptiveLogisticRegression(
-                numSimilarityScores, 2, new L1());
+                2, numSimilarityScores, new L1());
         for (int i = 0; i < numPasses; ++i) {
             trainCousins(knownPositives.map(), model);
             trainCousins(knownNegatives.map(), model);
@@ -337,7 +367,8 @@ public class ExtendWordNet {
                                 int classLabel) {
         for (Map<String, Evidence> value : map.values())
             for (Evidence e : value.values()) 
-                model.train(classLabel, new MahoutSparseVector(e.vector));
+                model.train(classLabel, new MahoutSparseVector(
+                            e.vector, basis.numDimensions()));
     }
 
     /**

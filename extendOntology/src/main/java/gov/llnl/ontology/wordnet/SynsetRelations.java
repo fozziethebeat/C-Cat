@@ -70,8 +70,10 @@ public class SynsetRelations {
   public static HypernymStatus getHypernymStatus(String childTerm,
                                                  String ancestorTerm) {
     OntologyReader wordnet = WordNetCorpusReader.getWordNet();
-    Synset[] childSynsets = wordnet.getSynsets(childTerm);
-    Synset[] ancestorSynsets = wordnet.getSynsets(ancestorTerm);
+    Synset[] childSynsets = wordnet.getSynsets(
+            childTerm, PartsOfSpeech.NOUN);
+    Synset[] ancestorSynsets = wordnet.getSynsets(
+            ancestorTerm, PartsOfSpeech.NOUN);
 
     // Return false if either term is not found in wordnet.
     if ((childSynsets == null || childSynsets.length == 0) &&
@@ -229,8 +231,8 @@ public class SynsetRelations {
 
     // Get the synsets for both terms.
     OntologyReader wordnet = WordNetCorpusReader.getWordNet();
-    Synset[] term1Synsets = wordnet.getSynsets(term1);
-    Synset[] term2Synsets = wordnet.getSynsets(term2);
+    Synset[] term1Synsets = wordnet.getSynsets(term1, PartsOfSpeech.NOUN);
+    Synset[] term2Synsets = wordnet.getSynsets(term2, PartsOfSpeech.NOUN);
 
     // Precompute the worst case result.
     int bestDepth = Integer.MAX_VALUE;
@@ -420,7 +422,7 @@ public class SynsetRelations {
   public static Synset bestAttachmentPoint(
       String[] attachmentLocations,
       double[] attachmentScores,
-      List<Map<String, Double>> cousinScores,
+      Map<String, Double> cousinScores,
       double lambda) {
     OntologyReader wordnet = WordNetCorpusReader.getWordNet();
 
@@ -432,7 +434,7 @@ public class SynsetRelations {
     Synset[][] attachmentSynsets = new Synset[attachmentLocations.length][0];
     int i = 0;
     for (String attachment : attachmentLocations) {
-      attachmentSynsets[i] = wordnet.getSynsets(attachment);
+      attachmentSynsets[i] = wordnet.getSynsets(attachment, PartsOfSpeech.NOUN);
       for (Synset synset : attachmentSynsets[i])
         synsetToHypernymScore.put(synset, attachmentScores[i]);
       i++;
@@ -473,23 +475,33 @@ public class SynsetRelations {
         // Compute the probability of any implied cousin relationships.
         double totalCousinScore = 0;
         int c = 0;
-        for (Map<String, Double> scores : cousinScores) {
-          Synset[] cousins = attachmentSynsets[c++];
+        // Iterate through each of the words with cousin score information. Try
+        // to find a link between the synsets for this cousin term and the
+        // possible attachment point we are making.  If a valid cousin
+        // relationship exists, include the implied probability of the cousin
+        // relationship.
+        for (Map.Entry<String, Double> score : cousinScores.entrySet()) {
+          Synset[] cousins = wordnet.getSynsets(
+                  score.getKey(), PartsOfSpeech.NOUN);
+
+          // Skip empty cousins.
+          if (cousins == null || cousins.length == 0)
+              continue;
+
+          // Get the best distances found for the synset and the cousins.
           Pair<Integer> bestCousinDistance = getCousinDistance(
-              possibleParent, cousins, parentDistances(possibleParent, false), 
+              possibleParent, cousins,
+              parentDistances(possibleParent, false), 
               distanceCache, Integer.MAX_VALUE);
+
+          // Skip cousins that have no valid path.
           if (bestCousinDistance == null)
             continue;
+          if (bestCousinDistance.x == Integer.MAX_VALUE ||
+              bestCousinDistance.y == Integer.MAX_VALUE)
+              continue;
 
-          // Convert the cousin relationship to a string in the expected format.
-          int x = bestCousinDistance.x+1;
-          int y = bestCousinDistance.y;
-          String cousinKey = (x < y) ? y + "-" + x : x + "-" + y;
-
-          // Add in the score.
-          Double cousinScore = scores.get(cousinKey);
-          if (cousinScore != null)
-            totalCousinScore *= computeScore(1, cousinScore, 1);
+          totalCousinScore *= computeScore(1, score.getValue(), 1);
         }
 
         // If the full score observed is the best so far, save the delta and the
