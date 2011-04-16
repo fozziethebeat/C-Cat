@@ -163,21 +163,16 @@ public class Castanet {
 
 	    // Try out some different matrix transform properties
 	    
-	   
-
 	    String[] matrixTransforms = {"edu.ucla.sspace.matrix.TfIdfTransform"};
 
 	    for (int transform = 0; transform < matrixTransforms.length; transform++){
 		
-		LOGGER.info("Applying transform = " + matrixTransforms[transform]);
-
 		System.setProperty(VectorSpaceModel.MATRIX_TRANSFORM_PROPERTY, matrixTransforms[transform]);
 		vsm.processSpace(System.getProperties());
 	    
 	    }
 
 
-	     LOGGER.info("Done with TF-IDF Transform...");
 
 	    for (String term : vsm.getWords()) {
 		edu.ucla.sspace.vector.Vector termVector = vsm.getVector(term);
@@ -188,8 +183,6 @@ public class Castanet {
 		String whatPrint = "";
 		for(int i = 0; i < termVector.length(); i++) {
 		    
-		    
-
 		    Keyword keyword = new Keyword(term, termVector.getValue(i).doubleValue());
 		    ((List)listOfDocs.get(i)).add(keyword);
 		}
@@ -200,9 +193,7 @@ public class Castanet {
 	    
 	    List documentKeywords = new ArrayList(dir.listFiles().length);
 	    
-	    LOGGER.info("Sorting the keywords by their TFIDF score...");
-
-
+	    
 	    // Sort all the keywords by the TFIDF Ranking
 	    for(List docTerms : listOfDocs) {
 		Collections.sort(docTerms);
@@ -244,7 +235,7 @@ public class Castanet {
 	
 	if(root.getChildren().size() == 0) return root;
 	
-	if(root.getChildren().size() == 1 && root.getParent() != null && root.nodeValue().getAttribute("files") == null ) {
+	if(root.getChildren().size() == 1 && root.getParent() != null ) {
 	    
 	    
 	    Node child = (Node) root.getChildren().get(0);
@@ -389,13 +380,12 @@ public class Castanet {
 	    List first_only = (List)vennMap.get("first");
 	    List second_only = (List)vennMap.get("second");
 	    List both = (List)vennMap.get("both");
-
+	    
 	    // new_children is the new list that will replace the first's current children list.
 	    // Add children that the first does not already have yet.
 
 	    List new_children = new ArrayList(first_only);
 	    new_children.addAll(second_only);
-	    
 	    
 	    Iterator both_iter = both.iterator();
 	    
@@ -410,7 +400,7 @@ public class Castanet {
 		
 		
 		// Merge the attributes of the two common children Nodes.
-		//	mergeAttributes(commonNode, nodeInSecond);
+		mergeAttributes(commonNode, nodeInSecond);
 		
 		new_children.add(mergeOntologyGraphs(commonNode, nodeInSecond));
 		
@@ -418,9 +408,8 @@ public class Castanet {
 	    }
 
 	    
-	    
 	    // Merge the attributes of the 'first' and 'second' Node
-	    //    mergeAttributes(first, second);
+	    mergeAttributes(first, second);
 	    
 
 	    first.setChildren(new_children);
@@ -457,7 +446,7 @@ public class Castanet {
     private void printGraph(Node root) {
 	
 	System.out.print("[");
-	System.out.print(root.nodeValue().getName());
+	System.out.print(root.nodeValue());
 
 	Iterator child_iter = root.getChildren().iterator();
 
@@ -476,33 +465,11 @@ public class Castanet {
        System.out.print("]");
     }
 
-    public void printGraph(Node root, PrintWriter out) {
-	
-	out.print("[");
-	out.print(root.nodeValue().getName());
-
-	Iterator child_iter = root.getChildren().iterator();
-
-
-	while (child_iter.hasNext()) {
-	    Node next_child = (Node) child_iter.next();
-
-	    // Use tabs to make it easier to read.
-	    out.print("<");
-
-	    printGraph(next_child, out);
-
-	    out.print(">");
-
-	}
-       out.print("]");
-    }
-
     
 
     /** 
      *  Takes a word, part of speech and word sense, then creates a Tree based off of its ontology starting from
-     *  the root. */
+     *  the root. 
     public Node getOntologyGraph(String word, PartsOfSpeech pos, int senseNum) {
 
 	Synset word_synset = reader.getSynset(word, pos, senseNum);	
@@ -527,11 +494,7 @@ public class Castanet {
 
 	}
 
-	return graph;
-
-    }
-
-   
+    */
  
 
     /** 
@@ -588,172 +551,15 @@ public class Castanet {
     }
     */
 
-    
 
-    public Node runCastanet(String directory) {
-	
-	// Get all the files in the directory and extract all the top keywords
-	Map keywordsAndFiles = extractKeywordsFromDocument(directory, 5);
-
-	List<List> keywords = (List)keywordsAndFiles.get("keywords");
-	List<File> files = (List)keywordsAndFiles.get("files");
-	
-	Node masterGraph = null;
-	
-	
-	for(int fileNo = 0; fileNo < keywords.size(); fileNo++){
-	    
-	    // Get the keywords that were extracted from the file
-	    List<Keyword> topKeywords = keywords.get(fileNo);
-	    File currentFile = files.get(fileNo);
-	    
-	    for(Keyword k : topKeywords) {
-		
-
-
-
-		String word = k.getWord();
-		LOGGER.info("Processing: " + word);
-
-		
-		Synset wordSynset = reader.getSynset(word, PartsOfSpeech.NOUN, 1);
-		
-		// if the synset does not exist then skip it
-		if(wordSynset == null) continue;
-		
-		// For every keyword, create an ontology tree, attach a File object to it.
-		
-		// Check if there is a FileListAttribute, if yes add to it, if not create one.
-		Attribute fileAttribute = wordSynset.getAttribute("files");
-		
-		if(fileAttribute == null) {
-		    List synsetFiles = new ArrayList();
-		    synsetFiles.add(currentFile);
-		    
-		    FileListAttribute fileList = new FileListAttribute(synsetFiles);
-		    wordSynset.setAttribute("files", fileList);
-		    
-		    
-
-		}else{
-		    
-		    FileListAttribute fileList = (FileListAttribute) fileAttribute;
-
-		    // Add the file to the list
-		    fileList.object().add(currentFile);
-
-		}
-
-		
-		Node wordGraph = getOntologyGraph(word, PartsOfSpeech.NOUN, 1);
-		
-		
-
-		if(masterGraph == null) masterGraph = wordGraph;
-		else {
-		    masterGraph = mergeOntologyGraphs(masterGraph, wordGraph);
-
-		}
-		
-
-	    }
-	    
-
-
-	}
-
-
-	// Remove the single parents
-	eliminateSingleParents(masterGraph);
-
-	return masterGraph;
-
+    public void runCastanet(String directory) {
 	
 
-	
-    }
+	// Extract keywords from all the documents
+	//reader = WordNetCorpusReader.initialize(wordnet_file_path);
 
+	//	reader.
 
-    
-    public Node followTheRabbit(Node rootNode, String[] path){
-	
-
-	Node currentNode = rootNode;
-	
-	for (int i = 0; i < path.length; i++) {
-	    
-	    String nextPath = path[i];
-	    
-	    // Find the child with the unique id (the name).
-	    List children = currentNode.getChildren();
-	    Iterator child_iter = children.iterator();
-	    
-
-	    
-	    boolean foundChild = false;
-	    
-	    while(child_iter.hasNext()) {
-		
-		Node childNode = (Node)child_iter.next();
-		String childID = childNode.nodeValue().getName();
-		
-		if(nextPath.equals(childID)) {
-		    // Follow the rabbit...
-		    currentNode = childNode;
-		    foundChild = true;
-
-		    // DEBUG 
-		    System.out.println("Going into: "+childID);
-
-		    break;
-		}
-		
-		// DEBUG
-		else {
-		    System.out.println("Looking for  " + nextPath +", but got "+childID+" =  FAILED!");
-
-		}
-
-	    }
-	    
-
-	    if(!foundChild) {
-		 throw new IllegalStateException("Could not find node: " + nextPath + " in "+rootNode.nodeValue().getName()+".  Available children are: " + children);
-		 
-	    }
-
-	}
-
-
-	return currentNode;
-    }
-    
-
-
-    // DEBUG print out the unique ids.
-     public void printUniqueID(Node rootNode){
-	
-
-
-	
-
-	    
-	// Find the child with the unique id (the name).
-	List children = rootNode.getChildren();
-	Iterator child_iter = children.iterator();
-	
-	while(child_iter.hasNext()) {
-	    
-	    Node childNode = (Node)child_iter.next();
-	    
-	    System.out.println(childNode.nodeValue().getName());
-	    
-
-	    printUniqueID(childNode);
-	    break;
-	}
-	    
-	
     }
 
 
@@ -761,8 +567,6 @@ public class Castanet {
     public static void main (String[] args) {
 		
 	Castanet cnet;
-
-	File testFile = new File("/Users/thuang513/Projects/research/C-Cat/extendOntology/test-docs/");
 	
 	if(args.length == 2){
 	    System.out.println("DEBUG: Using STOP FILE = "+args[1]);
@@ -774,88 +578,45 @@ public class Castanet {
 
 
 	
-	// Get all the files in the directory and extract all the top keywords
-		
-	try{
 
-	    
-	    Node castanetGraph = cnet.runCastanet(testFile.getCanonicalPath());
-	    
-	    String[] pathwayToHeaven = {};
 
-	    Node test = cnet.followTheRabbit(castanetGraph, pathwayToHeaven);
-	    cnet.printGraph(test);
-	    
-	    /*
-	    Map keywordsAndFiles = cnet.extractKeywordsFromDocument(testFile.getCanonicalPath(), 5);
-	
-	    
-	    List<List> keywords = (List)keywordsAndFiles.get("keywords");
-	    List<File> files = (List)keywordsAndFiles.get("files");
-	    
-	    System.out.println(keywords);
-	    System.out.println(files);
-	    
-	    */
-	}catch(IOException e){
-
-	}
-    
-	
-	/*
 	
 	Node pig_graph = cnet.getOntologyGraph("pig", PartsOfSpeech.NOUN, 1);
 	Node computer = cnet.getOntologyGraph("computer", PartsOfSpeech.NOUN, 1);
       
 	Node cat = cnet.getOntologyGraph("cat", PartsOfSpeech.NOUN, 1);
-	
-	String[] path = {"physical_entity.NOUN.1","object.NOUN.1","whole.NOUN.2","living_thing.NOUN.1","organism.NOUN.1","animal.NOUN.2","chordate.NOUN.1",
-			 "vertebrate.NOUN.1","mammal.NOUN.1","placental.NOUN.1","ungulate.NOUN.1","even-toed_ungulate.NOUN.1"};
-	*/
-	    
-	//cnet.printUniqueID(pig_graph);
 
-	/*
+
 
 
 	// DEBUG: test out merging and attributes.
 	
 	try{
 	    File wordnet = new File(args[0]);
-	    ArrayList fileList = new ArrayList();
-	    fileList.add(wordnet);
-	    FileListAttribute test = new FileListAttribute(fileList);
 	    
+	    FileListAttribute test = new FileListAttribute(new List(wordnet));
 	    
-	    System.out.println("FileList = "+ test);
 	    
 	    pig_graph.nodeValue().setAttribute("file", test);
 	    
-	}catch(Exception e) {
+	}catch(IOException e) {
 	    
 
 	}
-	
-	
 
 
-	
+
 	Node merged = cnet.mergeOntologyGraphs(pig_graph, computer);
-	//	merged = cnet.mergeOntologyGraphs(merged, cat);
+	merged = cnet.mergeOntologyGraphs(merged, cat);
 	
 	merged = cnet.eliminateSingleParents(merged);
+
+	// cnet.printGraph(merged);
 	
-	cnet.printGraph(merged);
-
-	//	Node resultNode = cnet.followTheRabbit(merged, path);
-	// System.out.println(resultNode.nodeValue().getName());
-
-
-	
-	 //System.out.println(merged.nodeValue().getAttribute("file"));
+	System.out.println(merged.nodeValue().getAttribute("file"));
 	
 
-	 */
+
 
 	
 	/*

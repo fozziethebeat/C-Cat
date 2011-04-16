@@ -15,8 +15,11 @@ import gov.llnl.ontology.wordnet.Synset;
  */
 public class Node {
 
-    private Synset value;
-    private List children;
+
+     private transient Synset value;
+
+     private transient List children;
+
     private Node parent;
     
 
