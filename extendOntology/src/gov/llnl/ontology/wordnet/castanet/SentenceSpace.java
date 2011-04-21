@@ -47,7 +47,7 @@ import edu.stanford.nlp.ling.HasWord;
 import edu.sspace.common.SemanticSpace;
 
 
-public class SentenceSpace implements SemanticSpace{
+public class SentenceCountSpace{
 
    protected static final Logger LOG = 
         Logger.getLogger(SentenceSpace.class.getName());
@@ -94,9 +94,15 @@ public class SentenceSpace implements SemanticSpace{
     protected Matrix wordSpace;
 
     
+    public SentenceSpace() throws IOException {
+	this(false, new ConcurrentMap<String, Integer>(),  Matrices.getMatrixBuilderForSVD());
 
-    public SentenceSpace(MatrixBuilder termDocumentMatrixBuilder) throws IOException{
+    }
+
+    public SentenceSpace(boolean readHeaderToken, ConcurrentMap<String, Integer> termToIndex, 
+			 MatrixBuilder termDocumentMatrixBuilder) throws IOException{
 	
+	this.readHeaderToken = readHeaderToken;
 	this.termToIndex = termToIndex;
         termIndexCounter = new AtomicInteger(0);
         documentCounter = new AtomicInteger(0);
@@ -109,11 +115,14 @@ public class SentenceSpace implements SemanticSpace{
 
     public void processDocument(BufferedReader document) throws IOException {
 	
-	// Create a matrix
-
-
 	// Create a Map that will store the sentence location count.
 	Map<String,Integer> termSentence = new HashMap<String,Integer>(1000);
+
+        // If the first token is to be interpreted as a document header read it.
+        if (readHeaderToken)
+            handleDocumentHeader(docCount, documentTokens.next());
+
+
 
 	// Tokenize the document by sentences.
 	DocumentPreprocessor processor = new DocumentPreprocessor(document);
@@ -122,7 +131,7 @@ public class SentenceSpace implements SemanticSpace{
 
 
 	for(List<HasWord> sentence : processor) {
-
+	    
 	    sentenceCount++;
 	    
 	    // Go through each word and record what sentence number they are from.
@@ -130,30 +139,118 @@ public class SentenceSpace implements SemanticSpace{
 		
 		// We're looking for the first occurrence of the word. So if theres already a record then we don't want it.
 		if(!termSentence.containsKey(word.word())){
-		    
+		    addTerm(word.word());
 		    termSentece.put(word.word(), sentenceCount);
 		}
-
 		
-
 	    }
-	    
-	    
-
-	    
 	}
 
-	
+
+	document.close();
+
+	// Check that we actually loaded in some terms before we increase the
+        // documentIndex. This is done after increasing the document count since
+        // some configurations may need the document order preserved, for
+        // example, if each document corresponds to some cluster assignment.
+        if (termSentence.isEmpty())
+            return;
+
+
+	// Now that we have a count of what words appear in what sentence, we will write this to the Matrix
+        // Get the total number of terms encountered so far, including any new
+        // unique terms found in the most recent document
+        int totalNumberOfUniqueWords = termIndexCounter.get();
+
+        // Convert the Map count to a SparseArray
+
+	// Create a column with all the known words
+        SparseArray<Integer> documentColumn =  new SparseIntHashArray(totalNumberOfUniqueWords);
+
+        for (Map.Entry<String,Integer> e : termSentence.entrySet())
+            documentColumn.set(termToIndex.get(e.getKey()), e.getValue());
+
+        // Update the term-document matrix with the results of processing the
+        // document.
+        termDocumentMatrixBuilder.addColumn(documentColumn);
 
     }
+
+    public MatrixFile getMatrixFile() {
+	
+	// No more messing with the matrix data
+	termDocumentMatrixBuilder.finish();
+
+	File termDocumentMatrix = termDocumentMatrixBuilder.getFile();
+
+	return new MatrixFile(termDocumentMatrix, termDocumentMatrixBuilder.getMatrixFormat());
+	
+    }
+
+
+    public void setupMatrix(){
+	
+	MatrixFile processedSpace = getMatrixFile();
+	wordSpace = MatrixIO.readMatrix(processedSpace.getFile(), processedSpace.getFormat());
+
+    }
+
 
     String public getSpaceName() {
 
-	return "SentenceSpace";
+	return "SentenceCountSpace";
     }
 
-    String Vector getVector(String word) {
-	
+
+    /**
+     * {@inheritDoc}
+     */
+    public Vector getVector(String word) {
+        // determine the index for the word
+        Integer index = termToIndex.get(word);
+        
+        return (index == null)
+            ? null
+            : wordSpace.getRowVector(index.intValue());
+    }
+
+
+
+
+    /**
+     * Adds the term to the list of terms and gives it an index, or if the term
+     * has already been added, does nothing.
+     * TODO: Replace this with a basis mapping.
+     */
+    private void addTerm(String term) {
+        Integer index = termToIndex.get(term);
+
+        if (index == null) {
+
+            synchronized(this) {
+                // recheck to see if the term was added while blocking
+                index = termToIndex.get(term);
+                // if some other thread has not already added this term while
+                // the current thread was blocking waiting on the lock, then add
+                // it.
+                if (index == null) {
+                    index = Integer.valueOf(termIndexCounter.getAndIncrement());
+                    termToIndex.put(term, index);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Subclasses should override this method if they need to utilize a header
+     * token for each document.  Implementations of this method <b>must</b> be
+     * thread safe.  The default action is a no-op.
+     *
+     * @param docIndex The document id assigned to the current document
+     * @param documentName The name of the current document.
+     */
+    protected void handleDocumentHeader(int docIndex, String header) {
     }
 
     
