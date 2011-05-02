@@ -1,0 +1,79 @@
+package gov.llnl.ontology.wordnet.castanet;
+
+
+
+import edu.ucla.sspace.matrix.Matrices;
+import edu.ucla.sspace.matrix.Matrix;
+import edu.ucla.sspace.matrix.MatrixFile;
+import edu.ucla.sspace.matrix.MatrixBuilder;
+import edu.ucla.sspace.matrix.MatrixIO;
+import edu.ucla.sspace.matrix.MatrixIO.Format;
+import edu.ucla.sspace.matrix.SVD;
+import edu.ucla.sspace.matrix.Transform;
+
+import edu.ucla.sspace.text.IteratorFactory;
+
+import edu.ucla.sspace.util.LoggerUtil;
+import edu.ucla.sspace.util.SparseArray;
+import edu.ucla.sspace.util.SparseIntHashArray;
+
+import edu.ucla.sspace.vector.DoubleVector;
+import edu.ucla.sspace.vector.Vector;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOError;
+import java.io.IOException;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
+import java.util.logging.Logger;
+
+
+
+import edu.stanford.nlp.process.DocumentPreprocessor;
+import edu.stanford.nlp.ling.HasWord;
+
+import edu.sspace.common.SemanticSpace;
+
+
+public class SentenceSpace implements SemanticSpace{
+
+   protected static final Logger LOG = 
+        Logger.getLogger(SentenceSpace.class.getName());
+
+    /**
+     * A mapping from a word to the row index in the that word-document matrix
+     * that contains occurrence counts for that word.
+     * TODO: Replace this with a basis mapping.
+     */
+    private final ConcurrentMap<String,Integer> termToIndex;
+
+
+
+    public SentenceSpace(){
+
+
+    }
+
+    String public getSpaceName() {
+
+
+    }
+
+    String Vector getVector(String word) {
+	
+    }
+
+    
+}
