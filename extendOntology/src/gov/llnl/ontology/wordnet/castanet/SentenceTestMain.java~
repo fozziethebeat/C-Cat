@@ -1,0 +1,22 @@
+package gov.llnl.ontology.wordnet.castanet;
+
+
+
+public class SentenceTestMain {
+
+    public static void main(String[] args) {
+	SentenceSpace sp = new SentenceSpace();
+
+
+	String PATH = "":
+	// Test document location 
+	File doc = new File(PATH);
+
+	// Process Document
+	FileDocument fileDoc = new FileDocument(doc.getCanonicalPath());
+	sp.processDocument(fileDoc.reader());
+
+    }
+
+
+}
