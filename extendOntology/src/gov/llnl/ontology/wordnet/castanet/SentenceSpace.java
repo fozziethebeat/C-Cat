@@ -263,4 +263,9 @@ public class SentenceSpace{
     }
 
     
+    public Set<String> getWords() {
+        return Collections.unmodifiableSet(termToIndex.keySet());
+    }
+
+
 }
