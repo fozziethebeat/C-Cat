@@ -13,18 +13,18 @@ public class SentenceTestMain {
 
 
 
-	String PATH = "test-docs/LibyaNews2.txt";
+	String PATH = "test-docs";
 	    
 	String PATH2 = "test-docs/JapanNuclear.txt";
-
+	String PATH3 = "test-docs/TaxGas.txt";
 	// Test document location 
-	File doc = new File(PATH);
+	File doc = new File(PATH3);
 	File doc2 = new File(PATH2);
 
 
 	try{
 
-	    // Process Document
+	    //Process Document
 	    FileDocument fileDoc = new FileDocument(doc.getCanonicalPath());
 	    FileDocument fileDoc2 = new FileDocument(doc2.getCanonicalPath());
 	    
@@ -34,18 +34,25 @@ public class SentenceTestMain {
 
 	    sp.setupMatrix();
 	    
-	    for(String term: sp.getWords()) {
-		System.out.print("Word = "+ term);
-
-		for(int i = 0; i < sp.getVector(term).length(); i++) {
-		    System.out.print("\t" + sp.getVector(term).getValue(i).doubleValue());
-		    
-		}
-		
-		System.out.println();
-		
-	    }
+	    sp.calculateSentenceScore();
 	    
+	    
+	    
+	    // for(String term: sp.getWords()) {
+	    // 	System.out.print("Word = "+ term);
+
+	    // 	for(int i = 0; i < sp.getVector(term).length(); i++) {
+	    // 	    System.out.print("\t" + sp.getVector(term).getValue(i).doubleValue());
+		    
+	    // 	}
+		
+	    // 	System.out.println();
+		
+	    // }
+	    
+
+	    Autosummary.calculateSakaiEtAlScore(PATH);
+
 
 	}catch(IOException ioe) {
 	    System.err.println("Error reading the file!");

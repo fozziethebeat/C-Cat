@@ -19,6 +19,7 @@ import edu.ucla.sspace.util.SparseIntHashArray;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.Vector;
+import edu.ucla.sspace.vector.CompactSparseVector;
 
 // import edu.sspace.common.*;
 
@@ -32,6 +33,7 @@ import java.io.IOException;
 
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -66,7 +68,7 @@ public class SentenceSpace{
      */
     private final ConcurrentMap<String,Integer> termToIndex;
 
-        /**
+    /**
      * The counter for recording the current, largest word index in the
      * word-document matrix.  Subclasses can use this for any reporting.
      */
@@ -85,11 +87,6 @@ public class SentenceSpace{
      */
     private final MatrixBuilder termDocumentMatrixBuilder;
 
-    /**
-     * If true, the first token in each document is considered to be a document
-     * header.
-     */
-    private final boolean readHeaderToken;
 
     /**
      * The word space of the term document based word space model.  If the word
@@ -100,16 +97,21 @@ public class SentenceSpace{
      */
     protected Matrix wordSpace;
 
+    /**
+     * Keeps track of how many sentences are in a document. The location of the sentence count 
+     * corresponds to which document in the matrix row. 
+     */
+    private List<Integer> sentenceCounter;
+
     
     public SentenceSpace() throws IOException {
-	this(false, new ConcurrentHashMap<String, Integer>(),  Matrices.getMatrixBuilderForSVD());
+	this(new ConcurrentHashMap<String, Integer>(),  Matrices.getMatrixBuilderForSVD());
 
     }
 
-    public SentenceSpace(boolean readHeaderToken, ConcurrentMap<String, Integer> termToIndex, 
+    public SentenceSpace(ConcurrentMap<String, Integer> termToIndex, 
 			 MatrixBuilder termDocumentMatrixBuilder) throws IOException{
 	
-	this.readHeaderToken = readHeaderToken;
 	this.termToIndex = termToIndex;
         termIndexCounter = new AtomicInteger(0);
         documentCounter = new AtomicInteger(0);
@@ -117,7 +119,8 @@ public class SentenceSpace{
         this.termDocumentMatrixBuilder = termDocumentMatrixBuilder;
 	
         wordSpace = null;
-
+	
+	sentenceCounter = new ArrayList();
     }
 
     public void processDocument(BufferedReader document) throws IOException {
@@ -126,12 +129,6 @@ public class SentenceSpace{
 	// For every word stored in this Map (the key), the value is what is the sentence location
 	// for this word
 	Map<String,Integer> termSentence = new HashMap<String,Integer>(1000);
-
-        // If the first token is to be interpreted as a document header read it.
-	//        if (readHeaderToken)
-	// handleDocumentHeader(docCount, documentTokens.next());
-
-
 
 	// Tokenize the document by sentences.
 	DocumentPreprocessor processor = new DocumentPreprocessor(document);
@@ -159,6 +156,8 @@ public class SentenceSpace{
 
 	document.close();
 
+	sentenceCounter.add(new Integer(sentenceCount));
+
 	// Check that we actually loaded in some terms before we increase the
         // documentIndex. This is done after increasing the document count since
         // some configurations may need the document order preserved, for
@@ -176,6 +175,7 @@ public class SentenceSpace{
         SparseArray<Integer> documentColumn =  new SparseIntHashArray(totalNumberOfUniqueWords);
 
 	// For every unique word encountered, add it to the column of the matrix
+
         for (Map.Entry<String,Integer> e : termSentence.entrySet())
             documentColumn.set(termToIndex.get(e.getKey()), e.getValue());
 
@@ -207,9 +207,11 @@ public class SentenceSpace{
 
     public String getSpaceName() {
 
-	return "SentenceCountSpace";
+	return "SentenceSpace";
     }
 
+
+    
 
     /**
      * {@inheritDoc}
@@ -249,23 +251,92 @@ public class SentenceSpace{
             }
         }
     }
-
-
-    /**
-     * Subclasses should override this method if they need to utilize a header
-     * token for each document.  Implementations of this method <b>must</b> be
-     * thread safe.  The default action is a no-op.
-     *
-     * @param docIndex The document id assigned to the current document
-     * @param documentName The name of the current document.
-     */
-    protected void handleDocumentHeader(int docIndex, String header) {
-    }
-
     
     public Set<String> getWords() {
         return Collections.unmodifiableSet(termToIndex.keySet());
     }
+
+    public int getSentenceCountFor(int document) {
+	if (document < 0 || document >= sentenceCounter.size()) 
+	    return -1;
+	else
+	    return sentenceCounter.get(document);
+    }
+
+
+
+    private DoubleVector calculateScoreForDocument(int doc) {
+	
+	double docDouble = (double) doc;
+	DoubleVector documentWords = wordSpace.getColumnVector( doc);
+	    
+	// Go through every word in the document and perform the right calculations
+	Integer sentenceMax = sentenceCounter.get(new Integer(doc));
+
+	DoubleVector newScores = new CompactSparseVector(documentWords.length());
+	
+	
+	for(int j = 0; j < documentWords.length(); j++) {
+		
+	    double currentSentenceLoc = documentWords.get(j);
+	    double newScore = (1 + sentenceMax.doubleValue() - currentSentenceLoc) / sentenceMax.doubleValue();
+	    
+	    newScores.set(j, newScore);
+	   
+	}
+
+	
+	return newScores;
+
+
+    }
+
+    private void printScores() {
+	
+
+
+	for(String word : getWords()) {
+	    
+	    Vector wordVector = getVector(word);
+	    
+	    System.out.print(word +": \t\t");
+	    for (int j = 0; j < wordVector.length(); j++) {
+		
+		System.out.print(wordVector.getValue(j) +"\t");
+		
+		
+	    }
+
+	    System.out.println();
+
+
+	}
+
+
+    }
+
+
+    /*** 
+     *  Calculate the scores for each word's sentence location based on the Sakai Et Al. method. 
+     */
+    public void calculateSentenceScore() {
+	
+	// Go down the column, normalize and add everything.
+	
+	// Get the column (all the words in a document).
+	
+	for(int i = 0; i < wordSpace.columns(); i++) {
+	    
+	    DoubleVector newScores = calculateScoreForDocument(i);
+	    wordSpace.setColumn(i, newScores);
+
+	}
+
+	// DEBUG
+	printScores();
+    }
+
+
 
 
 }
