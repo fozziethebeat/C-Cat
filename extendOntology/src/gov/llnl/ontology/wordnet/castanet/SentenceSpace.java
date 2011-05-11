@@ -333,7 +333,7 @@ public class SentenceSpace{
 	}
 
 	// DEBUG
-	printScores();
+	// printScores();
     }
 
 

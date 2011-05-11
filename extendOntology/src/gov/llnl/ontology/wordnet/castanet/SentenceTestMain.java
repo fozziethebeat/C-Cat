@@ -24,17 +24,17 @@ public class SentenceTestMain {
 
 	try{
 
-	    //Process Document
-	    FileDocument fileDoc = new FileDocument(doc.getCanonicalPath());
-	    FileDocument fileDoc2 = new FileDocument(doc2.getCanonicalPath());
+	    // //Process Document
+	    // FileDocument fileDoc = new FileDocument(doc.getCanonicalPath());
+	    // FileDocument fileDoc2 = new FileDocument(doc2.getCanonicalPath());
 	    
-	    SentenceSpace sp = new SentenceSpace();
-	    sp.processDocument(fileDoc.reader());
-	    sp.processDocument(fileDoc2.reader());
+	    // SentenceSpace sp = new SentenceSpace();
+	    // sp.processDocument(fileDoc.reader());
+	    // sp.processDocument(fileDoc2.reader());
 
-	    sp.setupMatrix();
+	    // sp.setupMatrix();
 	    
-	    sp.calculateSentenceScore();
+	    // sp.calculateSentenceScore();
 	    
 	    
 	    
@@ -51,7 +51,7 @@ public class SentenceTestMain {
 	    // }
 	    
 
-	    Autosummary.calculateSakaiEtAlScore(PATH);
+	  Autosummary.calculateSakaiEtAlScore(PATH);
 
 
 	}catch(IOException ioe) {
