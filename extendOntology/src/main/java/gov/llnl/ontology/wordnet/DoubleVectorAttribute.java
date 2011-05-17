@@ -31,32 +31,32 @@ import edu.ucla.sspace.vector.VectorMath;
  * An {@link Attribute} that stores a {@link DoubleVector}
  */
 public class DoubleVectorAttribute<T extends DoubleVector>
-    implements Attribute<T> {
+        implements Attribute<T> {
 
-  /**
-   * The {@lnk DoubleVector} being stored.
-   */
-  private T vector;
+    /**
+     * The {@lnk DoubleVector} being stored.
+     */
+    private T vector;
 
-  /**
-   * Creates a new {@link DoubleVectorAttribute}.
-   */
-  public DoubleVectorAttribute(T vector) {
-    this.vector = vector;
-  }
+    /**
+     * Creates a new {@link DoubleVectorAttribute}.
+     */
+    public DoubleVectorAttribute(T vector) {
+        this.vector = vector;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public void merge(Attribute<T> other) {
-    VectorMath.add(vector, other.object());
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public void merge(Attribute<T> other) {
+        VectorMath.add(vector, other.object());
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public T object() {
-    return vector;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public T object() {
+        return vector;
+    }
 }
 

@@ -33,20 +33,20 @@ import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
  */
 public interface InformationContent {
 
-  /**
-   * Returns the raw content counts for a given {@link Sysnet}.  If there is no
-   * content value, -1 is returned.
-   */
-  double contentForSynset(Synset synset);
+    /**
+     * Returns the raw content counts for a given {@link Sysnet}.    If there is
+     * no content value, -1 is returned.
+     */
+    double contentForSynset(Synset synset);
 
-  /**
-   * Returns the raw content counts for a given {@link PartsOfSpeech}
-   */
-  double contentForPartOfSpeech(PartsOfSpeech pos);
+    /**
+     * Returns the raw content counts for a given {@link PartsOfSpeech}
+     */
+    double contentForPartOfSpeech(PartsOfSpeech pos);
 
-  /**
-   * Returns the information theoretic content value for a given {@link Synset}.
-   * If there is no content value, -1 is returned.
-   */
-  double informationContent(Synset synset);
+    /**
+     * Returns the information theoretic content value for a given {@link
+     * Synset}.  If there is no content value, -1 is returned.
+     */
+    double informationContent(Synset synset);
 }

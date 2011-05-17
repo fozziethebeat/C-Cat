@@ -31,38 +31,38 @@ package gov.llnl.ontology.wordnet;
  */
 public class SimpleRelatedForm implements RelatedForm {
 
-  /**
-   * The index of the related {@link Lemma} in the source {@link Sysnet}.
-   */
-  public int sourceIndex;
+    /**
+     * The index of the related {@link Lemma} in the source {@link Sysnet}.
+     */
+    public int sourceIndex;
 
-  /**
-   * The index of the related {@link Lemma} in the other {@link Sysnet}.
-   */
-  public int otherIndex;
+    /**
+     * The index of the related {@link Lemma} in the other {@link Sysnet}.
+     */
+    public int otherIndex;
 
-  /**
-   * Creates a new {@link SimpleRelatedForm} relating the lemma at index {@code
-   * sourceIndex} for the current {@link Synset} to the lemma at index {@code
-   * otherIndex} of another, related {@link Synset}.
-   */
-  public SimpleRelatedForm(int sourceIndex, int otherIndex) {
-    this.sourceIndex = sourceIndex;
-    this.otherIndex = otherIndex;
-  }
+    /**
+     * Creates a new {@link SimpleRelatedForm} relating the lemma at index
+     * {@code sourceIndex} for the current {@link Synset} to the lemma at index
+     * {@code otherIndex} of another, related {@link Synset}.
+     */
+    public SimpleRelatedForm(int sourceIndex, int otherIndex) {
+        this.sourceIndex = sourceIndex;
+        this.otherIndex = otherIndex;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public int sourceIndex() {
-    return sourceIndex;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public int sourceIndex() {
+        return sourceIndex;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public int otherIndex() {
-    return otherIndex;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public int otherIndex() {
+        return otherIndex;
+    }
 }
 

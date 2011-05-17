@@ -44,95 +44,94 @@ import java.util.Map;
  */
 public class FileBasedInformationContent implements InformationContent {
 
-  /**
-   * The content for each known synset.
-   */
-  private Map<Synset, Double> synsetContent;
+    /**
+     * The content for each known synset.
+     */
+    private Map<Synset, Double> synsetContent;
 
-  /**
-   * The total content for each part of speech.
-   */
-  private double[] posContent;
+    /**
+     * The total content for each part of speech.
+     */
+    private double[] posContent;
 
-  /**
-   * Creates a {@link FileBasedInformationContent} from the provided file name.
-   * tThis {@link InformationContent} should only be loaded after initializing
-   * the {@link WordNetCorpusReader}.
-   *
-   * @throws IllegalArgumentException When an offset id does not match any known
-   *                                  offset value in wordnet as this is
-   *                                  indicitive that the incorrect content file
-   *                                  is being used.
-   */
-  public FileBasedInformationContent(String icFilename) {
-    posContent = new double[WordNetCorpusReader.POS_TAGS.length];
-    synsetContent = new HashMap<Synset, Double>();
-    WordNetCorpusReader wordnet = WordNetCorpusReader.getWordNet();
+    /**
+     * Creates a {@link FileBasedInformationContent} from the provided file
+     * name.  tThis {@link InformationContent} should only be loaded after
+     * initializing the {@link WordNetCorpusReader}.
+     *
+     * @throws IllegalArgumentException When an offset id does not match any
+     *         known offset value in wordnet as this is indicitive that the
+     *         incorrect content file is being used.
+     */
+    public FileBasedInformationContent(String icFilename) {
+        posContent = new double[WordNetCorpusReader.POS_TAGS.length];
+        synsetContent = new HashMap<Synset, Double>();
+        WordNetCorpusReader wordnet = WordNetCorpusReader.getWordNet();
 
-    try {
-      // Read in each line of the content file.  Each line, except for the first
-      // is formatted such that the offset value and the part of speech share
-      // the same token.
-      BufferedReader br = new BufferedReader(new FileReader(icFilename));
-      int index = 0;
-      for (String line = null; (line = br.readLine()) != null; ) {
-        // Skip the first line of the informaton content files as they have a
-        // junk header.
-        if (index++ == 0)
-          continue;
+        try {
+            // Read in each line of the content file.  Each line, except for the
+            // first is formatted such that the offset value and the part of
+            // speech share the same token.
+            BufferedReader br = new BufferedReader(new FileReader(icFilename));
+            int index = 0;
+            for (String line = null; (line = br.readLine()) != null; ) {
+                // Skip the first line of the informaton content files as they
+                // have a junk header.
+                if (index++ == 0)
+                    continue;
 
-        // Tokenize the line.
-        String[] tokens = line.split("\\s+");
-        // Extract the offset value and the part of speech.
-        Integer offset = Integer.parseInt(
-            tokens[0].substring(0, tokens[0].length() - 1));
-        PartsOfSpeech pos = WordNetCorpusReader.POS_MAP.get(
-            tokens[0].substring(tokens[0].length()-1));
+                // Tokenize the line.
+                String[] tokens = line.split("\\s+");
+                // Extract the offset value and the part of speech.
+                Integer offset = Integer.parseInt(
+                        tokens[0].substring(0, tokens[0].length() - 1));
+                PartsOfSpeech pos = WordNetCorpusReader.POS_MAP.get(
+                        tokens[0].substring(tokens[0].length()-1));
 
-        // Extract the content value.
-        Double value = Double.parseDouble(tokens[1]);
+                // Extract the content value.
+                Double value = Double.parseDouble(tokens[1]);
 
-        // Get the synset value for the given synset.  This may fail if the user
-        // loaded up a wordnet dictionary that has been modified but did not
-        // load a corresponding information content file.  If that is the case,
-        // crash and inform the user.
-        Synset synset = wordnet.getSynsetFromOffset(offset, pos);
-        if (synset == null)
-          throw new IllegalArgumentException(
-              "An offset in the information content file did not match any " +
-              "known synset offset.  Please check that the correct content " +
-              "file is being used");
+                // Get the synset value for the given synset.  This may fail if
+                // the user loaded up a wordnet dictionary that has been
+                // modified but did not load a corresponding information content
+                // file.  If that is the case, crash and inform the user.
+                Synset synset = wordnet.getSynsetFromOffset(offset, pos);
+                if (synset == null)
+                    throw new IllegalArgumentException(
+                            "An offset in the information content file did " +
+                            "not match any known synset offset.  Please " + 
+                            "check that the correct file is being used");
 
-        // Save the values
-        synsetContent.put(synset, value);
-        posContent[pos.ordinal()] += value;
-      }
-    } catch (IOException ioe) {
-      throw new IOError(ioe);
+                // Save the values
+                synsetContent.put(synset, value);
+                posContent[pos.ordinal()] += value;
+            }
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
-  }
 
-  /**
-   * {@inheritDoc}
-   */
-  public double contentForSynset(Synset synset) {
-    Double content = synsetContent.get(synset);
-    return (content == null) ? -1 : content;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public double contentForSynset(Synset synset) {
+        Double content = synsetContent.get(synset);
+        return (content == null) ? -1 : content;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public double contentForPartOfSpeech(PartsOfSpeech pos) {
-    return posContent[pos.ordinal()];
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public double contentForPartOfSpeech(PartsOfSpeech pos) {
+        return posContent[pos.ordinal()];
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public double informationContent(Synset synset) {
-    double content = contentForSynset(synset);
-    double posContent = contentForPartOfSpeech(synset.getPartOfSpeech());
-    return (content == -1) ? -1 : -Math.log(content / posContent);
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public double informationContent(Synset synset) {
+        double content = contentForSynset(synset);
+        double posContent = contentForPartOfSpeech(synset.getPartOfSpeech());
+        return (content == -1) ? -1 : -Math.log(content / posContent);
+    }
 }

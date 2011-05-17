@@ -33,15 +33,15 @@ package gov.llnl.ontology.wordnet;
  */
 public interface RelatedForm {
 
-  /**
-   * Returns the index of the {@link Lemma} from this {@link Sysnet} that is
-   * related to another {@link Lemma}.
-   */
-  int sourceIndex();
+    /**
+     * Returns the index of the {@link Lemma} from this {@link Sysnet} that is
+     * related to another {@link Lemma}.
+     */
+    int sourceIndex();
 
-  /**
-   * Returns the index of the {@link Lemma} from a related {@link Synset} that
-   * is related to a {@link Lemma} in this {@link Synset}.
-   */
-  int otherIndex();
+    /**
+     * Returns the index of the {@link Lemma} from a related {@link Synset} that
+     * is related to a {@link Lemma} in this {@link Synset}.
+     */
+    int otherIndex();
 }

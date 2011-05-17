@@ -35,113 +35,113 @@ import java.util.List;
  */
 public class BaseLemma implements Lemma {
 
-  /**
-   * The key for this {@link Lemma}
-   */
-  private String key;
+    /**
+     * The key for this {@link Lemma}
+     */
+    private String key;
 
-  /**
-   * The {@link Synset} for this {@link Lemma}
-   */
-  private Synset synset;
+    /**
+     * The {@link Synset} for this {@link Lemma}
+     */
+    private Synset synset;
 
-  /**
-   * The name for this {@link Lemma}
-   */
-  private String lemmaName;
+    /**
+     * The name for this {@link Lemma}
+     */
+    private String lemmaName;
 
-  /**
-   * The lexigrapher file name for this {@link Lemma}
-   */
-  private String lexName; 
+    /**
+     * The lexigrapher file name for this {@link Lemma}
+     */
+    private String lexName; 
 
-  /**
-   * The lexicographer file index for this {@link Lemma}
-   */
-  private int lexNameIndex;
+    /**
+     * The lexicographer file index for this {@link Lemma}
+     */
+    private int lexNameIndex;
 
-  /**
-   * The lexical id for this {@link Lemma}
-   */
-  private int lexId;
+    /**
+     * The lexical id for this {@link Lemma}
+     */
+    private int lexId;
 
-  /**
-   * The syntactic marker for for this {@link Lemma}
-   */
-  private String syntacticMarker;
+    /**
+     * The syntactic marker for for this {@link Lemma}
+     */
+    private String syntacticMarker;
 
-  /**
-   * The valid verb frames for this {@link Lemma}
-   */
-  private List<String> frameStrings;
+    /**
+     * The valid verb frames for this {@link Lemma}
+     */
+    private List<String> frameStrings;
 
-  /**
-   * Creates a new {@link Lemma}.
-   */
-  public BaseLemma(Synset synset, String lemmaName, String lexName, 
-                   int lexNameIndex, int lexId, String syntacticMarker) {
-    this.synset = synset;
-    this.lemmaName = lemmaName;
-    this.lexName = lexName;
-    this.lexNameIndex = lexNameIndex;
-    this.lexId = lexId;
-    this.syntacticMarker = syntacticMarker;
-    frameStrings = new ArrayList<String>();
-  }
+    /**
+     * Creates a new {@link Lemma}.
+     */
+    public BaseLemma(Synset synset, String lemmaName, String lexName, 
+                     int lexNameIndex, int lexId, String syntacticMarker) {
+        this.synset = synset;
+        this.lemmaName = lemmaName;
+        this.lexName = lexName;
+        this.lexNameIndex = lexNameIndex;
+        this.lexId = lexId;
+        this.syntacticMarker = syntacticMarker;
+        frameStrings = new ArrayList<String>();
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public Synset getSynset() {
-    return synset;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public Synset getSynset() {
+        return synset;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public String getLemmaName() {
-    return lemmaName;
-  }
-  
-  /**
-   * {@inheritDoc}
-   */
-  public String getLexicographerName() {
-    return lexName;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public String getLemmaName() {
+        return lemmaName;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public String getLexicographerName() {
+        return lexName;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public int getLexNameIndex() {
-    return lexNameIndex;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public int getLexNameIndex() {
+        return lexNameIndex;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public int getLexicalId() {
-    return lexId;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public int getLexicalId() {
+        return lexId;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public String getKey() {
-    return key;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public String getKey() {
+        return key;
+    }
 
-  /**
-   * Sets the key for this {@link Lemma}.
-   */
-  public void setKey(String key) {
-    this.key = key;
-  }
+    /**
+     * Sets the key for this {@link Lemma}.
+     */
+    public void setKey(String key) {
+        this.key = key;
+    }
 
-  /**
-   * Adds a verb frame to this {@link Lemma}.
-   */
-  public void addFrameString(String frameString) {
-    frameStrings.add(frameString);
-  }
+    /**
+     * Adds a verb frame to this {@link Lemma}.
+     */
+    public void addFrameString(String frameString) {
+        frameStrings.add(frameString);
+    }
 }

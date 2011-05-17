@@ -25,10 +25,16 @@ package gov.llnl.ontology.mains;
 
 import gov.llnl.ontology.util.MahoutSparseVector;
 
+import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.SynsetRelations;
 import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
+
+import gov.llnl.ontology.wordnet.builder.WordNetBuilder;
+import gov.llnl.ontology.wordnet.builder.OntologicalSortWordNetBuilder;
+import gov.llnl.ontology.wordnet.builder.DepthFirstBnBWordNetBuilder;
+import gov.llnl.ontology.wordnet.builder.UnorderedWordNetBuilder;
 
 import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.common.SemanticSpace;
@@ -49,6 +55,7 @@ import edu.ucla.sspace.dv.RelationPathBasisMapping;
 import edu.ucla.sspace.text.DependencyFileDocumentIterator;
 import edu.ucla.sspace.text.Document;
 
+import edu.ucla.sspace.util.Duple;
 import edu.ucla.sspace.util.Pair;
 
 import edu.ucla.sspace.vector.SparseDoubleVector;
@@ -74,6 +81,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+
 /**
  * @author Keith Stevens
  */
@@ -93,6 +101,8 @@ public class ExtendWordNet {
 
     private final EvidenceMap unknownEvidence;
 
+    private final WordNetBuilder wordnetBuilder;
+
     private OnlineLogisticRegression hypernymPredictor;
 
     private OnlineLogisticRegression cousinPredictor;
@@ -104,12 +114,13 @@ public class ExtendWordNet {
             System.exit(1);
         }
 
+        OntologyReader wordnet = WordNetCorpusReader.initialize(args[0]);
         ExtendWordNet builder = new ExtendWordNet(
                 new CoNLLDependencyExtractor(),
                 new RelationPathBasisMapping(),
                 new ConjunctionTransform(),
+                new OntologicalSortWordNetBuilder(wordnet),
                 args.length - 1);
-        WordNetCorpusReader.initialize(args[0]);
         Iterator<Document> corpusIter = new DependencyFileDocumentIterator(
                 args[1]);
         int c = 0;
@@ -136,7 +147,7 @@ public class ExtendWordNet {
 
         System.err.println("Unknown evidence labeled");
 
-        builder.extendWordNet();
+        builder.extendWordNet(wordnet);
 
         System.err.println("Words added to wordnet");
         System.exit(1);
@@ -168,9 +179,12 @@ public class ExtendWordNet {
         }
     }
 
-    public void extendWordNet() {
+    public void extendWordNet(OntologyReader wordnet) {
         for (Map.Entry<String, Map<String, Evidence>> fe :
                 unknownEvidence.map().entrySet()) {
+            // For the word that needs to be added, extract all the evidence we
+            // have for it, such as it's possible parents, their likelihoods,
+            // and the likelihood of cousins.
             String termToAdd = fe.getKey();
             Map<String, Evidence> evidenceMap = fe.getValue();
             String[] attachmentLocations = new String[evidenceMap.size()];
@@ -187,9 +201,14 @@ public class ExtendWordNet {
                 i++;
             }
 
-            Synset bestAttachment = SynsetRelations.bestAttachmentPoint(
-                    attachmentLocations, attachmentScores, cousinScores, .05);
+            // Add this term and it's information to the core builder.
+            wordnetBuilder.addEvidence(termToAdd, attachmentLocations,
+                                       attachmentScores, cousinScores);
         }
+
+        // After all words have been passed to the builder, add the terms
+        // according to the builder's methodology.
+        wordnetBuilder.addTerms(wordnet);
     }
 
     /**
@@ -198,10 +217,12 @@ public class ExtendWordNet {
     public ExtendWordNet(DependencyExtractor extractor,
                          DependencyPathBasisMapping basis,
                          DependencyTreeTransform transformer,
+                         WordNetBuilder wordnetBuilder,
                          int numSimilarityScores) {
         this.basis = basis;
         this.extractor = extractor;
         this.transformer = transformer;
+        this.wordnetBuilder = wordnetBuilder;
         this.numSimilarityScores = numSimilarityScores;
 
         knownPositives = new EvidenceMap(basis);

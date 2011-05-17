@@ -44,51 +44,51 @@ import java.util.List;
  * @author Keith Stevens
  */
 public class ExtendedList<T> extends AbstractList<T> {
-  
-  /**
-   * The base {@link List} that is being extended.  Only read access is given.
-   */
-  private List<T> baseItems;
+    
+    /**
+     * The base {@link List} that is being extended.  Only read access is given.
+     */
+    private List<T> baseItems;
 
-  /**
-   * The {@link List} used to store any items that are added to this {@link
-   * ExtendedList}
-   */
-  private List<T> extendedItems;
+    /**
+     * The {@link List} used to store any items that are added to this {@link
+     * ExtendedList}
+     */
+    private List<T> extendedItems;
 
-  /**
-   * Creates a new extended view of the given {@link List}.  Any new items added
-   * to the {@link ExtendedList} with calls to {@code add} will be added to a
-   * secondary {@link List}, and thus leave {@code baseItems} unmodified.  Only
-   * read access is given to {@code baseItems}.  As long as {@code baseItems} is
-   * synchronized, it can be extended with multiple {@link ExtendedList}s
-   * without and concern.
-   */
-  public ExtendedList(List<T> baseItems) {
-    this.baseItems = baseItems;
-    this.extendedItems = new ArrayList<T>();
-  }
+    /**
+     * Creates a new extended view of the given {@link List}.  Any new items
+     * added to the {@link ExtendedList} with calls to {@code add} will be added
+     * to a secondary {@link List}, and thus leave {@code baseItems} unmodified.
+     * Only read access is given to {@code baseItems}.  As long as {@code
+     * baseItems} is synchronized, it can be extended with multiple {@link
+     * ExtendedList}s without and concern.
+     */
+    public ExtendedList(List<T> baseItems) {
+        this.baseItems = baseItems;
+        this.extendedItems = new ArrayList<T>();
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public boolean add(T e) {
-    return extendedItems.add(e);
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public boolean add(T e) {
+        return extendedItems.add(e);
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public T get(int index) {
-    return (index < baseItems.size())
-      ? baseItems.get(index) 
-      : extendedItems.get(index - baseItems.size());
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public T get(int index) {
+        return (index < baseItems.size())
+            ? baseItems.get(index) 
+            : extendedItems.get(index - baseItems.size());
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public int size() {
-    return baseItems.size() + extendedItems.size();
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public int size() {
+        return baseItems.size() + extendedItems.size();
+    }
 }

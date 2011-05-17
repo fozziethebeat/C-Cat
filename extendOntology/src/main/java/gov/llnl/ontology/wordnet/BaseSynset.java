@@ -45,489 +45,506 @@ import java.util.HashSet;
  */
 public class BaseSynset implements Synset {
 
-  /**
-   * The {@link Relation}s associated with this {@link Synset}.
-   */
-  private MultiMap<String, Synset> relations;
+    /**
+     * The {@link Relation}s associated with this {@link Synset}.
+     */
+    private MultiMap<String, Synset> relations;
 
-  /**
-   * The {@link Attribute}s associated with this {@link Synset}.
-   */
-  private Map<String, Attribute> attributes;
+    /**
+     * The {@link Attribute}s associated with this {@link Synset}.
+     */
+    private Map<String, Attribute> attributes;
 
-  /**
-   * The total number of {@link Relation}s that this {@link Synset} has with
-   * others.
-   */
-  private int numRelations;
+    /**
+     * The total number of {@link Relation}s that this {@link Synset} has with
+     * others.
+     */
+    private int numRelations;
 
-  /**
-   * The sense key which uniquely identifies the {@link Synset}.
-   */
-  private String senseKey;
+    /**
+     * The sense key which uniquely identifies the {@link Synset}.
+     */
+    private String senseKey;
 
-  /**
-   * The sense number for this {@link Synset}.
-   */
-  private int senseNumber;
+    /**
+     * The sense number for this {@link Synset}.
+     */
+    private int senseNumber;
 
-  /**
-   * The {@link PartsOfSpeech} tag for this {@link Synset}
-   */
-  private PartsOfSpeech pos;
+    /**
+     * The {@link PartsOfSpeech} tag for this {@link Synset}
+     */
+    private PartsOfSpeech pos;
 
-  /**
-   * This is the byte offset number used to identify this {@link Synset} when
-   * loading and saving the WordNet dictionary.
-   */
-  private int offset;
+    /**
+     * This is the byte offset number used to identify this {@link Synset} when
+     * loading and saving the WordNet dictionary.
+     */
+    private int offset;
 
-  /**
-   * This records the nubmer of bytes used to store the offset number in a
-   * string format.
-   */
-  private int offsetSize;
+    /**
+     * This records the nubmer of bytes used to store the offset number in a
+     * string format.
+     */
+    private int offsetSize;
 
-  /**
-   * The definitions for this {@link Synset}.
-   */
-  private String definition;
+    /**
+     * The definitions for this {@link Synset}.
+     */
+    private String definition;
 
-  /**
-   * The set of example sentences for this {@link Synset}.
-   */
-  private List<String> examples;
+    /**
+     * The set of example sentences for this {@link Synset}.
+     */
+    private List<String> examples;
 
-  /**
-   * The {@link Lemma}s associated with this {@link Synset}.
-   */
-  private List<Lemma> lemmas;
+    /**
+     * The {@link Lemma}s associated with this {@link Synset}.
+     */
+    private List<Lemma> lemmas;
 
-  /**
-   * A mapping from related {@link Synset}s to the lemma to which they are
-   * related.
-   */
-  private Map<Synset, RelatedForm> relatedForms;
+    /**
+     * A mapping from related {@link Synset}s to the lemma to which they are
+     * related.
+     */
+    private Map<Synset, RelatedForm> relatedForms;
 
-  /**
-   * The frame indices for all verb frames for this {@link Synset}.
-   */
-  private int[] frameIds;
+    /**
+     * The frame indices for all verb frames for this {@link Synset}.
+     */
+    private int[] frameIds;
 
-  /**
-   * The lemma indices for all verb frames for this {@link Synset}.
-   */
-  private int[] lemmaIds;
+    /**
+     * The lemma indices for all verb frames for this {@link Synset}.
+     */
+    private int[] lemmaIds;
 
-  /**
-   * The maximum depth from this {@link Synset} to the root of the hierarchy.
-   */
-  private int maxDepth;
+    /**
+     * The maximum depth from this {@link Synset} to the root of the hierarchy.
+     */
+    private int maxDepth;
 
-  /**
-   * The minimum depth from this {@link Synset} to the root of the hierarchy.
-   */
-  private int minDepth;
+    /**
+     * The minimum depth from this {@link Synset} to the root of the hierarchy.
+     */
+    private int minDepth;
 
-  /**
-   * Creates a {@link BaseSynset} with a byte offset value.
-   */
-  public BaseSynset(int offset, PartsOfSpeech pos) {
-    this.offset = offset;
-    relations = new HashMultiMap<String, Synset>();
-    attributes = new HashMap<String, Attribute>();
-    relatedForms = new HashMap<Synset, RelatedForm>();
-    examples = new ArrayList<String>();
-    lemmas = new ArrayList<Lemma>();
-    frameIds = new int[0];
-    lemmaIds = new int[0];
+    /**
+     * Creates a {@link BaseSynset} with a byte offset value.
+     */
+    public BaseSynset(int offset, PartsOfSpeech pos) {
+        this.offset = offset;
+        relations = new HashMultiMap<String, Synset>();
+        attributes = new HashMap<String, Attribute>();
+        relatedForms = new HashMap<Synset, RelatedForm>();
+        examples = new ArrayList<String>();
+        lemmas = new ArrayList<Lemma>();
+        frameIds = new int[0];
+        lemmaIds = new int[0];
 
-    this.pos = pos;
-    this.definition = "";
-    this.senseKey = "";
-    this.senseNumber = 0;
-    this.numRelations = 0;
-    this.minDepth = -1;
-    this.maxDepth = -1;
-    this.offsetSize = -1;
-  }
+        this.pos = pos;
+        this.definition = "";
+        this.senseKey = "";
+        this.senseNumber = 0;
+        this.numRelations = 0;
+        this.minDepth = -1;
+        this.maxDepth = -1;
+        this.offsetSize = -1;
+    }
 
-  /**
-   * Creates an empty {@link BaseSynset}.
-   */
-  public BaseSynset(PartsOfSpeech pos) {
-    this(-1, pos);
-  }
+    /**
+     * Creates an empty {@link BaseSynset}.
+     */
+    public BaseSynset(PartsOfSpeech pos) {
+        this(-1, pos);
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public int getSenseNumber() {
-    return senseNumber;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public int getSenseNumber() {
+        return senseNumber;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public void setSenseNumber(int senseNumber) {
-    this.senseNumber = senseNumber;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public void setSenseNumber(int senseNumber) {
+        this.senseNumber = senseNumber;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public String getName() {
-    return lemmas.get(0).getLemmaName().toLowerCase() + "." +
-           pos + "." + senseNumber;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public String getName() {
+        return lemmas.get(0).getLemmaName().toLowerCase() + "." +
+               pos + "." + senseNumber;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public String getSenseKey() {
-    return senseKey;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public String getSenseKey() {
+        return senseKey;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public void setSenseKey(String senseKey) {
-    this.senseKey = senseKey;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public void setSenseKey(String senseKey) {
+        this.senseKey = senseKey;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public String getDefinition() {
-    return definition;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public String getDefinition() {
+        return definition;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public PartsOfSpeech getPartOfSpeech() {
-    return pos;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public PartsOfSpeech getPartOfSpeech() {
+        return pos;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public List<Lemma> getLemmas() {
-    return lemmas;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public List<Lemma> getLemmas() {
+        return lemmas;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public List<String> getExamples() {
-    return examples;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public List<String> getExamples() {
+        return examples;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public RelatedForm getDerivationallyRelatedForm(Synset synset) {
-    return relatedForms.get(synset);
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public RelatedForm getDerivationallyRelatedForm(Synset synset) {
+        return relatedForms.get(synset);
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public Set<String> getKnownRelationTypes() {
-    return relations.keySet();
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public Set<String> getKnownRelationTypes() {
+        return relations.keySet();
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public Set<Synset> getRelations(String relation) {
-    Set<Synset> r = relations.get(relation);
-    return (r == null) ? new HashSet<Synset>() : r;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public Set<Synset> getRelations(String relation) {
+        Set<Synset> r = relations.get(relation);
+        return (r == null) ? new HashSet<Synset>() : r;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public Set<Synset> getRelations(Relation relation) {
-    return getRelations(relation.toString());
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public Set<Synset> getRelations(Relation relation) {
+        return getRelations(relation.toString());
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public int getNumRelations() {
-    return numRelations;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    public int getNumRelations() {
+        return numRelations;
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public List<List<Synset>> getParentPaths() {
-    List<List<Synset>> parentPaths = new ArrayList<List<Synset>>();
-    Set<Synset> parents = getParents();
-    if (parents == null || parents.size() == 0) {
-      List<Synset> path = new ArrayList<Synset>();
-      path.add(this);
-      parentPaths.add(path);
-    } else {
-      for (Synset parent : parents) {
-        for (List<Synset> ancestorList : parent.getParentPaths()) {
-          ancestorList.add(this);
-          parentPaths.add(ancestorList);
+    /**
+     * {@inheritDoc}
+     */
+    public List<List<Synset>> getParentPaths() {
+        List<List<Synset>> parentPaths = new ArrayList<List<Synset>>();
+        Set<Synset> parents = getParents();
+        if (parents == null || parents.size() == 0) {
+            List<Synset> path = new ArrayList<Synset>();
+            path.add(this);
+            parentPaths.add(path);
+        } else {
+            for (Synset parent : parents) {
+                for (List<Synset> ancestorList : parent.getParentPaths()) {
+                    ancestorList.add(this);
+                    parentPaths.add(ancestorList);
+                }
+            }
         }
-      }
+        return parentPaths;
     }
-    return parentPaths;
-  }
 
-  /**
-   * {@inheritDoc}
-   */
-  public Set<Synset> getParents() {
-    return getRelations(Relation.HYPERNYM);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public Set<Synset> getChildren() {
-    return getRelations(Relation.HYPONYM);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public int getId() {
-    return offset;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public int[] getFrameIds() {
-    return frameIds;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public int[] getLemmaIds() {
-    return lemmaIds;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void setFrameInfo(int[] frameIds, int[] lemmaIds) {
-    this.frameIds = frameIds;
-    this.lemmaIds = lemmaIds;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void setId(int newOffset) {
-    offset = newOffset;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void setDefinition(String definition) {
-    this.definition = definition;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void addLemma(Lemma lemma) {
-    lemmas.add(lemma);
-  }
-  /**
-   * {@inheritDoc}
-   */
-  public void addExample(String example) {
-    examples.add(example);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void addDerivationallyRelatedForm(Synset related, RelatedForm form) {
-    relatedForms.put(related, form);
-  }
-
-  /**
-   * Adds the given {@link Synset} to the set of related synsets with the given
-   * relation.
-   */
-  public void addRelation(Relation relation, Synset synset) {
-    addRelation(relation.toString(), synset);
-  }
-
-  /**
-   * Adds the given {@link Synset} to the set of related synsets with the given
-   * relation.
-   */
-  public void addRelation(String relation, Synset synset) {
-    relations.put(relation, synset);
-    numRelations++;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public String getGloss() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(getDefinition());
-    for (String example : examples)
-      sb.append(";").append(" \"").append(example).append("\" ");
-    return sb.toString();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public int getMaxDepth() {
-    if (maxDepth > -1)
-      return maxDepth;
-
-    // Recursively compute the maximum depth from this synset to the base
-    // synset.  Cache the values along the way so that the computation is only
-    // done once.
-    int bestParentDepth = -1;
-    for (Synset parent : getParents())
-      bestParentDepth = Math.max(parent.getMaxDepth(), bestParentDepth);
-    maxDepth = 1 + bestParentDepth;
-    return maxDepth;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public int getMinDepth() {
-    if (minDepth > -1)
-      return minDepth;
-
-    // Recursively compute the minimum depth from this synset to the base
-    // synset.  Cache the values along the way so that the computation is only
-    // done once.
-    int bestParentDepth = Integer.MAX_VALUE;
-    for (Synset parent : getParents())
-      bestParentDepth = Math.min(parent.getMinDepth(), bestParentDepth);
-
-    // Store the best depth found so far, or 0 if this synset has no parents.
-    maxDepth = (bestParentDepth == Integer.MAX_VALUE) 
-      ? 0
-      : 1 + bestParentDepth;
-    return maxDepth;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void setAttribute(String attributeName, Attribute attribute) {
-    attributes.put(attributeName, attribute);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public Attribute getAttribute(String attributeName) {
-    return attributes.get(attributeName);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public Set<String> attributeLabels() {
-    return attributes.keySet();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void merge(Synset synset) {
-    // Reject any merges between synsets of different parts of speech.
-    if (pos != synset.getPartOfSpeech())
-      throw new IllegalArgumentException(
-          "Cannot merge synsets with different parts of speech.");
-
-    Set<Duple<String, Synset>> toRemove = new HashSet<Duple<String, Synset>>();
-    for (String relation : getKnownRelationTypes()) {
-        Set<Synset> links = relations.get(relation);
-        if (links.contains(synset))
-            toRemove.add(new Duple<String, Synset>(relation, synset));
+    /**
+     * {@inheritDoc}
+     */
+    public Set<Synset> getParents() {
+        return getRelations(Relation.HYPERNYM);
     }
-    for (Duple<String, Synset> r : toRemove)
-        relations.remove(r.x, r.y);
 
-    // For any relation held by the other synset, add those relations to the
-    // current synset. Also, For any synsets pointing to the other synset,
-    // change their relation to point to this synset.
-    for (Relation relation : Relation.values()) {
-      // Iterate through all of the synsets related to the other synset.  Since
-      // most relations are reflexive, we can simply inspect the relations for  
-      // these related synsets and replace the mapping from the related synset
-      // to the other synset with this current synset.
-      for (Synset related : synset.getRelations(relation)) {
-          // If the related synset is actuall this synset, don'tmake the link as
-          // it would create a cycle.
-          if (related == this)
-              continue;
+    /**
+     * {@inheritDoc}
+     */
+    public Set<Synset> getChildren() {
+        return getRelations(Relation.HYPONYM);
+    }
 
-        // Add the relation to this synset.
-        relations.put(relation.toString(), related);
+    /**
+     * {@inheritDoc}
+     */
+    public int getId() {
+        return offset;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int[] getFrameIds() {
+        return frameIds;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int[] getLemmaIds() {
+        return lemmaIds;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setFrameInfo(int[] frameIds, int[] lemmaIds) {
+        this.frameIds = frameIds;
+        this.lemmaIds = lemmaIds;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setId(int newOffset) {
+        offset = newOffset;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setDefinition(String definition) {
+        this.definition = definition;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void addLemma(Lemma lemma) {
+        lemmas.add(lemma);
+    }
+    /**
+     * {@inheritDoc}
+     */
+    public void addExample(String example) {
+        examples.add(example);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void addDerivationallyRelatedForm(Synset related, RelatedForm form) {
+        relatedForms.put(related, form);
+    }
+
+    /**
+     * Adds the given {@link Synset} to the set of related synsets with the
+     * given relation.
+     */
+    public void addRelation(Relation relation, Synset synset) {
+        addRelation(relation.toString(), synset);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void addRelation(String relation, Synset synset) {
+        relations.put(relation, synset);
         numRelations++;
+    }
 
-        // If there is no reflexive version, skip inspection.
-        if (relation.reflexive() == null)
-          continue;
+    /**
+     * {@inheritDoc}
+     */
+    public void removeRelation(Relation relation, Synset synset) {
+        removeRelation(relation.toString(), synset);
+    }
 
-        // Find the synsets that the related synset points to for this relation.
-        // Replace the mapping from that sysnet to the other synset with this
-        // current synset.
-        Set<Synset> inwardRelations = related.getRelations(
-            relation.reflexive());
-        if (inwardRelations.contains(synset)) {
-            inwardRelations.remove(synset);
-            inwardRelations.add(this);
+    /**
+     * {@inheritDoc}
+     */
+    public void removeRelation(String relation, Synset synset) {
+        relations.remove(relation, synset);
+        numRelations--;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String getGloss() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getDefinition());
+        for (String example : examples)
+            sb.append(";").append(" \"").append(example).append("\" ");
+        return sb.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getMaxDepth() {
+        if (maxDepth > -1)
+            return maxDepth;
+
+        // Recursively compute the maximum depth from this synset to the base
+        // synset.  Cache the values along the way so that the computation is
+        // only done once.
+        int bestParentDepth = -1;
+        for (Synset parent : getParents())
+            bestParentDepth = Math.max(parent.getMaxDepth(), bestParentDepth);
+        maxDepth = 1 + bestParentDepth;
+        return maxDepth;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getMinDepth() {
+        if (minDepth > -1)
+            return minDepth;
+
+        // Recursively compute the minimum depth from this synset to the base
+        // synset.  Cache the values along the way so that the computation is
+        // only done once.
+        int bestParentDepth = Integer.MAX_VALUE;
+        for (Synset parent : getParents())
+            bestParentDepth = Math.min(parent.getMinDepth(), bestParentDepth);
+
+        // Store the best depth found so far, or 0 if this synset has no
+        // parents.
+        maxDepth = (bestParentDepth == Integer.MAX_VALUE) 
+            ? 0
+            : 1 + bestParentDepth;
+        return maxDepth;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setAttribute(String attributeName, Attribute attribute) {
+        attributes.put(attributeName, attribute);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Attribute getAttribute(String attributeName) {
+        return attributes.get(attributeName);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Set<String> attributeLabels() {
+        return attributes.keySet();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void merge(Synset synset) {
+        // Reject any merges between synsets of different parts of speech.
+        if (pos != synset.getPartOfSpeech())
+            throw new IllegalArgumentException(
+                    "Cannot merge synsets with different parts of speech.");
+
+        Set<Duple<String, Synset>> toRemove =
+            new HashSet<Duple<String, Synset>>();
+        for (String relation : getKnownRelationTypes()) {
+                Set<Synset> links = relations.get(relation);
+                if (links.contains(synset))
+                    toRemove.add(new Duple<String, Synset>(relation, synset));
         }
-      }
+        for (Duple<String, Synset> r : toRemove)
+                relations.remove(r.x, r.y);
+
+        // For any relation held by the other synset, add those relations to the
+        // current synset. Also, For any synsets pointing to the other synset,
+        // change their relation to point to this synset.
+        for (Relation relation : Relation.values()) {
+            // Iterate through all of the synsets related to the other synset.
+            // Since most relations are reflexive, we can simply inspect the
+            // relations for these related synsets and replace the mapping
+            // from the related synset to the other synset with this current
+            // synset.
+            for (Synset related : synset.getRelations(relation)) {
+                    // If the related synset is actuall this synset, don'tmake
+                    // the link as it would create a cycle.
+                    if (related == this)
+                            continue;
+
+                // Add the relation to this synset.
+                relations.put(relation.toString(), related);
+                numRelations++;
+
+                // If there is no reflexive version, skip inspection.
+                if (relation.reflexive() == null)
+                    continue;
+
+                // Find the synsets that the related synset points to for this
+                // relation.  Replace the mapping from that sysnet to the other
+                // synset with this current synset.
+                Set<Synset> inwardRelations = related.getRelations(
+                        relation.reflexive());
+                if (inwardRelations.contains(synset)) {
+                        inwardRelations.remove(synset);
+                        inwardRelations.add(this);
+                }
+            }
+        }
+
+        // Copy over the examples and the gloss to this synset.
+        for (String example : synset.getExamples())
+            examples.add(example);
+        this.definition += "; " + synset.getDefinition();
+
+        // Copy over the lemmas for the other synset.  Assume this synset
+        // maintains it's base lemma.
+        for (Lemma otherLemma : synset.getLemmas())
+            lemmas.add(otherLemma);
+
+        // We currently lose out on the derivationally related forms.  For each
+        // attribute in the other synset, copy it over or merge it if this
+        // synset has a similarly labeled attribute.
+        for (String attributeLabel : synset.attributeLabels()) {
+            Attribute attribute = attributes.get(attributeLabel);
+            if (attribute == null)
+                attributes.put(attributeLabel, 
+                               synset.getAttribute(attributeLabel));
+            else
+                attribute.merge(synset.getAttribute(attributeLabel));
+        }
+
+        // Reset the min and max depth values as it will change with the merging
+        // of synset parents.
+        this.minDepth = -1;
+        this.maxDepth = -1;
     }
 
-    // Copy over the examples and the gloss to this synset.
-    for (String example : synset.getExamples())
-      examples.add(example);
-    this.definition += "; " + synset.getDefinition();
-
-    // Copy over the lemmas for the other synset.  Assume this synset maintains
-    // it's base lemma.
-    for (Lemma otherLemma : synset.getLemmas())
-      lemmas.add(otherLemma);
-
-    // We currently lose out on the derivationally related forms.
-
-    // For each attribute in the other synset, copy it over or merge it if this
-    // synset has a similarly labeled attribute.
-    for (String attributeLabel : synset.attributeLabels()) {
-      Attribute attribute = attributes.get(attributeLabel);
-      if (attribute == null)
-        attributes.put(attributeLabel, synset.getAttribute(attributeLabel));
-      else
-        attribute.merge(synset.getAttribute(attributeLabel));
+    /**
+     * Returns this {@link Synset}s name and gloss.
+     */
+    public String toString() {
+        return String.format("%s: %s\n", getName(), getDefinition());
     }
-
-    // Reset the min and max depth values as it will change with the merging of
-    // synset parents.
-    this.minDepth = -1;
-    this.maxDepth = -1;
-  }
-
-  /**
-   * Returns this {@link Synset}s name and gloss.
-   */
-  public String toString() {
-    return String.format("%s: %s\n", getName(), getDefinition());
-  }
 }

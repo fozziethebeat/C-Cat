@@ -31,16 +31,16 @@ package gov.llnl.ontology.wordnet;
  */
 public interface Attribute<T> {
 
-  /**
-   * Merges this {@link Attribute} with another {@link Attribute}.  Merging can
-   * occur when two {@link Synset}s are merged together and have {@link
-   * Attribute}s associated with the same label.  This method will only be
-   * called internally when {@link Synset}s are combined together.
-   */
-  void merge(Attribute<T> other);
+    /**
+     * Merges this {@link Attribute} with another {@link Attribute}. Merging can
+     * occur when two {@link Synset}s are merged together and have {@link
+     * Attribute}s associated with the same label.    This method will only be
+     * called internally when {@link Synset}s are combined together.
+     */
+    void merge(Attribute<T> other);
 
-  /**
-   * Returns the underlying object for this {@link Attribute}.
-   */
-  T object();
+    /**
+     * Returns the underlying object for this {@link Attribute}.
+     */
+    T object();
 }

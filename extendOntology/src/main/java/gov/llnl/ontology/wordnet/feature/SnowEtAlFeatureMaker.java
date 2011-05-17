@@ -23,12 +23,16 @@
 
 package gov.llnl.ontology.wordnet.feature;
 
+import gov.llnl.ontology.wordnet.LeacockChodorowScaledSimilarity;
 import gov.llnl.ontology.wordnet.Lemma;
-import gov.llnl.ontology.wordnet.Similarity;
+import gov.llnl.ontology.wordnet.HirstStOngeSimilarity;
+import gov.llnl.ontology.wordnet.PathSimilarity;
+import gov.llnl.ontology.wordnet.SynsetSimilarity;
 import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 import gov.llnl.ontology.wordnet.SynsetRelations;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
+import gov.llnl.ontology.wordnet.WuPalmerSimilarity;
 
 import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
@@ -189,11 +193,16 @@ public class SnowEtAlFeatureMaker implements SynsetPairFeatureMaker {
         values.set(values.length() - 1, 1);
     }
 
+    SynsetSimilarity[] simFunctions = new SynsetSimilarity[] {
+        new HirstStOngeSimilarity(),
+        new LeacockChodorowScaledSimilarity(wordnet),
+        new WuPalmerSimilarity(),
+        new PathSimilarity()
+    };
+
     // Set the pure path based similarity features.
-    values.set(0, Similarity.hso(sense1, sense2));
-    values.set(1, Similarity.lchScaled(sense1, sense2));
-    values.set(2, Similarity.wup(sense1, sense2));
-    values.set(3, Similarity.path(sense1, sense2));
+    for (int i = 0; i < simFunctions.length; ++i)
+        values.set(i, simFunctions[i].similarity(sense1, sense2));
 
     // Set the MN and MAXMN features.
     Synset lowestCH = SynsetRelations.lowestCommonHypernym(

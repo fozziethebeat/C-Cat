@@ -32,47 +32,48 @@ package gov.llnl.ontology.wordnet;
  *
  * Each {@link Lemma} has several attributes:
  * <ul>
- * </li> A key that uniquely identifies this {@link Lemma} against other {@link
- * Lemma}s for the same {@link Synset}.
- * </li> The {@link Synset} for this {@link Lemma}
- * </li> The name of this {@link Lemma}
- * </li> The lexigicgrapher file name that is attributed to this {@link Lemma}
- * </li> The lexigicgrapher file name index that is attributed to this {@link Lemma}
- * </li> The lexigicgrapher index that is attributed to this {@link Lemma}
+ * <li> A key that uniquely identifies this {@link Lemma} against other {@link
+ * Lemma}s for the same {@link Synset}. </li>
+ * <li> The {@link Synset} for this {@link Lemma} </li>
+ * <li> The name of this {@link Lemma} </li>
+ * <li> The lexigicgrapher file name that is attributed to this {@link Lemma}
+ * </li> <li> The lexigicgrapher file name index that is attributed to this
+ * {@link Lemma} </li>
+ * <li> The lexigicgrapher index that is attributed to this {@link Lemma} </li>
  * </ul>
  *
  * @author Keith Stevens
  */
 public interface Lemma {
 
-  /**
-   * Returns the key for this {@link Lemma}.
-   */
-  String getKey();
+    /**
+     * Returns the key for this {@link Lemma}.
+     */
+    String getKey();
 
-  /**
-   * Returns the {@link Synset} for this {@link Lemma}.
-   */
-  Synset getSynset();
+    /**
+     * Returns the {@link Synset} for this {@link Lemma}.
+     */
+    Synset getSynset();
 
-  /**
-   * Returns the name of this {@link Lemma}
-   */
-  String getLemmaName();
-  
-  /**
-   * Returns the lexicographer file name for this {@link lemma}.
-   */
-  String getLexicographerName();
+    /**
+     * Returns the name of this {@link Lemma}
+     */
+    String getLemmaName();
+    
+    /**
+     * Returns the lexicographer file name for this {@link lemma}.
+     */
+    String getLexicographerName();
 
-  /**
-   * Returns the index corresponding to the lexicographer file name for this
-   * {@link Lemma}.
-   */
-  int getLexNameIndex();
+    /**
+     * Returns the index corresponding to the lexicographer file name for this
+     * {@link Lemma}.
+     */
+    int getLexNameIndex();
 
-  /**
-   * Returns the lexical id for this {@link Lemma}
-   */
-  int getLexicalId();
+    /**
+     * Returns the lexical id for this {@link Lemma}
+     */
+    int getLexicalId();
 }

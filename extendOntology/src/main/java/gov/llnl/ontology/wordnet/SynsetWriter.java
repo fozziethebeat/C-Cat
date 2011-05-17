@@ -25,12 +25,20 @@ package gov.llnl.ontology.wordnet;
 
 
 /**
+ * An interface for serializing a series of {@link Synset}s.
+ *
  * @author Keith Stevens
  */
 public interface SynsetWriter {
 
-  String serializeSynset(Synset synset);
+    /**
+     * Returns a {@link String} version of a single {@link Synset}.
+     */
+    String serializeSynset(Synset synset);
 
-  String serializeSynsetKey(Synset synset);
+    /**
+     * Returns a {@link String} version of a {@link Synset}'s key.
+     */
+    String serializeSynsetKey(Synset synset);
 }
 
