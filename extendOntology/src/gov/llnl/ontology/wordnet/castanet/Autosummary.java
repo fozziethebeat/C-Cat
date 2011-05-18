@@ -13,7 +13,11 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
+
+import edu.ucla.sspace.text.IteratorFactory;
+
 
 public class Autosummary {
 
@@ -22,7 +26,7 @@ public class Autosummary {
     private static final Logger LOGGER = 
         Logger.getLogger(Autosummary.class.getName());
 
-    public static void calculateSakaiEtAlScore(String directory) throws IOException{
+    public static Map<String, Double> calculateSakaiEtAlScore(String directory, String stopWordsFile) throws IOException{
 	
 
 	// Set up all the subcomponents of the score
@@ -45,6 +49,13 @@ public class Autosummary {
 	    LOGGER.info("calculateSakaiEtAlScore: Invalid Directory!");
 	    return;
 	}
+
+
+	// Remove any stop words.
+	LOGGER.info("setting the stop word file = "+stopWordsFile);
+	System.setProperty(IteratorFactory.TOKEN_FILTER_PROPERTY, "exclude="+stopWordsFile);
+	IteratorFactory.setProperties(System.getProperties());
+	
 
 
 	try{
@@ -263,10 +274,15 @@ public class Autosummary {
 	 * Now that we have all the subcomponents of the equation, let's calculate the final score 
 	 */
 
+
+
 	// Go through every word and calculate the final score
 	HashMap<String, Double> finalScore = new HashMap();
+
+
+	// TODO: figure out which one is better, vsm or sp?
 	
-	for(String word : sp.getWords()) {
+	for(String word : vsm.getWords()) {
 	    
 	    // Get the appropriate score
 	    
@@ -278,24 +294,26 @@ public class Autosummary {
 	   
 	    // Get the Sentence location score
 	    Double wordSentenceScore = sentenceScore.get(word);
+
+
+	    if(word_tf_score == null && wordSentenceScore == null) {
+
+		LOGGER.warning("Could not find the word: \""+word+"\" in either vsm or SentenceSpace.");
+	    }
+
 	    
-	    if(wordSentenceScore == null) {
-		System.err.println(word);
+	    if(word_tf_score == null && word_tf_score == null){
+		LOGGER.warning("Vector Space Model couldn't find word: \""+word+"\". Giving these guys the default score of 1.0 then.");
+
+		word_tf_score = new Double(0.0);
+		wordEntropyScore = new Double(0.0);
+
+	    }else if (wordSentenceScore == null) {
+		
+		LOGGER.warning("Could not find word: \"" + word + "\" in the SentenceSpace. Giving this a default score of 1.0");
 		wordSentenceScore = new Double(1.0);
 	    }
-
-
-	    if(word_tf_score == null) {
-		System.err.println(word);
-		word_tf_score = new Double(1.0);
-	    }
-
-
-	    if(wordEntropyScore == null) {
-		System.err.println(word);
-		wordEntropyScore = new Double(1.0);
-	    }
-
+	    
 
 	    double finalWordScore = (0.5 + word_tf_score.doubleValue()) *
 		(0.5 + wordEntropyScore.doubleValue()) * 
@@ -305,12 +323,12 @@ public class Autosummary {
 	    finalScore.put(word, new Double(finalWordScore));
 	    
 	    // DEBUG
-	    System.out.println(word+":\t"+finalWordScore);
+	    //	    System.out.println(word+":\t"+finalWordScore);
 	    
 	}
 
 
-
+	return finalScore;
     }
 
 

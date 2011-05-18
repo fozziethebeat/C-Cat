@@ -12,7 +12,7 @@ public class SentenceTestMain {
     public static void main(String[] args) {
 
 
-
+	String STOPWORD_FILE = "data/english-stop-words-large.txt";
 	String PATH = "test-docs";
 	    
 	String PATH2 = "test-docs/JapanNuclear.txt";
@@ -51,7 +51,7 @@ public class SentenceTestMain {
 	    // }
 	    
 
-	  Autosummary.calculateSakaiEtAlScore(PATH);
+	    Autosummary.calculateSakaiEtAlScore(PATH, STOPWORD_FILE);
 
 
 	}catch(IOException ioe) {
