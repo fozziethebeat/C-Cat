@@ -26,9 +26,12 @@ package gov.llnl.ontology.mains;
 import gov.llnl.ontology.util.MahoutSparseVector;
 
 import gov.llnl.ontology.wordnet.OntologyReader;
+import gov.llnl.ontology.wordnet.PathSimilarity;
 import gov.llnl.ontology.wordnet.Synset;
+import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 import gov.llnl.ontology.wordnet.SynsetRelations;
 import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
+import gov.llnl.ontology.wordnet.SynsetSimilarity;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 
 import gov.llnl.ontology.wordnet.builder.WordNetBuilder;
@@ -36,6 +39,7 @@ import gov.llnl.ontology.wordnet.builder.OntologicalSortWordNetBuilder;
 import gov.llnl.ontology.wordnet.builder.DepthFirstBnBWordNetBuilder;
 import gov.llnl.ontology.wordnet.builder.UnorderedWordNetBuilder;
 
+import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.StaticSemanticSpace;
@@ -57,6 +61,7 @@ import edu.ucla.sspace.text.Document;
 
 import edu.ucla.sspace.util.Duple;
 import edu.ucla.sspace.util.Pair;
+import edu.ucla.sspace.util.ReflectionUtil;
 
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.CompactSparseVector;
@@ -72,6 +77,7 @@ import org.apache.mahout.ep.State;
 import org.apache.mahout.math.DenseVector;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
 
@@ -108,49 +114,141 @@ public class ExtendWordNet {
     private OnlineLogisticRegression cousinPredictor;
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 2) {
+        ArgOptions options = new ArgOptions();
+        options.addOption('w', "wordnetDir",
+                          "Set the directory holding wordnet data files",
+                          true, "DIR", "Required");
+        options.addOption('l', "testWordList",
+                          "Set the test word list",
+                          true, "FILE", "Required");
+        options.addOption('f', "corpusFile",
+                          "Set the CoNLL dependency parsed corpus file",
+                          true, "FILE", "Required");
+        options.addOption('b', "wordnetBuilder",
+                          "Set the wordnetBuilder",
+                          true, "CLASSNAME", "Required");
+                         
+        options.parseOptions(args);
+
+        if (!options.hasOption('b') ||
+            !options.hasOption('w') ||
+            !options.hasOption('l') ||
+            !options.hasOption('f') ||
+            options.numPositionalArgs() == 0) {
             System.out.println(
-                    "usage: java ExtendWordNet <wordnetDir> <corpus> <sspace>+");
+                    "usage: java ExtendWordNet [OPTIONS] <sspace>+\n" +
+                    options.prettyPrint());
             System.exit(1);
         }
 
+        // Load the test word list, and then wordnet.  Then remove each word in
+        // the word list from wordnet and save the possible parents for each
+        // word.
+        Set<String> wordList = loadWordList(options.getStringOption('l'));
         OntologyReader wordnet = WordNetCorpusReader.initialize(args[0]);
+        Map<String, Set<Synset>> wordParents = loadTestParents(
+                wordList, wordnet);
+
+        // Create the builder.
+        WordNetBuilder wnBuilder = ReflectionUtil.getObjectInstance(
+            options.getStringOption('b'));
         ExtendWordNet builder = new ExtendWordNet(
                 new CoNLLDependencyExtractor(),
                 new RelationPathBasisMapping(),
                 new ConjunctionTransform(),
-                new OntologicalSortWordNetBuilder(wordnet),
-                args.length - 1);
+                wnBuilder,
+                options.numPositionalArgs());
+
+        // Iterate over each document in the corpus and gather evidence.
         Iterator<Document> corpusIter = new DependencyFileDocumentIterator(
-                args[1]);
+            options.getStringOption('f'));
         int c = 0;
         while (corpusIter.hasNext()) {
             System.err.printf("Processing document %d\n", c);
-            builder.gatherEvidence(corpusIter.next().reader());
+            builder.gatherEvidence(corpusIter.next().reader(), wordList);
             System.err.printf("Processed document %d\n", c++);
         }
-
         System.err.println("Evidence gathered");
 
-        for (int s = 2; s < args.length; ++s) {
-            SemanticSpace sspace = new StaticSemanticSpace(args[s]);
-            builder.applySimilarityScores(s-2, sspace);
+        // Apply similarity scores to each noun pair found.
+        for (int s = 0; s < options.numPositionalArgs(); ++s) {
+            SemanticSpace sspace = new StaticSemanticSpace(
+                    options.getPositionalArg(s));
+            builder.applySimilarityScores(s, sspace);
         }
-
         System.err.println("Similarity labeled");
 
+        // Train the models.
         builder.trainModel(5);
-
         System.err.println("Models trained");
 
+        // Label the unknown evidence.
         builder.labelUnknownEvidence();
-
         System.err.println("Unknown evidence labeled");
 
         builder.extendWordNet(wordnet);
-
         System.err.println("Words added to wordnet");
-        System.exit(1);
+
+        double totalScore = 0;
+        int totalAnswered = 0;
+        SynsetSimilarity simMethod = new PathSimilarity();
+        for (Map.Entry<String, Set<Synset>> entry : wordParents.entrySet()) {
+            String word = entry.getKey();
+            Set<Synset> parents = entry.getValue();
+
+            // Get the synset for the word that was added.  If it was not in
+            // fact added, skip this test instance.
+            Synset[] synsets = wordnet.getSynsets(word, PartsOfSpeech.NOUN);
+            if (synsets.length == 0)
+                continue;
+            Synset addedSynset = synsets[0];
+
+            // For each pairwise combination of added parents and real parents,
+            // find the pairing that gives the highest similarity and consider
+            // this to be the best addition made for the given synset.
+            double maxParentSim = 0;
+            for (Synset addedParent : addedSynset.getParents()) {
+                for (Synset realParent : parents) {
+                    double pathSim = simMethod.similarity(
+                            realParent, addedParent);
+                    maxParentSim = Math.max(pathSim, maxParentSim);
+                }
+            }
+
+            // Add the score for this added test word.
+            totalAnswered++;
+            totalScore += maxParentSim;
+        }
+    }
+
+    private static Set<String> loadWordList(String wordListFile)
+            throws IOException {
+        Set<String> words = new HashSet<String>();
+        BufferedReader br = new BufferedReader(new FileReader(wordListFile));
+        for (String line = null; (line = br.readLine()) != null;)
+            words.add(br.readLine());
+        return words;
+    }
+
+    /**
+     * Get the parent {@link Synset}s for each word in the {@code wordList} and
+     * remove each word's {@link Synset}s from the {@code wordnet} instance.
+     */
+    private static Map<String, Set<Synset>> loadTestParents(
+            Set<String> wordList,
+            OntologyReader wordnet) {
+        Map<String, Set<Synset>> parentMaps =
+            new HashMap<String, Set<Synset>>();
+        for (String word : wordList) {
+            Set<Synset> parents = new HashSet<Synset>();
+            parentMaps.put(word, parents);
+            for (Synset synset : wordnet.getSynsets(word, PartsOfSpeech.NOUN)) {
+                parents.addAll(synset.getParents());
+                wordnet.removeSynset(synset);
+            }
+        }
+
+        return parentMaps;
     }
 
     /**
@@ -286,7 +384,7 @@ public class ExtendWordNet {
      * {@link DependencyPath}, the shortest path connecting these two nouns will
      * be used as evidence.
      */
-    public void gatherEvidence(BufferedReader document) {
+    public void gatherEvidence(BufferedReader document, Set<String> wordList) {
         try {
             for (DependencyTreeNode[] tree = null;
                     (tree = extractor.readNextTree(document)) != null; ) {
@@ -327,7 +425,7 @@ public class ExtendWordNet {
 
                         seenNodes.add(path.last());
 
-                        addTermEvidence(firstTerm, secondTerm, path);
+                        addTermEvidence(firstTerm, secondTerm, path, wordList);
                     }
                 }
             }
@@ -347,14 +445,16 @@ public class ExtendWordNet {
      */
     private void addTermEvidence(String firstTerm,
                                  String secondTerm,
-                                 DependencyPath path) {
+                                 DependencyPath path,
+                                 Set<String> wordList) {
         // Store the data in the correct map if the two words have already been
         // seen.
         if (knownPositives.contains(firstTerm, secondTerm))
             knownPositives.add(firstTerm, secondTerm, path);
         else if (knownNegatives.contains(firstTerm, secondTerm))
             knownNegatives.add(firstTerm, secondTerm, path);
-        else if (unknownEvidence.contains(firstTerm, secondTerm))
+        else if (unknownEvidence.contains(firstTerm, secondTerm) &&
+                 wordList.contains(firstTerm))
             unknownEvidence.add(firstTerm, secondTerm, path);
         else {
             // Otherwise determine the relationship between the two words and
@@ -369,7 +469,8 @@ public class ExtendWordNet {
                     knownNegatives.add(firstTerm, secondTerm, path);
                     break;
                 default:
-                    unknownEvidence.add(firstTerm, secondTerm, path);
+                    if (wordList.contains(firstTerm))
+                        unknownEvidence.add(firstTerm, secondTerm, path);
             }
         }
     }
