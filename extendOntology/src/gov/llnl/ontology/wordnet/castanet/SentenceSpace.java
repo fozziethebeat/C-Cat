@@ -135,7 +135,9 @@ public class SentenceSpace{
 	
 	int sentenceCount = 0;
 
-
+	
+	// TODO: Take the sentence and put it into the string and then use the TokenizerFactory class to do the tokenize.
+	// iteratorFactory.tokenize(document)
 	for(List<HasWord> sentence : processor) {
 	    
 	    sentenceCount++;

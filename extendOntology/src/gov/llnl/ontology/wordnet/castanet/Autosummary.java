@@ -26,6 +26,11 @@ public class Autosummary {
     private static final Logger LOGGER = 
         Logger.getLogger(Autosummary.class.getName());
 
+    
+    /**
+     * Returns a Map with all the words as keys and their Sakai Et Al. scores as values. 
+     *
+     */
     public static Map<String, Double> calculateSakaiEtAlScore(String directory, String stopWordsFile) throws IOException{
 	
 
@@ -47,7 +52,7 @@ public class Autosummary {
 	// Make sure dir is a working directory
 	if(!dir.isDirectory() || !dir.exists()) {
 	    LOGGER.info("calculateSakaiEtAlScore: Invalid Directory!");
-	    return;
+	    return null;
 	}
 
 
