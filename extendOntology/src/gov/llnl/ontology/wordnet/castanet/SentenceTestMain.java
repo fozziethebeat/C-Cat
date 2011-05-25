@@ -12,8 +12,8 @@ public class SentenceTestMain {
     public static void main(String[] args) {
 
 
-	String STOPWORD_FILE = "data/english-stop-words-large.txt";
-	String PATH = "test-docs";
+	String STOPWORD_FILE = "data/bbc-stop-words.txt";
+	String PATH = args[0];
 	    
 	String PATH2 = "test-docs/JapanNuclear.txt";
 	String PATH3 = "test-docs/TaxGas.txt";
