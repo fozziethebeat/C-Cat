@@ -117,7 +117,7 @@ public class Castanet {
 	
 	// Make sure folderLocation is a working directory
 	if(!dir.isDirectory() || !dir.exists()) {
-	    System.err.println("extractKeywordsFromDocument: Invalid Directory!");
+	    System.err.println("extractKeywordsFromDocument: Invalid Folder Directory = "+folderLocation);
 	    return null;
 	}
 	
@@ -139,7 +139,8 @@ public class Castanet {
 	    // This is eventually used to rank what are the top keywords.
 	    List<List> listOfDocs = new ArrayList<List>(dir.listFiles().length);
 	    
-	    
+
+	    /*
 	    // If we have a stop word list, then use it.
 	    if(!stopWordsFile.equals("")){
 
@@ -147,6 +148,13 @@ public class Castanet {
 		System.setProperty(IteratorFactory.TOKEN_FILTER_PROPERTY, "exclude="+stopWordsFile);
 		IteratorFactory.setProperties(System.getProperties());
 	    }
+	    */
+
+
+
+	    // TODO: use Sakai et al. method. to extract keywords.
+	    Map<String, Double> wordScores = Autosummary.calculateSakaiEtAlScore(folderLocation,stopWordsFile);
+	    
 
 	    // Get the list of files and process them
 	    for(File doc : dir.listFiles()) {
@@ -163,7 +171,7 @@ public class Castanet {
 
 	    // Try out some different matrix transform properties
 	    
-	   
+	    /*
 
 	    String[] matrixTransforms = {"edu.ucla.sspace.matrix.TfIdfTransform"};
 
@@ -175,23 +183,30 @@ public class Castanet {
 		vsm.processSpace(System.getProperties());
 	    
 	    }
-
-
+	    
 	     LOGGER.info("Done with TF-IDF Transform...");
 
+	    */
+	    
+	    
+	    // Finalize the internal matrix
+	    vsm.processSpace(System.getProperties());
+		
+		
 	    for (String term : vsm.getWords()) {
+
+		// Get all the terms found in the document
 		edu.ucla.sspace.vector.Vector termVector = vsm.getVector(term);
 		
-		// Find out if we should print out the values
-
-		boolean toPrint = true;
-		String whatPrint = "";
 		for(int i = 0; i < termVector.length(); i++) {
 		    
-		    
-
-		    Keyword keyword = new Keyword(term, termVector.getValue(i).doubleValue());
-		    ((List)listOfDocs.get(i)).add(keyword);
+		    // If the term existed in the document then add it to the document's list of keywords
+		    // with the term's score.
+		    if(termVector.getValue(i).doubleValue() != 0.0){
+			Double keywordScore = wordScores.get(term);			
+			Keyword keyword = new Keyword(term, keywordScore.doubleValue());
+			((List)listOfDocs.get(i)).add(keyword);
+		    }
 		}
 		
 
@@ -762,7 +777,7 @@ public class Castanet {
 		
 	Castanet cnet;
 
-	File testFile = new File("/Users/thuang513/Projects/research/C-Cat/extendOntology/test-docs/");
+	File testFile = new File("test-docs/");
 	
 	if(args.length == 2){
 	    System.out.println("DEBUG: Using STOP FILE = "+args[1]);

@@ -5,5 +5,5 @@ for jar in lib/*.jar; do export cp=$cp:$jar; done
 
 ant wordnet &&
 
-java -cp build:$cp -Xmx1g gov.llnl.ontology.wordnet.castanet.SentenceTestMain
+java -cp build:$cp -Xmx1g gov.llnl.ontology.wordnet.castanet.SentenceTestMain ~/Projects/cs112/bin/like/cleaned
 

@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.List;
+import java.util.LinkedList;
 
 import edu.ucla.sspace.text.IteratorFactory;
 
@@ -47,15 +49,17 @@ public class Autosummary {
 	// Make sure dir is a working directory
 	if(!dir.isDirectory() || !dir.exists()) {
 	    LOGGER.info("calculateSakaiEtAlScore: Invalid Directory!");
-	    return;
+	    return null;
 	}
 
-
-	// Remove any stop words.
-	LOGGER.info("setting the stop word file = "+stopWordsFile);
-	System.setProperty(IteratorFactory.TOKEN_FILTER_PROPERTY, "exclude="+stopWordsFile);
-	IteratorFactory.setProperties(System.getProperties());
 	
+	
+	// Remove any stop words, if required.
+	if(!stopWordsFile.equals("")){
+	    LOGGER.info("setting the stop word file = "+stopWordsFile);
+	    System.setProperty(IteratorFactory.TOKEN_FILTER_PROPERTY, "exclude="+stopWordsFile);
+	    IteratorFactory.setProperties(System.getProperties());
+	}
 
 
 	try{
@@ -134,7 +138,7 @@ public class Autosummary {
 	    tf_score.put(word, normalizedScore);
 	    
 	    // DEBUG
-	    //	    System.out.println(word+"\t"+normalizedScore);
+	    System.out.println(word+"\t"+normalizedScore);
 	}
 
 
@@ -331,5 +335,13 @@ public class Autosummary {
 	return finalScore;
     }
 
+
+    /**
+     * Returns a list of sentences that are relevant. 
+     */
+    public List<String> rankSentences() {
+
+	return null;
+    }
 
 }
