@@ -11,3 +11,5 @@ mvn install:install-file -DgroupId=gov.llnl.text -DartifactId=textCommons \
 # Add wordsi 2.0 (Not in trunk yet)
 mvn install:install-file -DgroupId=edu.ucla.sspace -DartifactId=sspace \
 -Dversion=2.0 -Dpackaging=jar -Dfile=lib/sspace-lib.jar
+
+#noop
