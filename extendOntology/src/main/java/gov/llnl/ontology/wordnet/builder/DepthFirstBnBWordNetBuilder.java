@@ -46,7 +46,7 @@ import java.util.Deque;
 /**
  * @author Keith Stevens
  */
-public class DepthFirstBnBWordNetBuilder {
+public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
 
     private final OntologyReader wordnet;
 

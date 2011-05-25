@@ -78,7 +78,7 @@ public class SynsetRelations {
      *        parent of a {@link Synset} of {@code childTerm}
      */
     public static HypernymStatus getHypernymStatus(String childTerm,
-                                                                                                 String ancestorTerm) {
+                                                   String ancestorTerm) {
         OntologyReader wordnet = WordNetCorpusReader.getWordNet();
         Synset[] childSynsets = wordnet.getSynsets(
                 childTerm, PartsOfSpeech.NOUN);
@@ -93,12 +93,12 @@ public class SynsetRelations {
         // If the child does not have any synsets, but the other term does, we
         // consider this a novel hyponym pair.
         if (childSynsets == null || childSynsets.length == 0)
-            return HypernymStatus.NOVEL_HYPONYM;
+            return HypernymStatus.NOVEL_HYPERNYM;
 
         // If the ancestor does not have any synsets, but the other term does,
         // we consider this a novel hypernym pair.
         if (ancestorSynsets == null || ancestorSynsets.length == 0)
-            return HypernymStatus.NOVEL_HYPERNYM;
+            return HypernymStatus.NOVEL_HYPONYM;
 
         // Compute the set of known ancestors for all synsets of the child term.
         Set<Synset> knownParents = new HashSet<Synset>();

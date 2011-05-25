@@ -643,7 +643,9 @@ public class WordNetCorpusReader implements OntologyReader {
         // get the synsets that synset is connected to and remove the inverse
         // relation to synset from that related synset.
         for (String relationStr : synset.getKnownRelationTypes()) {
-            Relation relation = Relation.valueOf(relationStr);
+            Relation relation = Relation.fromId(relationStr);
+            if (relation == null)
+                continue;
             Relation inverse = relation.reflexive();
             if (inverse == null)
                 continue;

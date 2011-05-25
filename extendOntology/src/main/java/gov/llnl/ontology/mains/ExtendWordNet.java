@@ -101,9 +101,9 @@ public class ExtendWordNet {
 
     private final int numSimilarityScores;
 
-    private final EvidenceMap knownPositives;
+    private EvidenceMap knownPositives;
 
-    private final EvidenceMap knownNegatives;
+    private EvidenceMap knownNegatives;
 
     private final EvidenceMap unknownEvidence;
 
@@ -126,7 +126,7 @@ public class ExtendWordNet {
                           true, "FILE", "Required");
         options.addOption('b', "wordnetBuilder",
                           "Set the wordnetBuilder",
-                          true, "CLASSNAME", "Required");
+                          true, "u|o|d", "Required");
                          
         options.parseOptions(args);
 
@@ -135,7 +135,7 @@ public class ExtendWordNet {
             !options.hasOption('l') ||
             !options.hasOption('f') ||
             options.numPositionalArgs() == 0) {
-            System.out.println(
+            System.err.println(
                     "usage: java ExtendWordNet [OPTIONS] <sspace>+\n" +
                     options.prettyPrint());
             System.exit(1);
@@ -145,13 +145,20 @@ public class ExtendWordNet {
         // the word list from wordnet and save the possible parents for each
         // word.
         Set<String> wordList = loadWordList(options.getStringOption('l'));
-        OntologyReader wordnet = WordNetCorpusReader.initialize(args[0]);
+        OntologyReader wordnet = WordNetCorpusReader.initialize(
+                options.getStringOption('w'));
         Map<String, Set<Synset>> wordParents = loadTestParents(
                 wordList, wordnet);
 
         // Create the builder.
-        WordNetBuilder wnBuilder = ReflectionUtil.getObjectInstance(
-            options.getStringOption('b'));
+        WordNetBuilder wnBuilder = null;
+        if (options.getStringOption('b').equals("u"))
+            wnBuilder = new UnorderedWordNetBuilder(wordnet);
+        else if (options.getStringOption('b').equals("d"))
+            wnBuilder = new DepthFirstBnBWordNetBuilder(wordnet);
+        else if (options.getStringOption('b').equals("o"))
+            wnBuilder = new OntologicalSortWordNetBuilder(wordnet);
+
         ExtendWordNet builder = new ExtendWordNet(
                 new CoNLLDependencyExtractor(),
                 new RelationPathBasisMapping(),
@@ -219,6 +226,8 @@ public class ExtendWordNet {
             totalAnswered++;
             totalScore += maxParentSim;
         }
+        System.out.printf("Final Score: %f Total Answered: %d Average: %f",
+                          totalScore, totalAnswered, totalScore/totalAnswered);
     }
 
     private static Set<String> loadWordList(String wordListFile)
@@ -226,7 +235,7 @@ public class ExtendWordNet {
         Set<String> words = new HashSet<String>();
         BufferedReader br = new BufferedReader(new FileReader(wordListFile));
         for (String line = null; (line = br.readLine()) != null;)
-            words.add(br.readLine());
+            words.add(line);
         return words;
     }
 
@@ -278,6 +287,8 @@ public class ExtendWordNet {
     }
 
     public void extendWordNet(OntologyReader wordnet) {
+        knownPositives = null;
+        knownNegatives = null;
         for (Map.Entry<String, Map<String, Evidence>> fe :
                 unknownEvidence.map().entrySet()) {
             // For the word that needs to be added, extract all the evidence we
@@ -405,7 +416,7 @@ public class ExtendWordNet {
                     // between the two nouns.
                     Iterator<DependencyPath> pathIter =
                         new FilteredDependencyIterator(
-                                treeNode, new UniversalPathAcceptor(), 7);
+                                treeNode, new UniversalPathAcceptor(), 3);
                     while (pathIter.hasNext()) {
                         DependencyPath path = pathIter.next();
       
