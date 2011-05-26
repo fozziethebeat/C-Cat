@@ -114,6 +114,7 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
         if (termsToAdd.size() == seen.size()) {
             finalList.clear();
             finalList.addAll(addList);
+            System.out.println("Added everything!");
             scorer.scoreAdditions(wordnet);
             return currCost;
         }
@@ -129,13 +130,14 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
             Duple<Synset,Double> bestAttachment = 
                 SynsetRelations.bestAttachmentPoint(
                         termToAdd.parents, termToAdd.parentScores,
-                        termToAdd.cousinScores, .05);
+                        termToAdd.cousinScores, .95);
 
             // Compute the cost of this attachment, i.e how likely that it is
             // wrong and how likely that the other attachments are wrong.
             double likelihood = bestAttachment.y;
             double newCost = currCost * (1 - likelihood);
 
+            System.out.printf("likelihood: %f newCost: %f maxCost: %f\n", likelihood, newCost, maxCost);
             // If the new cost is higher than the best cost found so far, reject
             // this addition and move along.  We don't need to explore further
             // down this ordering of additions.

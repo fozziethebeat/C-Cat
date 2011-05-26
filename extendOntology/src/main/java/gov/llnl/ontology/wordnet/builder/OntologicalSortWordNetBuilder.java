@@ -79,7 +79,7 @@ public class OntologicalSortWordNetBuilder implements WordNetBuilder {
             Duple<Synset,Double> bestAttachment = 
                 SynsetRelations.bestAttachmentPoint(
                         termToAdd.parents, termToAdd.parentScores,
-                        termToAdd.cousinScores, .05);
+                        termToAdd.cousinScores, .95);
             Synset newSynset = new BaseSynset(PartsOfSpeech.NOUN);
             newSynset.addLemma(new BaseLemma(newSynset, termToAdd.term,
                                              "", 0, 0, "n"));

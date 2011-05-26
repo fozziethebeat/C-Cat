@@ -64,8 +64,7 @@ public class BuilderScorer {
             // this to be the best addition made for the given synset.
             double maxParentSim = 0;
             for (Synset addedParent : addedSynset.getParents()) {
-                System.out.printf("%s -> %s\n",
-                                  word, addedParent.getSenseKey());
+                System.out.printf("%s -> %s\n", word, addedParent.getName());
                 for (Synset realParent : parents) {
                     double pathSim = simMethod.similarity(
                             realParent, addedParent);

@@ -552,6 +552,6 @@ public class SynsetRelations {
      */ 
     private static double computeScore(int depth, double score, double lambda) {
         double modifiedProb = Math.pow(lambda, depth-1) * score;
-        return modifiedProb / (1 - modifiedProb);
+        return modifiedProb / (1.000001 - modifiedProb);
     }
 }
