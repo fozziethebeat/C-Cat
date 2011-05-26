@@ -65,9 +65,9 @@ public class UnorderedWordNetBuilder implements WordNetBuilder {
     public void addTerms(OntologyReader wordnet, BuilderScorer scorer) {
         for (TermToAdd termToAdd : termsToAdd) {
             Duple<Synset,Double> bestAttachment = 
-                SynsetRelations.bestAttachmentPoint(
-                        termToAdd.parents, termToAdd.parentScores,
-                        termToAdd.cousinScores, .95);
+                SynsetRelations.bestAttachmentPointWithError(
+                        termToAdd.parents, termToAdd.parentScores, .95);
+                        //termToAdd.cousinScores, .95);
             Synset newSynset = new BaseSynset(PartsOfSpeech.NOUN);
             newSynset.addLemma(new BaseLemma(newSynset, termToAdd.term,
                                              "", 0, 0, "n"));
