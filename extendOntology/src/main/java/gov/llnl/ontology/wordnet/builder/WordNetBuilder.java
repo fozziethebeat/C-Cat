@@ -23,6 +23,8 @@
 
 package gov.llnl.ontology.wordnet.builder;
 
+import gov.llnl.ontology.mains.BuilderScorer;
+
 import gov.llnl.ontology.wordnet.OntologyReader;
 
 import java.util.Map;
@@ -38,5 +40,5 @@ public interface WordNetBuilder {
                      double[] parentScores,
                      Map<String, Double> cousinScores);
 
-    void addTerms(OntologyReader wordnet);
+    void addTerms(OntologyReader wordnet, BuilderScorer scorer);
 }

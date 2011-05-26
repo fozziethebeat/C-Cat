@@ -196,40 +196,7 @@ public class ExtendWordNet {
         /*
         builder.extendWordNet(wordnet);
         System.err.println("Words added to wordnet");
-
-        double totalScore = 0;
-        int totalAnswered = 0;
-        SynsetSimilarity simMethod = new PathSimilarity();
-        for (Map.Entry<String, Set<Synset>> entry : wordParents.entrySet()) {
-            String word = entry.getKey();
-            Set<Synset> parents = entry.getValue();
-
-            // Get the synset for the word that was added.  If it was not in
-            // fact added, skip this test instance.
-            Synset[] synsets = wordnet.getSynsets(word, PartsOfSpeech.NOUN);
-            if (synsets.length == 0)
-                continue;
-            Synset addedSynset = synsets[0];
-
-            // For each pairwise combination of added parents and real parents,
-            // find the pairing that gives the highest similarity and consider
-            // this to be the best addition made for the given synset.
-            double maxParentSim = 0;
-            for (Synset addedParent : addedSynset.getParents()) {
-                for (Synset realParent : parents) {
-                    double pathSim = simMethod.similarity(
-                            realParent, addedParent);
-                    maxParentSim = Math.max(pathSim, maxParentSim);
-                }
-            }
-
-            // Add the score for this added test word.
-            totalAnswered++;
-            totalScore += maxParentSim;
-        }
         */
-        //System.out.printf("Final Score: %f Total Answered: %d Average: %f",
-        //                  totalScore, totalAnswered, totalScore/totalAnswered);
     }
 
     private static Set<String> loadWordList(String wordListFile)
@@ -321,7 +288,7 @@ public class ExtendWordNet {
 
         // After all words have been passed to the builder, add the terms
         // according to the builder's methodology.
-        wordnetBuilder.addTerms(wordnet);
+        //wordnetBuilder.addTerms(wordnet);
     }
 
     /**

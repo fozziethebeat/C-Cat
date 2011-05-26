@@ -25,6 +25,8 @@ package gov.llnl.ontology.wordnet.builder;
 
 import edu.ucla.sspace.util.Duple;
 
+import gov.llnl.ontology.mains.BuilderScorer;
+
 import gov.llnl.ontology.wordnet.BaseLemma;
 import gov.llnl.ontology.wordnet.BaseSynset;
 import gov.llnl.ontology.wordnet.Synset;
@@ -69,7 +71,7 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
                     child, parents, parentScores, cousinScores));
     }
 
-    public void addTerms(OntologyReader wordnet) {
+    public void addTerms(OntologyReader wordnet, BuilderScorer scorer) {
         // Do an ontologoical sort on the set of terms that need to be added
         // such that words with more parents already in wordnet are ordered
         // first and words with fewer parents are last.
@@ -96,7 +98,7 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
         List<Synset> finalList = new ArrayList<Synset>(termsToAdd.size());
 
         // Do the search with nothing added.
-        addTerm(wordnet, seen, addList, finalList, 1, 1);
+        addTerm(wordnet, seen, addList, finalList, 1, 1, scorer);
     }
 
     private double addTerm(OntologyReader wordnet, 
@@ -104,13 +106,15 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
                            Deque<Synset> addList,
                            List<Synset> finalList,
                            double maxCost,
-                           double currCost ) {
+                           double currCost,
+                           BuilderScorer scorer) {
         // If we've added everything we need too or can add, then we've reached
         // a valid goal node.  Return the cost we've been given and copy over
         // the order of the synsets added.
         if (termsToAdd.size() == seen.size()) {
             finalList.clear();
             finalList.addAll(addList);
+            scorer.scoreAdditions(wordnet);
             return currCost;
         }
 
@@ -119,6 +123,7 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
             // it.
             if (seen.contains(termToAdd))
                 continue;
+            System.out.printf("Trying to add %s\n", termToAdd.term);
 
             // Find the best attachment point for the given word based.
             Duple<Synset,Double> bestAttachment = 
@@ -151,7 +156,7 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
 
             // Recursively try to add the rest of the synsets.
             newCost = addTerm(wordnet, seen, addList, 
-                              finalList, maxCost, newCost);
+                              finalList, maxCost, newCost, scorer);
 
             // Remove the synset from the tree so that the next call does not
             // observe this addition.

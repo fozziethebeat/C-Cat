@@ -25,6 +25,8 @@ package gov.llnl.ontology.wordnet.builder;
 
 import edu.ucla.sspace.util.Duple;
 
+import gov.llnl.ontology.mains.BuilderScorer;
+
 import gov.llnl.ontology.wordnet.BaseLemma;
 import gov.llnl.ontology.wordnet.BaseSynset;
 import gov.llnl.ontology.wordnet.Synset;
@@ -67,7 +69,7 @@ public class OntologicalSortWordNetBuilder implements WordNetBuilder {
                     child, parents, parentScores, cousinScores));
     }
 
-    public void addTerms(OntologyReader wordnet) {
+    public void addTerms(OntologyReader wordnet, BuilderScorer scorer) {
         for (TermToAdd termToAdd : termsToAdd) {
             termToAdd.checkParentsInWordNet(wordnet);
             termToAdd.checkParentsInList(knownTerms);
@@ -83,9 +85,8 @@ public class OntologicalSortWordNetBuilder implements WordNetBuilder {
                                              "", 0, 0, "n"));
             newSynset.addRelation(Relation.HYPERNYM, bestAttachment.x);
             wordnet.addSynset(newSynset);
-
-            System.out.printf("Adding %s -> %s\n",
-                              termToAdd.term, bestAttachment.x.getSenseKey());
         }
+
+        scorer.scoreAdditions(wordnet);
     }
 }
