@@ -484,7 +484,7 @@ public class SynsetRelations {
                 // Iterate through the set of implied parents and determine if
                 // there is any hypernym evidence for for them.  If so, compute
                 // the score for adding that relation to the taxonomy.
-                double impliedScore = 0;
+                double impliedScore = 1;
                 for (List<Synset> parents : parentPaths) {
                     int depth = parents.size();
                     for (Synset parent : parents) {
@@ -497,8 +497,9 @@ public class SynsetRelations {
                     }
                 }
 
+                double totalCousinScore = 1;
+                /*
                 // Compute the probability of any implied cousin relationships.
-                double totalCousinScore = 0;
                 int c = 0;
                 // Iterate through each of the words with cousin score
                 // information. Try to find a link between the synsets for this
@@ -530,6 +531,7 @@ public class SynsetRelations {
 
                     totalCousinScore *= computeScore(1, score.getValue(), 1);
                 }
+                */
 
                 // If the full score observed is the best so far, save the delta
                 // and the parent which generated this delta.
@@ -549,6 +551,7 @@ public class SynsetRelations {
      * that generated the score and a decay factor.
      */ 
     private static double computeScore(int depth, double score, double lambda) {
-        return Math.pow(lambda, depth - 1) * score/(1-score);
+        double modifiedProb = Math.pow(lambda, depth-1) * score;
+        return modifiedProb / (1 - modifiedProb);
     }
 }

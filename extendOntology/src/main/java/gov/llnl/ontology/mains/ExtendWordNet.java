@@ -193,6 +193,7 @@ public class ExtendWordNet {
         builder.labelUnknownEvidence();
         System.err.println("Unknown evidence labeled");
 
+        /*
         builder.extendWordNet(wordnet);
         System.err.println("Words added to wordnet");
 
@@ -226,8 +227,9 @@ public class ExtendWordNet {
             totalAnswered++;
             totalScore += maxParentSim;
         }
-        System.out.printf("Final Score: %f Total Answered: %d Average: %f",
-                          totalScore, totalAnswered, totalScore/totalAnswered);
+        */
+        //System.out.printf("Final Score: %f Total Answered: %d Average: %f",
+        //                  totalScore, totalAnswered, totalScore/totalAnswered);
     }
 
     private static Set<String> loadWordList(String wordListFile)
@@ -278,8 +280,10 @@ public class ExtendWordNet {
                 double hypernymProb = 1 - hypernymPredictor.classifyScalar(
                         new MahoutSparseVector(entry.getValue().vector,
                                                basis.numDimensions()));
-                double cousinProb = 1 - cousinPredictor.classifyScalar(
-                        new DenseVector(entry.getValue().similarityScores));
+                double cousinProb = 0;//1 - cousinPredictor.classifyScalar(
+                        //new DenseVector(entry.getValue().similarityScores));
+                System.out.printf("%s %s %f\n", fe.getKey(), entry.getKey(),
+                        hypernymProb);
                 entry.getValue().classScores = new ClassScores(
                         hypernymProb, cousinProb);
             }
@@ -371,6 +375,7 @@ public class ExtendWordNet {
             return false;
         hypernymPredictor = best.getPayload().getLearner().getModels().get(0);
 
+        /*
         // Train the cousin predictor using the similarity scores.
         model = new AdaptiveLogisticRegression(
                 2, numSimilarityScores, new L1());
@@ -385,6 +390,7 @@ public class ExtendWordNet {
         if (best == null)
             return false;
         cousinPredictor = best.getPayload().getLearner().getModels().get(0);
+        */
 
         return true;
     }
