@@ -83,13 +83,13 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
 
         // If any words lack any possible parents remove them from the list
         // entirely as they could never be added.
-        int zeroParentIndex = -1;
+        int zeroParentIndex = 0;
         for (TermToAdd termToAdd : termsToAdd) {
             zeroParentIndex++;
             if (termToAdd.numParentsInWordNet + termToAdd.numParentsToAdd == 0)
                 break;
         }
-        if (zeroParentIndex >= 0)
+        if (zeroParentIndex < termsToAdd.size())
             termsToAdd = termsToAdd.subList(0, zeroParentIndex);
 
         // Create the data structures needed during the branch and bound search.
@@ -98,7 +98,7 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
         List<Synset> finalList = new ArrayList<Synset>(termsToAdd.size());
 
         // Do the search with nothing added.
-        addTerm(wordnet, seen, addList, finalList, 1, 1, scorer);
+        addTerm(wordnet, seen, addList, finalList, Integer.MAX_VALUE, 0, scorer);
     }
 
     private double addTerm(OntologyReader wordnet, 
@@ -114,7 +114,6 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
         if (termsToAdd.size() == seen.size()) {
             finalList.clear();
             finalList.addAll(addList);
-            System.out.println("Added everything!");
             scorer.scoreAdditions(wordnet);
             return currCost;
         }
@@ -124,20 +123,17 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
             // it.
             if (seen.contains(termToAdd))
                 continue;
-            System.out.printf("Trying to add %s\n", termToAdd.term);
 
             // Find the best attachment point for the given word based.
             Duple<Synset,Double> bestAttachment = 
-                SynsetRelations.bestAttachmentPoint(
-                        termToAdd.parents, termToAdd.parentScores,
-                        termToAdd.cousinScores, .95);
+                SynsetRelations.bestAttachmentPointWithError(
+                        termToAdd.parents, termToAdd.parentScores, .95);
 
             // Compute the cost of this attachment, i.e how likely that it is
             // wrong and how likely that the other attachments are wrong.
             double likelihood = bestAttachment.y;
-            double newCost = currCost * (1 - likelihood);
+            double newCost = currCost + likelihood;
 
-            System.out.printf("likelihood: %f newCost: %f maxCost: %f\n", likelihood, newCost, maxCost);
             // If the new cost is higher than the best cost found so far, reject
             // this addition and move along.  We don't need to explore further
             // down this ordering of additions.

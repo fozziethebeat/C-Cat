@@ -554,4 +554,71 @@ public class SynsetRelations {
         double modifiedProb = Math.pow(lambda, depth-1) * score;
         return modifiedProb / (1.000001 - modifiedProb);
     }
+
+    public static Duple<Synset, Double> bestAttachmentPointWithError(
+            String[] attachmentLocations,
+            double[] attachmentScores,
+            double lambda) {
+        OntologyReader wordnet = WordNetCorpusReader.getWordNet();
+
+        // Create all of the synsets at which a given term may be attached.
+        // Computing a mapping from those synsets to the evidence score for that
+        // particular attachment.  Note that all synsets generated from the same
+        // lemma will have the same attachment score.
+        Map<Synset, Double> synsetToHypernymScore =
+            new HashMap<Synset, Double>();
+        Synset[][] attachmentSynsets =
+            new Synset[attachmentLocations.length][0];
+        int i = 0;
+        for (String attachment : attachmentLocations) {
+            attachmentSynsets[i] = wordnet.getSynsets(
+                    attachment, PartsOfSpeech.NOUN);
+            for (Synset synset : attachmentSynsets[i])
+                synsetToHypernymScore.put(synset, attachmentScores[i]);
+            i++;
+        }
+
+        // Create a cache of distance values for the cousin distances.
+        Map<Synset, Map<Synset, Integer>> distanceCache =
+            new HashMap<Synset, Map<Synset, Integer>>();
+
+        // Create the default best values.
+        double bestDelta = Integer.MAX_VALUE;
+        Synset bestLocation = null;
+
+        for (i = 0; i < attachmentSynsets.length; ++i) {
+            for (Synset possibleParent : attachmentSynsets[i]) {
+                // Iterate through the set of implied parents and determine if
+                // there is any hypernym evidence for for them.  If so, compute
+                // the score for adding that relation to the taxonomy.
+                double impliedScore = 1;
+                for (List<Synset> parents : possibleParent.getParentPaths()) {
+                    int depth = parents.size();
+                    for (Synset parent : parents) {
+                        Double evidenceScore = synsetToHypernymScore.get(
+                                parent);
+                        if (evidenceScore != null)
+                            impliedScore *= computeError(
+                                    depth, evidenceScore, lambda);
+                        depth--;
+                    }
+                }
+
+                // If the full score observed is the best so far, save the delta
+                // and the parent which generated this delta.
+                if (impliedScore <= bestDelta) {
+                    bestDelta = impliedScore;
+                    bestLocation = possibleParent;
+                }
+            }
+        }
+
+        return new Duple<Synset, Double>(bestLocation, bestDelta);
+    }
+
+    private static double computeError(int depth, double score, double lambda) {
+        double modifiedProb = Math.pow(lambda, depth-1) * score;
+        return (1.000001 - modifiedProb) / modifiedProb;
+    }
+
 }
