@@ -56,8 +56,16 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
 
     private List<TermToAdd> termsToAdd;
 
-    public DepthFirstBnBWordNetBuilder(OntologyReader wordnet) {
+    private boolean compareInWn;
+
+    private boolean order;
+
+    public DepthFirstBnBWordNetBuilder(OntologyReader wordnet,
+                                       boolean compareInWn,
+                                       boolean order) {
         this.wordnet = wordnet;
+        this.compareInWn = compareInWn;
+        this.order = order;
         knownTerms = new HashSet<String>();
         termsToAdd = new ArrayList<TermToAdd>();
     }
@@ -68,7 +76,7 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
                             Map<String, Double> cousinScores) {
         knownTerms.add(child);
         termsToAdd.add(new TermToAdd(
-                    child, parents, parentScores, cousinScores));
+                    child, parents, parentScores, cousinScores, compareInWn));
     }
 
     public void addTerms(OntologyReader wordnet, BuilderScorer scorer) {
@@ -79,7 +87,9 @@ public class DepthFirstBnBWordNetBuilder implements WordNetBuilder {
             termToAdd.checkParentsInWordNet(wordnet);
             termToAdd.checkParentsInList(knownTerms);
         }
-        Collections.sort(termsToAdd);
+
+        if (order)
+            Collections.sort(termsToAdd);
 
         // If any words lack any possible parents remove them from the list
         // entirely as they could never be added.

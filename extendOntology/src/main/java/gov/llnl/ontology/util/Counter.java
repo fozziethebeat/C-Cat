@@ -89,6 +89,17 @@ public class Counter<T> implements Iterable<Map.Entry<T,Integer>>,
         return newCount;
     }
 
+    /**
+     * Counts the object, increasing its total count by 1.
+     */
+    public int count(T obj, int delta) {
+        Integer count = counts.get(obj);
+        int newCount = (count == null) ? delta : count + delta;
+        counts.put(obj, newCount);
+        sum += delta;
+        return newCount;
+    }
+
     public boolean equals(Object o) {
         return (o instanceof Counter)
             && ((Counter)o).counts.equals(counts);

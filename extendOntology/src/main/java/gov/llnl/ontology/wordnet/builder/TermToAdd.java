@@ -47,12 +47,20 @@ public class TermToAdd implements Comparable<TermToAdd> {
 
     public int numParentsToAdd;
 
+    private boolean compareInWn;
+
     public TermToAdd(String term, String[] parents, double[] parentScores,
                      Map<String, Double> cousinScores) {
+        this(term, parents, parentScores, cousinScores, true);
+    }
+
+    public TermToAdd(String term, String[] parents, double[] parentScores,
+                     Map<String, Double> cousinScores, boolean compareInWn) {
         this.term = term;
         this.parents = parents;
         this.parentScores = parentScores;
         this.cousinScores = cousinScores;
+        this.compareInWn = compareInWn;
     }
 
     public void checkParentsInWordNet(OntologyReader wordnet) {
@@ -69,10 +77,16 @@ public class TermToAdd implements Comparable<TermToAdd> {
     }
 
     public int compareTo(TermToAdd other) {
-        int inWordNetDiff =
-            other.numParentsInWordNet - this.numParentsInWordNet;
-        if (inWordNetDiff == 0)
-            return other.numParentsToAdd - this.numParentsToAdd;
-        return inWordNetDiff;
+        if (compareInWn) {
+            int inWordNetDiff =
+                other.numParentsInWordNet - this.numParentsInWordNet;
+            return (inWordNetDiff == 0)
+                ? other.numParentsToAdd - this.numParentsToAdd
+                : inWordNetDiff;
+        }
+        int inListDiff = this.numParentsToAdd - other.numParentsToAdd;
+        return (inListDiff == 0)
+            ? other.numParentsInWordNet - this.numParentsInWordNet
+            : inListDiff;
     }
 }

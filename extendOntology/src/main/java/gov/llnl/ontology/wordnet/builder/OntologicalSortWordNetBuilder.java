@@ -54,8 +54,12 @@ public class OntologicalSortWordNetBuilder implements WordNetBuilder {
 
     private List<TermToAdd> termsToAdd;
 
-    public OntologicalSortWordNetBuilder(OntologyReader wordnet) {
+    private boolean compareInWn;
+
+    public OntologicalSortWordNetBuilder(OntologyReader wordnet, 
+                                         boolean compareInWn) {
         this.wordnet = wordnet;
+        this.compareInWn = compareInWn;
         knownTerms = new HashSet<String>();
         termsToAdd = new ArrayList<TermToAdd>();
     }
@@ -66,7 +70,7 @@ public class OntologicalSortWordNetBuilder implements WordNetBuilder {
                             Map<String, Double> cousinScores) {
         knownTerms.add(child);
         termsToAdd.add(new TermToAdd(
-                    child, parents, parentScores, cousinScores));
+                    child, parents, parentScores, cousinScores, compareInWn));
     }
 
     public void addTerms(OntologyReader wordnet, BuilderScorer scorer) {

@@ -95,206 +95,172 @@ import java.util.Map;
  */
 public class WordNetEvidenceSchema {
 
-  /**
-   * The table name attributed to this schema.
-   */
-  public static final String tableName = "WordNetEvidence";
+    /**
+     * The table name attributed to this schema.
+     */
+    public static final String tableName = "WordNetEvidence";
 
-  /**
-   * table name for this schema
-   */
-  public static final String TABLE_NAME = "WordNetEvidence";
+    /**
+     * table name for this schema
+     */
+    public static final String TABLE_NAME = "WordNetEvidence";
 
-  /**
-   * The column family name for the dependency features.  Column names will be
-   * based on the source of the corpus for each dependency feature.
-   */
-  public static final String DEPENDENCY_FEATURE_CF =
-      "dependencyFeatures";
+    /**
+     * The column family name for the dependency features.  Column names will be
+     * based on the source of the corpus for each dependency feature.
+     */
+    public static final String DEPENDENCY_FEATURE_CF =
+            "dependencyFeatures";
 
-  /**
-   * The column family name for the class family.
-   */
-  public static final String CLASS_CF = "class";
+    /**
+     * The column family name for the class family.
+     */
+    public static final String CLASS_CF = "class";
 
-  /**
-   * The column name for the hyernym evidence class.  Positive values are marked
-   * as "KNOWN_HYPERNYM" and negative values are marked as "KNOWN_NON_HYPERNYM".
-   * Pairs that serve as potential additions to wordnet are marked as
-   * NOVEL_{HYPERNYM|HYPONYM}.  Use {@link WordNetEvidence#HypernymStatus} to
-   * read covert values in this column to the appropriate enum.
-   */
-  public static final String HYPERNYM_EVIDENCE = "hypernymEvidenceStatus";
+    /**
+     * The column name for the hyernym evidence class.  Positive values are
+     * marked as "KNOWN_HYPERNYM" and negative values are marked as
+     * "KNOWN_NON_HYPERNYM".  Pairs that serve as potential additions to wordnet
+     * are marked as NOVEL_{HYPERNYM|HYPONYM}.  Use {@link
+     * WordNetEvidence#HypernymStatus} to read covert values in this column to
+     * the appropriate enum.
+     */
+    public static final String HYPERNYM_EVIDENCE = "hypernymEvidenceStatus";
 
-  /**
-   * The column name for the coordinate evidence class.  Values are stored as a
-   * pair of integers separated by a hyphen, such as "m-n".  Cousins share some
-   * ancestor in the wordnet hierarchy, where m specifies the distance between
-   * the first term and the common ancestor and n specifies the distance between
-   * the second term and the common ancestor.  A distance of {@link
-   * Integer#MAX_VALUE} signifies that the common ancesstor is beyond a
-   * particular depth, most likely 7.
-   */
-  public static final String COUSIN_EVIDENCE = "cousinEvidence";
+    /**
+     * The column name for the coordinate evidence class.  Values are stored as
+     * a pair of integers separated by a hyphen, such as "m-n".  Cousins share
+     * some ancestor in the wordnet hierarchy, where m specifies the distance
+     * between the first term and the common ancestor and n specifies the
+     * distance between the second term and the common ancestor.  A distance of
+     * {@link Integer#MAX_VALUE} signifies that the common ancesstor is beyond a
+     * particular depth, most likely 7.
+     */
+    public static final String COUSIN_EVIDENCE = "cousinEvidence";
 
-  /**
-   * The column family name for the cluster based similarity column family.  All
-   * values are stored as doubles.
-   */
-  public static final String SIMILARITY_CLUSTER_CF = "similarity_cluster";
+    /**
+     * The column family name for the cluster based similarity column family.
+     * All values are stored as doubles.
+     */
+    public static final String SIMILARITY_CLUSTER_CF = "similarity_cluster";
 
-  /**
-   * The column name for clusters of similiarity lists generated via Locality
-   * Sensitive Hashing.
-   */
-  public static final String LSH_CLUSTER_SIMILARITY = "lsh";
+    /**
+     * The column name for clusters of similiarity lists generated via Locality
+     * Sensitive Hashing.
+     */
+    public static final String LSH_CLUSTER_SIMILARITY = "lsh";
 
-  /**
-   * The column family name for the cosine based similarity column family.  All
-   * values are stored as doubles.
-   */
-  public static final String SIMILARITY_COSINE_CF = "similarity_cosine";
+    /**
+     * The column family name for the cosine based similarity column family.
+     * All values are stored as doubles.
+     */
+    public static final String SIMILARITY_COSINE_CF = "similarity_cosine";
 
-  /**
-   * The column family name for the euclidean based similarity column family.
-   * All values are stored as doubles.
-   */
-  public static final String SIMILARITY_EUCLIDEAN_CF = "similarity_euclidean";
+    /**
+     * The column family name for the euclidean based similarity column family.
+     * All values are stored as doubles.
+     */
+    public static final String SIMILARITY_EUCLIDEAN_CF = "similarity_euclidean";
 
-  /**
-   * The column family name for the kl-divergence based similarity column
-   * family.  All values are stored as doubles.  Not that this metric is not
-   * symmetric.
-   */
-  public static final String SIMILARITY_KL_CF = "similarity_kl_divergence";
+    /**
+     * The column family name for the kl-divergence based similarity column
+     * family.  All values are stored as doubles.  Note that this metric is not
+     * symmetric.
+     */
+    public static final String SIMILARITY_KL_CF = "similarity_kl_divergence";
 
-  /**
-   * The column family name for the Lin based similarity column family.  All
-   * values are stored as doubles.
-   */
-  public static final String SIMILARITY_LIN_CF = "similarity_lin";
+    /**
+     * The column family name for the Lin based similarity column family.  All
+     * values are stored as doubles.
+     */
+    public static final String SIMILARITY_LIN_CF = "similarity_lin";
 
-  /**
-   * The annotation name for dependency path counts.
-   */
-  public static final String DEPENDENCY_PATH_ANNOTATION_NAME =
-    "DependencyPathCounts";
+    /**
+     * The annotation name for dependency path counts.
+     */
+    public static final String DEPENDENCY_PATH_ANNOTATION_NAME =
+        "DependencyPathCounts";
 
-  /**
-   * Creates a new instance of the {@link WordNetEvidenceSchema}.
-   */
-  public static void createTable() throws IOException {
-    HBaseConfiguration conf = new HBaseConfiguration();
-    HConnection connector = HConnectionManager.getConnection(conf);
-    createTable(connector);
-  }
-
-  /**
-   * Creates a new column family for the table with default versions, in memory
-   * columns, block cache, and TTL.
-   */
-  private static void addColumnFamily(HTableDescriptor tableDescriptor,
-                                      byte[] columnFamilyName) {
-    tableDescriptor.addFamily(
-        new HColumnDescriptor(columnFamilyName, DEFAULT_VERSIONS, "GZ", 
-                              DEFAULT_IN_MEMORY, DEFAULT_BLOCKCACHE, 
-                              DEFAULT_TTL, DEFAULT_BLOOMFILTER));
-  }
-
-  /**
-   * Creates the new instance of the table.
-   */
-  public static void createTable(HConnection connector) throws IOException {
-    // Do nothing if the table already exists.
-    if (connector.tableExists(tableName.getBytes())) 
-      return;
-
-    // Create configuration and admin classes.
-    HBaseConfiguration config = new HBaseConfiguration();
-    HBaseAdmin admin = new HBaseAdmin(config);
-
-    // Add the column families to the table.
-    HTableDescriptor evidenceDesc = new HTableDescriptor(tableName.getBytes());
-    addColumnFamily(evidenceDesc, DEPENDENCY_FEATURE_CF.getBytes());
-    addColumnFamily(evidenceDesc, SIMILARITY_COSINE_CF.getBytes());
-    addColumnFamily(evidenceDesc, SIMILARITY_EUCLIDEAN_CF.getBytes());
-    addColumnFamily(evidenceDesc, SIMILARITY_KL_CF.getBytes());
-    addColumnFamily(evidenceDesc, SIMILARITY_LIN_CF.getBytes());
-    addColumnFamily(evidenceDesc, CLASS_CF.getBytes());
-    admin.createTable(evidenceDesc);
-  }
-
-  /**
-   * Returns access to the created table.
-   */
-  public static HTable getTable() throws IOException {
-    Configuration config = HBaseConfiguration.create();
-    return new HTable(config, tableName);
-  }
-
-  /**
-   * Instantiates a new table.
-   */
-  public static void main(String[] args) {
-    try {
-      createTable();
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  /**
-   * Returns a new map that contains all of the dependency
-   * path counts, regardless of their source.
-   */
-  public static Map<String, Integer> getDependencyPaths(Result row) {
-    Map<String, Integer> pathCounts = new HashMap<String, Integer>();
-    Map<byte[], byte[]> qualifierValueMap = 
-        row.getFamilyMap(DEPENDENCY_FEATURE_CF.getBytes());
-    for (byte[] bytes : qualifierValueMap.values()) {
-      Map<String, Integer> sourcePathCounts = getDependencyPaths(
-          row, new String(bytes));
-      if (sourcePathCounts == null)
-        continue;
-
-      for (Map.Entry<String, Integer> newCount : sourcePathCounts.entrySet()) {
-        Integer oldCount = pathCounts.get(newCount.getKey());
-        pathCounts.put(newCount.getKey(), (oldCount == null)
-            ? newCount.getValue()
-            : newCount.getValue() + oldCount);
-      }
+    /**
+     * Creates a new instance of the {@link WordNetEvidenceSchema}.
+     */
+    public static void createTable() throws IOException {
+        HBaseConfiguration conf = new HBaseConfiguration();
+        HConnection connector = HConnectionManager.getConnection(conf);
+        createTable(connector);
     }
 
-    return pathCounts;
-  }
+    /**
+     * Creates the new instance of the table.
+     */
+    public static void createTable(HConnection connector) throws IOException {
+        // Do nothing if the table already exists.
+        if (connector.tableExists(tableName.getBytes())) 
+            return;
 
-  /**
-   * Returns a map that contains all of the dependency paths
-   * associated with a single noun pair.
-   */
-  public static Map<String, Integer> getDependencyPaths(Result row, 
-                                                        String source) {
-    return (Map<String, Integer>) SchemaUtil.getObjectColumn(
-        row, DEPENDENCY_FEATURE_CF, source);
-  }
+        // Create configuration and admin classes.
+        HBaseConfiguration config = new HBaseConfiguration();
+        HBaseAdmin admin = new HBaseAdmin(config);
 
-  /**
-   * Returns the similarity score stored for a particular row.  If the
-   * similarity score could not be computed for the row during a map/reduce, or
-   * has not yet been computed, this returns {@code null}.  Otherwise it returns
-   * a {@code Double} representing the score.
-   */
-  public static Double getSimilarity(Result row, 
-                                     String family,
-                                     String qualifier) {
-    // Get the raw text
-    byte[] bytes = row.getValue(family.getBytes(), qualifier.getBytes());
+        // Add the column families to the table.
+        HTableDescriptor evidenceDesc = new HTableDescriptor(
+                tableName.getBytes());
+        addDefaultColumnFamily(evidenceDesc,DEPENDENCY_FEATURE_CF);
+        addDefaultColumnFamily(evidenceDesc,SIMILARITY_COSINE_CF);
+        addDefaultColumnFamily(evidenceDesc,SIMILARITY_EUCLIDEAN_CF);
+        addDefaultColumnFamily(evidenceDesc,SIMILARITY_KL_CF);
+        addDefaultColumnFamily(evidenceDesc,SIMILARITY_LIN_CF);
+        addDefaultColumnFamily(evidenceDesc,CLASS_CF);
+        admin.createTable(evidenceDesc);
+    }
 
-    // Return null for non existing values.
-    if (bytes == null || bytes.length == 0)
-      return null;
+    /**
+     * Returns access to the created table.
+     */
+    public static HTable getTable() throws IOException {
+        Configuration config = HBaseConfiguration.create();
+        return new HTable(config, tableName);
+    }
 
-    return Bytes.toDouble(bytes);
-  }
+    /**
+     * Instantiates a new table.
+     */
+    public static void main(String[] args) {
+        try {
+            createTable();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Returns a new map that contains all of the dependency
+     * path counts, regardless of their source.
+     */
+    public static Counter<String> getDependencyPaths(Result row) {
+        Counter<String> pathCounts = new Counter<String>();
+        Map<byte[], byte[]> qualifierValueMap = 
+                row.getFamilyMap(DEPENDENCY_FEATURE_CF.getBytes());
+        for (byte[] bytes : qualifierValueMap.values()) {
+            Map<String, Integer> sourceCounts = getDependencyPaths(
+                    row, new String(bytes));
+            if (sourceCounts == null)
+                continue;
+
+            for (Map.Entry<String, Integer> newCount : sourceCounts.entrySet()) 
+                pathCounts.count(newCount.getKey(), newCount.getValue());
+        }
+
+        return pathCounts;
+    }
+
+    /**
+     * Returns a map that contains all of the dependency paths
+     * associated with a single noun pair.
+     */
+    public static Map<String, Integer> getDependencyPaths(Result row, 
+                                                          String source) {
+        return SchemaUtil.getObjectColumn(row, DEPENDENCY_FEATURE_CF, source);
+    }
 }

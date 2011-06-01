@@ -61,7 +61,12 @@ public class TestWordNetBuilder {
                           true, "FILE", "Required");
         options.addOption('b', "wordnetBuilder",
                           "Set the wordnetBuilder",
-                          true, "u|o|d", "Required");
+                          true, "u|o|d|x", "Required");
+        options.addOption('o', "order",
+                          "If set, this will order terms based on the number " +
+                          "of possible parents in the new word list, rather " +
+                          "than in wordnet.",
+                          true, "STRING", "Optional");
         options.parseOptions(args);
 
         if (!options.hasOption('b') ||
@@ -83,14 +88,17 @@ public class TestWordNetBuilder {
         Map<String, Set<Synset>> wordParents = loadTestParents(
                 wordList, wordnet);
 
+        boolean orderInWn = !options.hasOption('o');
         // Create the builder.
         WordNetBuilder wnBuilder = null;
         if (options.getStringOption('b').equals("u"))
             wnBuilder = new UnorderedWordNetBuilder(wordnet);
         else if (options.getStringOption('b').equals("d"))
-            wnBuilder = new DepthFirstBnBWordNetBuilder(wordnet);
+            wnBuilder = new DepthFirstBnBWordNetBuilder(wordnet, orderInWn, true);
+        else if (options.getStringOption('b').equals("x"))
+            wnBuilder = new DepthFirstBnBWordNetBuilder(wordnet, orderInWn, false);
         else if (options.getStringOption('b').equals("o"))
-            wnBuilder = new OntologicalSortWordNetBuilder(wordnet);
+            wnBuilder = new OntologicalSortWordNetBuilder(wordnet, orderInWn);
 
         // Load the evidence and pass it to the word net builder.
         Map<String, Evidence> evidenceMap = loadEvidence(
