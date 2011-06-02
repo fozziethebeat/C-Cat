@@ -140,17 +140,36 @@ public class SentenceSpace{
 	    
 	    sentenceCount++;
 	   
-
+	    String sentenceToProcess = "";
 	    // Go through each word and record what sentence number they are from.
 	    for (HasWord word : sentence) {
 		
+		// DEBUG: Trying to see if we use our own tokenizer we can produce the same tokens.
+		// Add the word to the sentence to be processed.
+		sentenceToProcess += word.word() + ' ';
+		    
+		   
+		
+	    }
+
+
+	    // DEBUG: Use our tokenizer to tokenize so we have the same results.
+	    Iterator<String> wordsInSentence =  IteratorFactory.tokenize(sentenceToProcess);
+	    
+	    while(wordsInSentence.hasNext()) {
+		String token = wordsInSentence.next();
+
+
 		// We're looking for the first occurrence of the word. So if theres already a record then we don't want it.
-		if(!termSentence.containsKey(word.word())){
-		    addTerm(word.word());
-		    termSentence.put(word.word(), sentenceCount);
+		if(!termSentence.containsKey(token)){
+		    addTerm(token);
+		    termSentence.put(token, sentenceCount);
 		}
 		
 	    }
+	    
+	    
+
 	}
 
 

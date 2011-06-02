@@ -107,7 +107,7 @@ public class Castanet {
      * @param topN The top N keywords after TFIDF transformation..
      * 
      */
-    public Map extractKeywordsFromDocument(String folderLocation, int topN) {
+    public static Map extractKeywordsFromDocument(String folderLocation, int topN, String stopWordsFile) {
 	
 	
 	if(folderLocation.equals("")) return null;
@@ -195,6 +195,10 @@ public class Castanet {
 		
 	    for (String term : vsm.getWords()) {
 
+		// DEBUG
+		//		System.out.println(term);
+
+
 		// Get all the terms found in the document
 		edu.ucla.sspace.vector.Vector termVector = vsm.getVector(term);
 		
@@ -202,10 +206,25 @@ public class Castanet {
 		    
 		    // If the term existed in the document then add it to the document's list of keywords
 		    // with the term's score.
-		    if(termVector.getValue(i).doubleValue() != 0.0){
+
+		    if(termVector.getValue(i).doubleValue() != 0.0 && 
+		       termVector.getValue(i).doubleValue() != Double.POSITIVE_INFINITY &&
+		       termVector.getValue(i).doubleValue() != Double.NEGATIVE_INFINITY){
 			Double keywordScore = wordScores.get(term);			
-			Keyword keyword = new Keyword(term, keywordScore.doubleValue());
-			((List)listOfDocs.get(i)).add(keyword);
+
+			if(keywordScore.doubleValue() != Double.POSITIVE_INFINITY && 
+			   keywordScore.doubleValue() != Double.NEGATIVE_INFINITY){
+
+			    Keyword keyword = new Keyword(term, keywordScore.doubleValue());
+			
+			    // DEBUG
+			    System.err.println(keyword +"\t"+keywordScore);
+			    
+			    ((List)listOfDocs.get(i)).add(keyword);
+			}
+
+
+
 		    }
 		}
 		
@@ -226,16 +245,16 @@ public class Castanet {
 		List top_N_terms = new ArrayList(topN);
 		
 		// Print out the top N terms
-		for(int i = 0; i < topN; i++){
+		for(int i = 0; i < topN && i  < docTerms.size(); i++){
 		    
 		    top_N_terms.add(docTerms.get(i));
-		    //System.out.println(i+". "+docTerms.get(i));
+		    System.out.println(i+". "+docTerms.get(i));
 		    
 		}
 		
 		documentKeywords.add(top_N_terms);
 
-		System.out.println("------");
+		//		System.out.println("------");
 	    }
 
 	    results.put("keywords", documentKeywords);
@@ -608,7 +627,7 @@ public class Castanet {
     public Node runCastanet(String directory) {
 	
 	// Get all the files in the directory and extract all the top keywords
-	Map keywordsAndFiles = extractKeywordsFromDocument(directory, 5);
+	Map keywordsAndFiles = extractKeywordsFromDocument(directory, 5, stopWordsFile);
 
 	List<List> keywords = (List)keywordsAndFiles.get("keywords");
 	List<File> files = (List)keywordsAndFiles.get("files");
