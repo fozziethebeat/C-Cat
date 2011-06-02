@@ -1,6 +1,7 @@
 
 package gov.llnl.ontology.wordnet.castanet;
 
+
 import edu.ucla.sspace.vsm.VectorSpaceModel;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.vector.Vector;
@@ -17,9 +18,24 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.List;
 import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Comparator;
+
 
 import edu.ucla.sspace.text.IteratorFactory;
 
+import edu.ucla.sspace.basis.StringBasisMapping;
+import edu.ucla.sspace.vector.AmortizedSparseVector;
+import edu.ucla.sspace.common.Similarity;
+import edu.ucla.sspace.util.Duple;
+
+import edu.ucla.sspace.vector.DoubleVector;
+
+import edu.stanford.nlp.process.DocumentPreprocessor;
+import edu.stanford.nlp.ling.HasWord;
 
 public class Autosummary {
 
@@ -240,7 +256,6 @@ public class Autosummary {
 	for(String word : vsm.getWords()) {
 	    
 	    Vector tf_for_docs = vsm.getVector(word);
-	    
 	    double globalEntropy = 0.0;
 
 	    for(int i = 0; i < tf_for_docs.length(); i++) {
@@ -304,22 +319,29 @@ public class Autosummary {
 	    // Get the Sentence location score
 	    Double wordSentenceScore = sentenceScore.get(word);
 
+	    // DEBUG
+	    // if(word_tf_score == null && wordSentenceScore == null) {
 
-	    if(word_tf_score == null && wordSentenceScore == null) {
-
-		LOGGER.warning("Could not find the word: \""+word+"\" in either vsm or SentenceSpace.");
-	    }
+	    // 	LOGGER.warning("Could not find the word: \""+word+"\" in either vsm or SentenceSpace.");
+	    // }
 
 	    
 	    if(word_tf_score == null && word_tf_score == null){
-		LOGGER.warning("Vector Space Model couldn't find word: \""+word+"\". Giving these guys the default score of 1.0 then.");
 
-		word_tf_score = new Double(0.0);
-		wordEntropyScore = new Double(0.0);
+		// DEBUG
+		//		LOGGER.warning("Vector Space Model couldn't find word: \""+word+"\". Giving these guys the default score of 1.0 then.");
+
+		// word_tf_score = new Double(0.0);
+		// wordEntropyScore = new Double(0.0);
+
+		continue;
 
 	    }else if (wordSentenceScore == null) {
 		
-		LOGGER.warning("Could not find word: \"" + word + "\" in the SentenceSpace. Giving this a default score of 1.0");
+
+		// DEBUG
+		//		LOGGER.warning("Could not find word: \"" + word + "\" in the SentenceSpace. Giving this a default score of 1.0");
+
 		wordSentenceScore = new Double(1.0);
 	    }
 	    
@@ -341,12 +363,218 @@ public class Autosummary {
     }
 
 
-    /**
-     * Returns a list of sentences that are relevant. 
+    /***
+     * Recalculates the scores based on what words were selected. In this measure, words that were selected will 
+     * have their scores boosted, based on how many keywords there were.
      */
-    public List<String> rankSentences() {
-
-	return null;
+    public static Map<String, Double> recalculateSelectedScores(Map<String, Double> wordScores, Set<String> wordsSelected, int numWordsShown) {
+	
+	Map<String, Double> result = new HashMap(wordScores);
+	
+	// Go through each selected word and update its score in 
+	Iterator<String> iter = wordsSelected.iterator();
+	
+	while(iter.hasNext()) {
+	    
+	    String term = iter.next();
+	    Double originalScore = wordScores.get(term);
+	    
+	    Double newScore = new Double(originalScore.doubleValue() * 0.5 * numWordsShown + 1.0);
+	    result.put(term, newScore);
+	}
+	
+	return result;
     }
 
+    
+    /**
+     * Generates the summary of a list of sentences, by returning the top m sentences of the list.
+     */
+    public static List< Duple<String, Double> > topSentences(List<String> sentences, 
+							     Map<String, Double> keywordScores ) {
+	 
+
+	List< Duple<String, Double> > topSentences = new ArrayList(sentences.size());	
+	
+	// For every sentence...
+	for(String sentence : sentences) {
+
+	    // Tokenize the sentences into words.
+	    Iterator sentenceIter = IteratorFactory.tokenize(sentence);
+	    DoubleVector sentenceVector = new AmortizedSparseVector();
+	    DoubleVector keywordVector = new AmortizedSparseVector();
+	    
+	    // Create a basis mapping that will keep track of what location of the DoubleVector matches what word.
+	    StringBasisMapping termBasis = new StringBasisMapping();
+	
+	    
+	    // Fill the vector with words from the sentence
+	    // TODO: use a POS tagger to only get the nouns
+	    while(sentenceIter.hasNext()) {
+		String term = (String) sentenceIter.next();
+		int termDimension = termBasis.getDimension(term);
+		
+		// Get the score for the current term
+		Double termScore = keywordScores.get(term);
+		
+		// DEBUG: Make sure that the extracted word form the sentence is actually in keywordScores.
+		if(termScore == null) {
+		    //		    LOGGER.warning("Couldn't find a score for the term = " + term + "!");
+		    continue;
+		}
+		
+		// Add the term to the sentence vector
+		sentenceVector.set(termDimension, termScore.doubleValue());
+	    }
+
+	    
+	    // Create a new vector that represents the keywords.
+	    for(String keyword : keywordScores.keySet()) {
+		// Figure out where to put this keyword
+		int keywordDimension  = termBasis.getDimension(keyword);
+		
+		// Get the score for the keyword.
+		Double keywordScore = keywordScores.get(keyword);
+		
+		// Add the keyword to the keywordVector
+		keywordVector.set(keywordDimension, keywordScore.doubleValue());
+
+	    }
+
+	    
+	    // Make sure that the sentenceVector and keywordVector both match in the number of dimensions
+	    if(sentenceVector.length() != termBasis.numDimensions()) {
+		// Set the last position to be equal to zero, so that the vector will update its known length.
+		sentenceVector.set(termBasis.numDimensions() - 1, 0.0);
+	    }
+
+
+	    // Make sure that the sentenceVector and keywordVector both match in the number of dimensions
+	    if(keywordVector.length() != termBasis.numDimensions()) {
+		// Set the last position to be equal to zero, so that the vector will update its known length.
+		keywordVector.set(termBasis.numDimensions() - 1, 0.0);
+	    }
+
+	    
+	    // Calculate the cosine similarity 
+	    double cosineSimilarity = Similarity.getSimilarity(Similarity.SimType.COSINE, sentenceVector.toArray(),
+							       keywordVector.toArray());
+	    
+	    Duple<String, Double> sentencePair = new Duple(sentence, new Double(cosineSimilarity));
+	    topSentences.add(sentencePair);
+	}
+
+	
+	DupleComparator comparator = new DupleComparator();
+
+	// Sort the sentences by their scores.
+	Collections.sort(topSentences, comparator);
+	Collections.reverse(topSentences);
+
+	return topSentences;
+	
+    }
+
+
+    public static void autosummarize(String path, String stopWordFile) throws IOException {
+
+	// Extract keywords from a list of files in a folder
+	Map extractedKeywords = Castanet.extractKeywordsFromDocument(path, 30, stopWordFile);
+	    
+	// Figure out the scores for the keywords
+	Map<String, Double> keywordScores = Autosummary.calculateSakaiEtAlScore(path, stopWordFile);
+	    	    
+	// Find a file in the test folder
+	// Here we are going to use the first file
+	List<File> files = (List)extractedKeywords.get("files");
+	
+	// For every file, we are going to generate an automated summary.
+	for(File file : files) {
+
+	    FileDocument fileDocument = new FileDocument(file.getCanonicalPath());
+	    DocumentPreprocessor processor = new DocumentPreprocessor(fileDocument.reader());
+	    List<String> sentencesInDoc = new LinkedList();
+
+	    /** Create a sentence string for every sentence in the document. **/
+	    for(List<HasWord> sentence: processor) {
+		
+		// Take the words and put them together in a sentence.
+		String sentenceToProcess = "";
+		
+		for (HasWord word : sentence) {
+		    sentenceToProcess += word.word() + ' ';
+		}
+		
+		sentencesInDoc.add(sentenceToProcess);
+	    }
+
+	    
+	    // Rank the sentences in the document
+	    // TODO: update the scores, boosting the rating for keywords that were actually selected.
+	    List<Duple<String, Double>> topSentences = Autosummary.topSentences(sentencesInDoc, keywordScores);
+
+	    System.out.println("\n\nGENERATED SUMMARY FOR FILE ="+file.toString() + "\n\n");
+	    
+	    
+	    // Print out the 10 sentences
+	    for(int i = 0; i < 10 && i < topSentences.size(); i++) {
+		Duple<String, Double> iDuple = topSentences.get(i);
+		
+		System.out.println(iDuple.x + "\t" +iDuple.y);
+	    }
+
+	
+	    
+	}
+
+
+
+	// ----------------------------------------------------
+	
+	    
+	    
+    }
+    
+
+    public static void main(String[] args) {
+	
+	/**  Test out the sentence rating function **/
+
+	// Assuming that the first argument is the directory, and second was stopwords file
+	String STOPWORD_FILE = args[1];
+	String PATH = args[0];
+
+	// Verify the arguments
+	LOGGER.info("path = "+args[0]+", stopwords file = "+args[1]);
+	
+	try{
+	    
+	    Autosummary.autosummarize(PATH, STOPWORD_FILE);
+	    
+	}catch(IOException ioe) {
+	    LOGGER.warning("Problem with reading!");
+
+
+	}
+	
+	//	this.topSentences(
+	
+
+    }
+
+    
+
+}
+
+
+
+class DupleComparator implements Comparator<Duple<String, Double>> {
+    public int compare(Duple<String, Double> o1, Duple<String, Double> o2) {
+	return o1.y.compareTo(o2.y);
+    }
+    
+
+    public boolean equals(Object ob) {
+	return (ob instanceof DupleComparator);
+    }
 }
