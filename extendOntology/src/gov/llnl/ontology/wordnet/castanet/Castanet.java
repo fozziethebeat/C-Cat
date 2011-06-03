@@ -479,8 +479,12 @@ public class Castanet {
 	Node this_node = new Node (pathToRoot.get(0), parent);
 	Node child = createOntologyGraph(pathToRoot.subList(1, pathToRoot.size()), this_node);
 
-	if (child != null)
+	// This is a non leaf node. 
+	if (child != null) 
 	    this_node.addChild(child);
+	 
+
+
 
 	return this_node;
     }
@@ -643,9 +647,6 @@ public class Castanet {
 	    
 	    for(Keyword k : topKeywords) {
 		
-
-
-
 		String word = k.getWord();
 		LOGGER.info("Processing: " + word);
 

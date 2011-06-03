@@ -13,17 +13,20 @@ import gov.llnl.ontology.wordnet.Synset;
  *
  * @author Terry Huang
  */
+
+import java.util.TreeSet;
+import java.util.Set;
+
 public class Node {
 
-
-     private transient Synset value;
-
-     private transient List children;
+    
+    private transient Synset value;
+    private transient List children;
 
     private Node parent;
-    
+    private Set<String> keywordSet;
 
-    public Node(Synset value, Node parent, List children){
+    public Node(Synset value, Node parent, List children, Set<String> keywords){
 	this.value = value;
 	this.parent = parent;
 
@@ -32,6 +35,11 @@ public class Node {
 	    this.children = children;
 	}
 
+	keywordSet = keywords;
+    }
+
+    public Node(Synset value, Node parent, List children){
+	this(value, parent, children, new TreeSet());
     }
 
     public Node(Synset value, Node parent){
@@ -53,6 +61,10 @@ public class Node {
 
 
     /* Getters for Tree Node */
+
+    public Set<String> getKeywordSet() {
+	return keywordSet;
+    }
 
     public List getChildren() {
 	return children;
