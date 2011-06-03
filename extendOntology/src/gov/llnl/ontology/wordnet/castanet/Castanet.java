@@ -41,6 +41,7 @@ class Keyword implements Comparable<Keyword> {
 
     private double value;
     private String word;
+
     
     Keyword(String theWord, double tfidf) {
 	value = tfidf;
@@ -54,6 +55,7 @@ class Keyword implements Comparable<Keyword> {
 
     public double getValue() { return value; }
     public String getWord() { return word; }
+
 
 
     public String toString() { return word + " - "+value; } 
@@ -400,10 +402,6 @@ public class Castanet {
     }
 	
 
-
-
-
-
     /** This merges to graphs together, meaning it takes two graphs, keeps traversing until there is a split, and then attaches the difference to
 	a children */
     private Node mergeOntologyGraphs (Node first, Node second) {
@@ -505,7 +503,6 @@ public class Castanet {
 
 	    // Use tabs to make it easier to read.
 	    System.out.print("<");
-
 	    printGraph(next_child);
 
 	    System.out.print(">");
@@ -631,7 +628,7 @@ public class Castanet {
     public Node runCastanet(String directory) {
 	
 	// Get all the files in the directory and extract all the top keywords
-	Map keywordsAndFiles = extractKeywordsFromDocument(directory, 5, stopWordsFile);
+	Map keywordsAndFiles = extractKeywordsFromDocument(directory, 10, stopWordsFile);
 
 	List<List> keywords = (List)keywordsAndFiles.get("keywords");
 	List<File> files = (List)keywordsAndFiles.get("files");
@@ -700,6 +697,8 @@ public class Castanet {
 
 	// Remove the single parents
 	eliminateSingleParents(masterGraph);
+
+
 
 	return masterGraph;
 

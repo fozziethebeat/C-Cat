@@ -53,9 +53,11 @@ public class CastanetServlet extends HttpServlet {
 
 	    Node castanetGraph = cnet.runCastanet(directoryFile.getCanonicalPath());
 	    
+	    // Generate all the keywords
+	    Set rootKeywords = castanetGraph.generateKeywordSet();
 	    
 	    out.println("Castanet SUCCESSFULLY initialized at directory: " + directory);
-
+	    out.println("Keywords in this tree = " + rootKeywords.toString());
 
 	    cnet.printGraph(castanetGraph, out);
 	    
@@ -129,9 +131,12 @@ public class CastanetServlet extends HttpServlet {
 	    
 	}
 
+	Set<String> keywordSet = resultNode.generateKeywordSet();
+
 	Map jsonOutput = new TreeMap(); 
 	jsonOutput.put("children", getSynsetNames(resultNode.getChildren()));
 	jsonOutput.put("files", jsonFiles);
+	jsonOutput.put("keywords", keywordSet);
 	
 	out.print(new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create().toJson(jsonOutput));
     }

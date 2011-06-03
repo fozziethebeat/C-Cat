@@ -3,7 +3,9 @@ package gov.llnl.ontology.wordnet.castanet;
 
 import java.util.List;
 import java.util.ArrayList;
-
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.Iterator;
 
 import gov.llnl.ontology.wordnet.Synset;
 
@@ -14,6 +16,7 @@ import gov.llnl.ontology.wordnet.Synset;
  * @author Terry Huang
  */
 
+<<<<<<< HEAD
 import java.util.TreeSet;
 import java.util.Set;
 
@@ -27,6 +30,15 @@ public class Node {
     private Set<String> keywordSet;
 
     public Node(Synset value, Node parent, List children, Set<String> keywords){
+=======
+    private transient Synset value;
+    private transient List<Node> children;
+    private Node parent;
+    private Set<String> keywordSet;
+    private boolean keywordShouldRegenerate;
+    
+    public Node(Synset value, Node parent, List children){
+>>>>>>> 02d0a67ce63ae43cfda20c68bb15f70f9dac176a
 	this.value = value;
 	this.parent = parent;
 
@@ -34,12 +46,19 @@ public class Node {
 	else {
 	    this.children = children;
 	}
+<<<<<<< HEAD
 
 	keywordSet = keywords;
     }
 
     public Node(Synset value, Node parent, List children){
 	this(value, parent, children, new TreeSet());
+=======
+	
+	keywordSet = new TreeSet();
+	keywordShouldRegenerate = true;
+	
+>>>>>>> 02d0a67ce63ae43cfda20c68bb15f70f9dac176a
     }
 
     public Node(Synset value, Node parent){
@@ -58,12 +77,60 @@ public class Node {
     }
 
 
-
+    
+    
 
     /* Getters for Tree Node */
 
+<<<<<<< HEAD
     public Set<String> getKeywordSet() {
 	return keywordSet;
+=======
+
+    /** 
+     * Generates a set of all the actual keywords that are part of this node and all of its descendents.
+     * @return A set of all the actual extracted keywords that can be found in the descendents of this node (including itself).
+     */
+    public Set<String> generateKeywordSet() {
+
+
+	// If this node is a leaf node (i.e. it has no children)
+	// then it should just add its keyword and return the set with a single member.
+	if (children.size() == 0) {
+
+	    String currentKeyword = toString();
+	    keywordSet.add(currentKeyword);
+	}else{
+
+	    // If this node is a non leaf node, then it will compile
+	    // a Set of keywords that its descendants have.
+	    if(keywordShouldRegenerate) {
+		for(Node child : children) {
+		    Set<String> childKeywords = child.generateKeywordSet();
+		    Iterator childIter = childKeywords.iterator();
+		    
+		    while(childIter.hasNext()) {
+			String childKeyword = (String) childIter.next();
+			keywordSet.add(childKeyword);
+		    }
+		}
+
+		keywordShouldRegenerate = false;
+	    
+
+
+		// Also if the current node has a file attached, also throw in its keyword too.
+		if(value.getAttribute("files") != null){
+		    String currentKeyword = toString();
+		    keywordSet.add(currentKeyword);
+		    
+		}
+	    }
+	}
+	
+	return keywordSet;
+
+>>>>>>> 02d0a67ce63ae43cfda20c68bb15f70f9dac176a
     }
 
     public List getChildren() {
@@ -104,5 +171,12 @@ public class Node {
     public String toString() {
 	return nodeValue().toString();
     }
+
+    
+    /** Setter functions */
+
+
+
+
 
 }
