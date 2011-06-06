@@ -38,16 +38,17 @@ public class CastanetServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 	
 	ServletContext sc = SERVLET_CONFIG.getServletContext();
+	
+	
 	Castanet cnet = (Castanet) sc.getAttribute("castanet");
 	PrintWriter out = response.getWriter();
 
 	String directory = request.getParameter("directory");
-	String stopfile = sc.getInitParameter("stopfile");
 
-	
+
+	// Get all the files in the directory and extract all the top keywords
 	try{
-
-	    // Get all the files in the directory and extract all the top keywords    
+	    
 	    File directoryFile = new File(directory);
 
 	    Node castanetGraph = cnet.runCastanet(directoryFile.getCanonicalPath());
@@ -59,17 +60,17 @@ public class CastanetServlet extends HttpServlet {
 	    out.println("Keywords in this tree = " + rootKeywords.toString());
 
 	    cnet.printGraph(castanetGraph, out);
+	    
+
+
 	    sc.setAttribute("castanetGraph", castanetGraph);
 
 	}catch(IOException e){
-	    out.println("There was an error in handling the files in the directory: "+directory);
+
 	}
     
 	
-	
-	// Create the keyword scores for all the words in the directory.
-	Map<String, Double> keywordScores = Autosummary.calculateSakaiEtAlScore(directory, stopfile);
-	sc.setAttribute("keywordScores", keywordScores);
+
 
     }
 
@@ -112,6 +113,7 @@ public class CastanetServlet extends HttpServlet {
 	if(files == null) {
 	    jsonFiles = new LinkedList();
 	    
+
 	    // DEBUG
 	    System.out.println("-------- NO FILES for "+ pathway+"!!! -----------");
 
@@ -125,6 +127,7 @@ public class CastanetServlet extends HttpServlet {
 		jsonFiles.add(f.toString());
 	    }
 	    System.out.println("--------  FILES:  "+ jsonFiles+"!!! -----------");
+
 	    
 	}
 

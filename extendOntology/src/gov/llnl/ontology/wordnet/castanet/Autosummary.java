@@ -476,6 +476,46 @@ public class Autosummary {
     }
 
 
+    /***
+     * Takes in a file that will be summarized and returns a list of sentences in ranked order (which is the 
+     * summary of the file.
+     */
+    public static List<Duple<String, Double>> autosummarize(File fileToSummarize, Map<String, Double> keywordScores) throws IOException {
+	   
+	FileDocument fileDocument = new FileDocument(fileToSummarize.getCanonicalPath());
+	DocumentPreprocessor processor = new DocumentPreprocessor(fileDocument.reader());
+	List<String> sentencesInDoc = new LinkedList();
+
+	/** Create a sentence string for every sentence in the document. **/
+	for(List<HasWord> sentence: processor) {
+		
+	    // Take the words and put them together in a sentence.
+	    String sentenceToProcess = "";
+		
+	    for (HasWord word : sentence) {
+		sentenceToProcess += word.word() + ' ';
+	    }
+		
+	    sentencesInDoc.add(sentenceToProcess);
+	}
+
+	    
+	// Rank the sentences in the document
+	List<Duple<String, Double>> topSentences = Autosummary.topSentences(sentencesInDoc, keywordScores);
+	
+	System.out.println("\n\nGENERATED SUMMARY FOR FILE ="+fileToSummarize.toString() + "\n\n");
+	
+	
+	// Print out the 10 sentences
+	for(int i = 0; i < 10 && i < topSentences.size(); i++) {
+	    Duple<String, Double> iDuple = topSentences.get(i);
+	    
+		System.out.println(iDuple.x + "\t" +iDuple.y);
+	}
+		
+	return topSentences;
+    }
+
     public static void autosummarize(String path, String stopWordFile) throws IOException {
 
 	// Extract keywords from a list of files in a folder
@@ -549,8 +589,15 @@ public class Autosummary {
 	
 	try{
 	    
-	    Autosummary.autosummarize(PATH, STOPWORD_FILE);
+	    //	    Autosummary.autosummarize(PATH, STOPWORD_FILE);
+	    Map<String, Double> keywordScores = Autosummary.calculateSakaiEtAlScore(PATH, STOPWORD_FILE);
+
 	    
+	    File directory = new File(PATH);
+	    File[] files = directory.listFiles();
+	    
+
+	    Autosummary.autosummarize(files[1], keywordScores);
 	}catch(IOException ioe) {
 	    LOGGER.warning("Problem with reading!");
 

@@ -69,7 +69,7 @@ public class Node {
 	// then it should just add its keyword and return the set with a single member.
 	if (children.size() == 0) {
 
-	    String currentKeyword = nodeValue().getName();
+	    String currentKeyword = toString();
 	    keywordSet.add(currentKeyword);
 	}else{
 
@@ -92,7 +92,7 @@ public class Node {
 
 		// Also if the current node has a file attached, also throw in its keyword too.
 		if(value.getAttribute("files") != null){
-		    String currentKeyword = nodeValue().getName();
+		    String currentKeyword = toString();
 		    keywordSet.add(currentKeyword);
 		    
 		}
