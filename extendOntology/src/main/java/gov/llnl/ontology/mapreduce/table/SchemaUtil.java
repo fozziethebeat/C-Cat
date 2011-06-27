@@ -21,7 +21,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.llnl.ontology.table;
+package gov.llnl.ontology.mapreduce.table;
+
+import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_BLOCKCACHE;
+import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_BLOOMFILTER;
+import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_IN_MEMORY;
+import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_TTL;
+import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_VERSIONS;
 
 import com.google.common.collect.Maps;
 
@@ -33,7 +39,9 @@ import edu.ucla.sspace.dependency.SimpleDependencyRelation;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -122,7 +130,7 @@ public class SchemaUtil {
             Object value = dis.readObject();
             dis.close();
             bis.close();
-            return value;
+            return (T) value;
         } catch (IOException ioe) {
             throw new IOError(ioe);
         } catch (ClassNotFoundException cnfe) {
@@ -186,7 +194,7 @@ public class SchemaUtil {
      * memory columns, block cache, and TTL.
      */
     public static void addDefaultColumnFamily(HTableDescriptor tableDescriptor,
-                                              byte[] columnFamilyName) {
+                                              String columnFamilyName) {
         tableDescriptor.addFamily(new HColumnDescriptor(
                     columnFamilyName.getBytes(), DEFAULT_VERSIONS, "GZ", 
                     DEFAULT_IN_MEMORY, DEFAULT_BLOCKCACHE, 

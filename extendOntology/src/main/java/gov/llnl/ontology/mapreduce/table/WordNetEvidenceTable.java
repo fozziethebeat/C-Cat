@@ -21,33 +21,25 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.llnl.ontology.table;
+package gov.llnl.ontology.mapreduce.table;
 
-import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_BLOCKCACHE;
-import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_BLOOMFILTER;
-import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_IN_MEMORY;
-import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_TTL;
-import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_VERSIONS;
+import gov.llnl.ontology.util.Counter;
 
 import org.apache.hadoop.conf.Configuration;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
+import java.io.IOError;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -93,7 +85,7 @@ import java.util.Map;
  *
  * @author Keith Stevens
  */
-public class WordNetEvidenceSchema {
+public class WordNetEvidenceTable implements EvidenceTable {
 
     /**
      * The table name attributed to this schema.
@@ -182,73 +174,145 @@ public class WordNetEvidenceSchema {
         "DependencyPathCounts";
 
     /**
-     * Creates a new instance of the {@link WordNetEvidenceSchema}.
+     * {@inheritDoc}
      */
-    public static void createTable() throws IOException {
+    public String tableName() {
+        return TABLE_NAME;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public byte[] tableNameBytes() {
+        return TABLE_NAME.getBytes();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String classColumnFamily() {
+        return CLASS_CF;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public byte[] classColumnFamilyBytes() {
+        return CLASS_CF.getBytes();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String dependencyColumnFamily() {
+        return DEPENDENCY_FEATURE_CF;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public byte[] dependencyColumnFamilyBytes() {
+        return DEPENDENCY_FEATURE_CF.getBytes();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String hypernymColumn() {
+        return HYPERNYM_EVIDENCE;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public byte[] hypernymColumnBytes() {
+        return HYPERNYM_EVIDENCE.getBytes();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String cousinColumn() {
+        return COUSIN_EVIDENCE;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public byte[] cousinColumnBytes() {
+        return COUSIN_EVIDENCE.getBytes();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void createTable() {
         HBaseConfiguration conf = new HBaseConfiguration();
         HConnection connector = HConnectionManager.getConnection(conf);
         createTable(connector);
     }
 
     /**
-     * Creates the new instance of the table.
+     * {@inheritDoc}
      */
-    public static void createTable(HConnection connector) throws IOException {
-        // Do nothing if the table already exists.
-        if (connector.tableExists(tableName.getBytes())) 
-            return;
+    public void createTable(HConnection connector) {
+        try {
+            // Do nothing if the table already exists.
+            if (connector.tableExists(tableName.getBytes())) 
+                return;
 
-        // Create configuration and admin classes.
-        HBaseConfiguration config = new HBaseConfiguration();
-        HBaseAdmin admin = new HBaseAdmin(config);
+            // Create configuration and admin classes.
+            HBaseConfiguration config = new HBaseConfiguration();
+            HBaseAdmin admin = new HBaseAdmin(config);
 
-        // Add the column families to the table.
-        HTableDescriptor evidenceDesc = new HTableDescriptor(
-                tableName.getBytes());
-        addDefaultColumnFamily(evidenceDesc,DEPENDENCY_FEATURE_CF);
-        addDefaultColumnFamily(evidenceDesc,SIMILARITY_COSINE_CF);
-        addDefaultColumnFamily(evidenceDesc,SIMILARITY_EUCLIDEAN_CF);
-        addDefaultColumnFamily(evidenceDesc,SIMILARITY_KL_CF);
-        addDefaultColumnFamily(evidenceDesc,SIMILARITY_LIN_CF);
-        addDefaultColumnFamily(evidenceDesc,CLASS_CF);
-        admin.createTable(evidenceDesc);
+            // Add the column families to the table.
+            HTableDescriptor evidenceDesc = new HTableDescriptor(
+                    tableName.getBytes());
+            SchemaUtil.addDefaultColumnFamily(evidenceDesc,DEPENDENCY_FEATURE_CF);
+            SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_COSINE_CF);
+            SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_EUCLIDEAN_CF);
+            SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_KL_CF);
+            SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_LIN_CF);
+            SchemaUtil.addDefaultColumnFamily(evidenceDesc,CLASS_CF);
+            admin.createTable(evidenceDesc);
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
 
     /**
-     * Returns access to the created table.
+     * {@inheritDoc}
      */
-    public static HTable getTable() throws IOException {
-        Configuration config = HBaseConfiguration.create();
-        return new HTable(config, tableName);
+    public HTable table() {
+        try {
+            return new HTable(tableName);
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
 
     /**
      * Instantiates a new table.
      */
     public static void main(String[] args) {
-        try {
-            createTable();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        WordNetEvidenceTable table = new WordNetEvidenceTable();
+        table.createTable();
     }
 
     /**
-     * Returns a new map that contains all of the dependency
-     * path counts, regardless of their source.
+     * {@inheritDoc}
      */
-    public static Counter<String> getDependencyPaths(Result row) {
+    public Counter<String> getDependencyPaths(Result row) {
         Counter<String> pathCounts = new Counter<String>();
         Map<byte[], byte[]> qualifierValueMap = 
                 row.getFamilyMap(DEPENDENCY_FEATURE_CF.getBytes());
         for (byte[] bytes : qualifierValueMap.values()) {
-            Map<String, Integer> sourceCounts = getDependencyPaths(
+            Counter<String> sourceCounts = getDependencyPaths(
                     row, new String(bytes));
             if (sourceCounts == null)
                 continue;
 
-            for (Map.Entry<String, Integer> newCount : sourceCounts.entrySet()) 
+            for (Map.Entry<String, Integer> newCount : sourceCounts) 
                 pathCounts.count(newCount.getKey(), newCount.getValue());
         }
 
@@ -256,11 +320,19 @@ public class WordNetEvidenceSchema {
     }
 
     /**
-     * Returns a map that contains all of the dependency paths
-     * associated with a single noun pair.
+     * {@inheritDoc}
      */
-    public static Map<String, Integer> getDependencyPaths(Result row, 
-                                                          String source) {
+    public Counter<String> getDependencyPaths(Result row, 
+                                              String source) {
         return SchemaUtil.getObjectColumn(row, DEPENDENCY_FEATURE_CF, source);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void storeDependencyPaths(Put put,
+                                     String source,
+                                     Counter<String> pathCounts) {
+        SchemaUtil.add(put, DEPENDENCY_FEATURE_CF, source, pathCounts);
     }
 }

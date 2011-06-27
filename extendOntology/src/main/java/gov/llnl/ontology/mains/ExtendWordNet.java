@@ -155,9 +155,9 @@ public class ExtendWordNet {
         if (options.getStringOption('b').equals("u"))
             wnBuilder = new UnorderedWordNetBuilder(wordnet);
         else if (options.getStringOption('b').equals("d"))
-            wnBuilder = new DepthFirstBnBWordNetBuilder(wordnet);
+            wnBuilder = new DepthFirstBnBWordNetBuilder(wordnet, true, true);
         else if (options.getStringOption('b').equals("o"))
-            wnBuilder = new OntologicalSortWordNetBuilder(wordnet);
+            wnBuilder = new OntologicalSortWordNetBuilder(wordnet, true);
 
         ExtendWordNet builder = new ExtendWordNet(
                 new CoNLLDependencyExtractor(),

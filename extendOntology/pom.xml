@@ -10,8 +10,9 @@
 
   <properties>
     <junit.version>4.7</junit.version>
-    <hadoop.version>0.20.2</hadoop.version>
-    <hbase.version>0.21.0-SNAPSHOT</hbase.version>
+    <malt.version>1.5.1</malt.version>
+    <hadoop.version>0.21.0-SNAPSHOT</hadoop.version>
+    <hbase.version>0.91.0-SNAPSHOT</hbase.version>
     <mahout.version>0.4</mahout.version>
     <cobertura.version>2.4</cobertura.version> 
     <sspace.version>2.0</sspace.version>
@@ -19,6 +20,7 @@
     <stanford.version>2010-11-12</stanford.version>
     <text.version>1.5.2</text.version>
     <logging.version>1.1.1</logging.version>
+    <opennlp.version>1.5.1-incubating</opennlp.version>
   </properties>
 
   <dependencies>
@@ -59,14 +61,29 @@
       <version>${mahout.version}</version>
     </dependency>
     <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-core</artifactId>
-        <version>${hadoop.version}</version>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapred</artifactId>
+      <version>${hadoop.version}</version>
     </dependency>
     <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase</artifactId>
-        <version>${hbase.version}</version>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>
+      <version>${hbase.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.opennlp</groupId>
+      <artifactId>opennlp-tools</artifactId>
+      <version>${opennlp.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.maltparser</groupId>
+      <artifactId>maltparser</artifactId>
+      <version>${malt.version}</version>
     </dependency>
   </dependencies>
 
@@ -169,7 +186,7 @@
           <source>1.6</source>
           <target>1.6</target>
           <excludes>
-            <exclude>**/mapreduce/**</exclude>
+            <exclude>**/old_mapreduce/**</exclude>
           </excludes>
         </configuration>
       </plugin>

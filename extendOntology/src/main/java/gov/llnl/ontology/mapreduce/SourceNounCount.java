@@ -23,27 +23,21 @@
 
 package gov.llnl.ontology.mapreduce;
 
-import gov.llnl.ontology.table.WordNetEvidenceSchema;
-import gov.llnl.ontology.table.SchemaUtil;
+import gov.llnl.ontology.mapreduce.table.EvidenceTable;
+
+import gov.llnl.ontology.util.Counter;
 
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 
-import com.google.common.collect.Maps;
+import edu.ucla.sspace.common.ArgOptions;
 
-import edu.ucla.sspace.common.SemanticSpace;
-import edu.ucla.sspace.common.StaticSemanticSpace;
-import edu.ucla.sspace.common.Similarity;
-import edu.ucla.sspace.common.Similarity.SimType;
+import edu.ucla.sspace.util.ReflectionUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-
-import org.apache.hadoop.filecache.DistributedCache;
-
-import org.apache.hadoop.fs.Path;
 
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -60,13 +54,7 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 
 import org.apache.hadoop.fs.Path;
 
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.Reporter;
 
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -75,11 +63,9 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -92,180 +78,211 @@ import java.util.Set;
  */
 public class SourceNounCount extends Configured implements Tool {
 
-  /**
-   *The logger for this class.
-   */
-  private static final Log LOG =
-    LogFactory.getLog(SourceNounCount.class);
+    /**
+     *The logger for this class.
+     */
+    private static final Log LOG =
+        LogFactory.getLog(SourceNounCount.class);
 
-  /**
-   * The {@link Configuration} for hadoop and hbase.
-   */
-  private HBaseConfiguration conf;
+    public static String CONFIGURATION_PREFIX =
+            "gov.llnl.ontology.mapreduce.SourceNounCount";
 
-  /**
-   * Runs the map reducer.
-   */
-  public static void main(String[] args) {
-    try {
-      ToolRunner.run(new Configuration(),
-                     new SourceNounCount(), args);
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
+    public static String WORDNET_DIR =
+            CONFIGURATION_PREFIX + ".wordnetDir";
 
-  @Override
-  public int run(String[] args) throws Exception {
-    // Validate the arguments.
-    if (args.length != 0) {
-      System.out.println("usage: java SourceNounCount");
-      return 1;
-    }
+    public static String TABLE_TYPE =
+            CONFIGURATION_PREFIX + ".evidenceTable";
 
-    conf = new HBaseConfiguration();
-
-    try {
-      // Run the first map/reduce job.
-      LOG.info("Preparing map/reduce system.");
-      Job job = new Job(conf, "Source Noun Count");
-
-      // Setup the mapper.
-      job.setJarByClass(SourceNounCount.class);
-
-      // Add a scanner that requests the requested similarity column.
-      Scan scan = new Scan();
-      scan.addFamily(WordNetEvidenceSchema.DEPENDENCY_FEATURE_CF.getBytes());
-
-      // Setup the mapper.
-      TableMapReduceUtil.initTableMapperJob(WordNetEvidenceSchema.tableName, 
-                                            scan,
-                                            SourceNounCountMap.class, 
-                                            Text.class,
-                                            Text.class, 
-                                            job);
-
-      // Setup the reducer.
-      job.setCombinerClass(SourceNounCountReducer.class);
-      job.setReducerClass(SourceNounCountReducer.class);
-      job.setOutputFormatClass(TextOutputFormat.class);
-      TextOutputFormat.setOutputPath(
-          job, new Path("/data/sourceNounCount"));
-      job.setNumReduceTasks(24);
-
-      Configuration jobConf = job.getConfiguration();
-
-      // Run the first job.
-      LOG.info("Counting dependnecy paths.");
-      job.waitForCompletion(true);
-      LOG.info("Computing completed.");
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-      return 1;
-    }
-
-    return 0;
-  }
-
-  /**
-   * This mapper traverses each row in the {@link WordNetEvidenceSchema} table
-   * and emits each word that appears from each document source.
-   */
-  public static class SourceNounCountMap extends TableMapper<Text, Text> {
+    public static String DEFAULT_TABLE =
+        "gov.llnl.ontology.mapreduce.table.WordNetEvidenceTable";
 
     /**
-     * The {@link WordNetCorpusReader} used to determine if a noun is known by
-     * wordnet.
+     * The {@link Configuration} for hadoop and hbase.
      */
-    private WordNetCorpusReader wordNet;
+    private HBaseConfiguration conf;
 
     /**
-     * Initializes the {@link WordNetCorpusReader}.
+     * Runs the map reducer.
      */
+    public static void main(String[] args) {
+        try {
+            ToolRunner.run(new Configuration(),
+                                         new SourceNounCount(), args);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
-    protected void setup(Context context) 
-        throws IOException, InterruptedException {
-      wordNet = WordNetCorpusReader.initialize("/dict", true);
+    public int run(String[] args) throws Exception {
+        ArgOptions options = new ArgOptions();
+        options.addOption('t', "evidenceTable",
+                          "Sets the EvidenceTable to use for extracting counts",
+                          true, "CLASSNAME", "Optional");
+        options.parseOptions(args);
+
+        // Validate the arguments.
+        if (options.numPositionalArgs() != 1) {
+            System.out.println(
+                    "usage: java SourceNounCount [OPTIONS] <outdir>\n" +
+                    options.prettyPrint());
+            return 1;
+        }
+
+        conf = new HBaseConfiguration();
+
+        String tableType = options.getStringOption('t', DEFAULT_TABLE);
+        conf.set(TABLE_TYPE, tableType);
+        EvidenceTable table = ReflectionUtil.getObjectInstance(tableType);
+
+        try {
+            // Run the first map/reduce job.
+            LOG.info("Preparing map/reduce system.");
+            Job job = new Job(conf, "Source Noun Count");
+
+            // Setup the mapper.
+            job.setJarByClass(SourceNounCount.class);
+
+            // Add a scanner that requests the requested similarity column.
+            Scan scan = new Scan();
+            scan.addFamily(table.dependencyColumnFamilyBytes());
+
+            // Setup the mapper.
+            TableMapReduceUtil.initTableMapperJob(table.tableName(),
+                                                  scan,
+                                                  SourceNounCountMap.class, 
+                                                  Text.class,
+                                                  Text.class, 
+                                                  job);
+
+            // Setup the reducer.
+            job.setCombinerClass(SourceNounCountReducer.class);
+            job.setReducerClass(SourceNounCountReducer.class);
+            job.setOutputFormatClass(TextOutputFormat.class);
+            TextOutputFormat.setOutputPath(
+                    job, new Path(options.getPositionalArg(0)));
+            job.setNumReduceTasks(24);
+
+            Configuration jobConf = job.getConfiguration();
+
+            // Run the first job.
+            LOG.info("Counting dependnecy paths.");
+            job.waitForCompletion(true);
+            LOG.info("Computing completed.");
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return 1;
+        }
+
+        return 0;
     }
 
     /**
-     * Emits the nouns found in each document source, and wether the noun is
-     * known by wordnet.
+     * This mapper traverses each row in the {@link WordNetEvidenceSchema} table
+     * and emits each word that appears from each document source.
      */
-    @Override
-    public void map(ImmutableBytesWritable key, Result row, Context context)
-        throws IOException, InterruptedException {
-      context.getCounter("Counting Nouns", "seen row").increment(1);
+    public static class SourceNounCountMap extends TableMapper<Text, Text> {
 
-      // Normalize the nouns in the key.
-      String keyStr = new String(key.get(), HConstants.UTF8_ENCODING);
-      String[] wordPair = keyStr.split("\\|");
-      wordPair[0] = wordPair[0].toLowerCase().trim();
-      wordPair[1] = wordPair[1].toLowerCase().trim();
+        /**
+         * The {@link WordNetCorpusReader} used to determine if a noun is known
+         * by wordnet.
+         */
+        private WordNetCorpusReader wordNet;
 
-      // Determine if the nouns are known by wordnet.
-      boolean term1Mapped = wordNet.getSynsets(wordPair[0]).length != 0;
-      boolean term2Mapped = wordNet.getSynsets(wordPair[1]).length != 0;
+        private EvidenceTable table;
 
-      // Create the output text for each noun, encoding is mapped status.
-      String term1 = (term1Mapped) ? wordPair[0] + "|T" : wordPair[0] + "|F";
-      String term2 = (term2Mapped) ? wordPair[1] + "|T" : wordPair[1] + "|F";
+        /**
+         * Initializes the {@link WordNetCorpusReader}.
+         */
+        @Override
+        protected void setup(Context context) 
+                throws IOException, InterruptedException {
+            Configuration conf = context.getConfiguration();
+            table = ReflectionUtil.getObjectInstance(conf.get(TABLE_TYPE));
+            wordNet = WordNetCorpusReader.initialize(
+                    conf.get(WORDNET_DIR), true);
+        }
 
-      // Iterate over the document sources attached to this noun pair.
-      Set<byte[]> sources = row.getFamilyMap(
-          WordNetEvidenceSchema.DEPENDENCY_FEATURE_CF.getBytes()).keySet();
-      for (byte[] source : sources) {
-        // Skip any source attribute to this noun pair that lacks observed
-        // evidence.
-        Map<String, Integer> pathCount =
-          WordNetEvidenceSchema.getDependencyPaths(row, new String(source));
-        if (pathCount == null)
-          return;
+        /**
+         * Emits the nouns found in each document source, and wether the noun is
+         * known by wordnet.
+         */
+        @Override
+        public void map(ImmutableBytesWritable key, Result row, Context context)
+                throws IOException, InterruptedException {
+            context.getCounter("Counting Nouns", "seen row").increment(1);
 
-        // Emit the occurrence of the nouns.
-        context.write(new Text(source), new Text(term1));
-        context.write(new Text(source), new Text(term2));
-      }
+            // Normalize the nouns in the key.
+            String keyStr = new String(key.get(), HConstants.UTF8_ENCODING);
+            String[] wordPair = keyStr.split("\\|");
+            wordPair[0] = wordPair[0].toLowerCase().trim();
+            wordPair[1] = wordPair[1].toLowerCase().trim();
+
+            // Determine if the nouns are known by wordnet.
+            boolean term1Mapped = wordNet.getSynsets(wordPair[0]).length != 0;
+            boolean term2Mapped = wordNet.getSynsets(wordPair[1]).length != 0;
+
+            // Create the output text for each noun, encoding is mapped status.
+            String term1 = (term1Mapped)
+                ? wordPair[0] + "|T" : wordPair[0] + "|F";
+            String term2 = (term2Mapped)
+                ? wordPair[1] + "|T" : wordPair[1] + "|F";
+
+            // Iterate over the document sources attached to this noun pair.
+            Set<byte[]> sources = row.getFamilyMap(
+                    table.dependencyColumnFamilyBytes()).keySet();
+            for (byte[] source : sources) {
+                // Skip any source attribute to this noun pair that lacks
+                // observed evidence.
+                Counter<String> pathCount = table.getDependencyPaths(
+                        row, new String(source));
+                if (pathCount == null)
+                    return;
+
+                // Emit the occurrence of the nouns.
+                context.write(new Text(source), new Text(term1));
+                context.write(new Text(source), new Text(term2));
+            }
+        }
     }
-  }
-
-  /**
-   * This class counts the number of unique nouns found in each documen source,
-   * along with their status wordnet in wordnet.  For each document source, one
-   * line will be emitted that has three values: a total noun count, a count of
-   * mapped nouns, and a count of unmapped nouns.
-   */
-  public static class SourceNounCountReducer 
-      extends Reducer<Text, Text, Text, Text> {
 
     /**
-     * Count the number of unique nouns for each document source.
+     * This class counts the number of unique nouns found in each documen
+     * source, along with their status wordnet in wordnet.  For each document
+     * source, one line will be emitted that has three values: a total noun
+     * count, a count of mapped nouns, and a count of unmapped nouns.
      */
-    @Override
-    public void reduce(Text key, Iterable<Text> values, Context context)
-        throws IOException, InterruptedException {
-      int pathCount = 0;
-      // Count the number of unique words observed, mapped, and unmapped for the
-      // given source.
-      Set<String> mapped = new HashSet<String>();
-      Set<String> unmapped = new HashSet<String>();
-      Set<String> total = new HashSet<String>();
-      for (Text value : values) {
-        String[] tokens = value.toString().split("\\|");
-        total.add(tokens[0]);
-        if (tokens[1].equals("T"))
-          mapped.add(tokens[0]);
-        else 
-          unmapped.add(tokens[0]);
-      }
+    public static class SourceNounCountReducer 
+            extends Reducer<Text, Text, Text, Text> {
 
-      // Emite the total counts for each of the three categories of nouns.
-      String value = String.format(
-          "Total: %d, Mapped: %d, Unmapped: %d",
-          total.size(), mapped.size(), unmapped.size());
-      context.write(key, new Text(value));
+        /**
+         * Count the number of unique nouns for each document source.
+         */
+        @Override
+        public void reduce(Text key, Iterable<Text> values, Context context)
+                throws IOException, InterruptedException {
+            int pathCount = 0;
+            // Count the number of unique words observed, mapped, and unmapped
+            // for the given source.
+            Set<String> mapped = new HashSet<String>();
+            Set<String> unmapped = new HashSet<String>();
+            Set<String> total = new HashSet<String>();
+            for (Text value : values) {
+                String[] tokens = value.toString().split("\\|");
+                total.add(tokens[0]);
+                if (tokens[1].equals("T"))
+                    mapped.add(tokens[0]);
+                else 
+                    unmapped.add(tokens[0]);
+            }
+
+            // Emite the total counts for each of the three categories of nouns.
+            String value = String.format(
+                    "Total: %d, Mapped: %d, Unmapped: %d",
+                    total.size(), mapped.size(), unmapped.size());
+            context.write(key, new Text(value));
+        }
     }
-  }
 }
