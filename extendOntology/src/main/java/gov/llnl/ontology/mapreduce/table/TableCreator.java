@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Lawrence Livermore National Security, LLC. Produced at
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
  * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
  * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
  *
@@ -21,34 +21,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.llnl.ontology.util;
+package gov.llnl.ontology.mapreduce.table;
 
-import edu.ucla.sspace.util.Pair;
+import edu.ucla.sspace.util.ReflectionUtil;
 
 
 /**
- * A subclass of {@link Pair} for {@link String}s that allows for arrays of
- * these pairs.
+ * A simple class that create a particular {@link CorpusTable}.
  *
  * @author Keith Stevens
  */
-public class StringPair extends Pair<String> implements Comparable {
+public class TableCreator {
 
-    /**
-     * Constructs a new {@link StringPair}.
-     */
-    public StringPair(String x, String y) {
-        super(x, y);
-    }
-
-    /**
-     * Compares this {@link StringPair} to another {@link StringPair}.  Ordering
-     * is based first on the {@code x} value and then the {@code y} if there is
-     * a tie.
-     */
-    public int compareTo(Object o) {
-        StringPair other = (StringPair) o;
-        int diff = this.x.compareTo(other.x);
-        return (diff == 0) ? this.y.compareTo(other.y) : diff;
+    public static void main(String[] args) {
+        CorpusTable table = ReflectionUtil.getObjectInstance(args[0]);
+        table.createTable();
     }
 }
+

@@ -6,7 +6,7 @@
  * This file is part of the C-Cat package and is covered under the terms and
  * conditions therein.
  *
- * The S-Space package is free software: you can redistribute it and/or modify
+ * The C-Cat package is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation and distributed hereunder to you.
  *
@@ -28,6 +28,7 @@ import gov.llnl.ontology.text.Sentence;
 
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 
+import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -57,7 +58,19 @@ import java.util.List;
  *
  * @author Keith Stevens
  */
-public interface CorpusTable extends Iterator<Result> {
+public interface CorpusTable { 
+
+    /**
+     * Creates a new instance of the {@link HTable} represented by this {@link
+     * CorpusTable}
+     */
+    void createTable();
+
+    /**
+     * Creates a new instance of the {@link HTable} represented by this {@link
+     * CorpusTable}
+     */
+    void createTable(HConnection connector);
 
     /**
      * Initializes a {@link Scan} such that it will request whatever columns and
@@ -100,9 +113,14 @@ public interface CorpusTable extends Iterator<Result> {
     String text(Result row);
 
     /**
-     * Returns the document text stored in {@code row}.
+     * Returns the raw document text stored in {@code row}.
      */
     String textSource(Result row);
+
+    /**
+     * Returns the source corpus that this row contains.
+     */
+    String sourceCorpus(Result row);
 
     /**
      * Returns the {@link List} of {@link Sentence}s stored in {@code row}.
