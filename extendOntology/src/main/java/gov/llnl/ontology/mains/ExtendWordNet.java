@@ -69,6 +69,8 @@ import edu.ucla.sspace.vector.Vector;
 
 import org.apache.mahout.classifier.OnlineLearner;
 import org.apache.mahout.classifier.sgd.AdaptiveLogisticRegression;
+import org.apache.mahout.classifier.sgd.AdaptiveLogisticRegression.Wrapper;
+import org.apache.mahout.classifier.sgd.CrossFoldLearner;
 import org.apache.mahout.classifier.sgd.L1;
 import org.apache.mahout.classifier.sgd.OnlineLogisticRegression;
 
@@ -337,7 +339,7 @@ public class ExtendWordNet {
 
         // Get the best predictor for hypernyms from the trainer.  If no trainer
         // could be found, return false.
-        State<AdaptiveLogisticRegression.Wrapper> best = model.getBest();
+        State<Wrapper, CrossFoldLearner> best = model.getBest();
         if (best == null)
             return false;
         hypernymPredictor = best.getPayload().getLearner().getModels().get(0);

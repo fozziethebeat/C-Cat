@@ -32,6 +32,7 @@ import org.apache.hadoop.conf.Configuration;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -166,7 +167,7 @@ public class TrinidadTable implements CorpusTable {
      */
     public TrinidadTable() {
         try {
-            table = new HTable(new HBaseConfiguration(), TABLE_NAME);
+            table = new HTable(HBaseConfiguration.create(), TABLE_NAME);
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
@@ -176,9 +177,14 @@ public class TrinidadTable implements CorpusTable {
      * {@inheritDoc}
      */
     public void createTable() {
-        HBaseConfiguration conf = new HBaseConfiguration();
-        HConnection connector = HConnectionManager.getConnection(conf);
-        createTable(connector);
+        try {
+            Configuration conf = HBaseConfiguration.create();
+            HConnection connector = HConnectionManager.getConnection(conf);
+            createTable(connector);
+        } catch (org.apache.hadoop.hbase.ZooKeeperConnectionException zkce) {
+            zkce.printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
@@ -186,11 +192,13 @@ public class TrinidadTable implements CorpusTable {
      */
     public void createTable(HConnection connector) {
         try {
-            if (connector.tableExists(TABLE_NAME.getBytes()))
+            Configuration config = HBaseConfiguration.create();
+            HBaseAdmin admin = new HBaseAdmin(config);
+
+            // Do nothing if the table already exists.
+            if (admin.tableExists(TABLE_NAME)) 
                 return;
 
-            HBaseConfiguration config = new HBaseConfiguration();
-            HBaseAdmin admin = new HBaseAdmin(config);
             HTableDescriptor docDesc = new HTableDescriptor(TABLE_NAME);
             SchemaUtil.addDefaultColumnFamily(docDesc, SOURCE_CF);
             SchemaUtil.addDefaultColumnFamily(docDesc, TEXT_CF);
