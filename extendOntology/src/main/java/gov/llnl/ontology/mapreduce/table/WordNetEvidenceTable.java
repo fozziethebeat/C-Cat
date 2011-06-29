@@ -88,11 +88,6 @@ import java.util.Map;
 public class WordNetEvidenceTable implements EvidenceTable {
 
     /**
-     * The table name attributed to this schema.
-     */
-    public static final String tableName = "WordNetEvidence";
-
-    /**
      * table name for this schema
      */
     public static final String TABLE_NAME = "WordNetEvidence";
@@ -247,9 +242,13 @@ public class WordNetEvidenceTable implements EvidenceTable {
      * {@inheritDoc}
      */
     public void createTable() {
-        HBaseConfiguration conf = new HBaseConfiguration();
-        HConnection connector = HConnectionManager.getConnection(conf);
-        createTable(connector);
+        try {
+            Configuration conf = HBaseConfiguration.create();
+            HConnection connector = HConnectionManager.getConnection(conf);
+            createTable(connector);
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
 
     /**
@@ -257,17 +256,16 @@ public class WordNetEvidenceTable implements EvidenceTable {
      */
     public void createTable(HConnection connector) {
         try {
-            // Do nothing if the table already exists.
-            if (connector.tableExists(tableName.getBytes())) 
-                return;
-
             // Create configuration and admin classes.
-            HBaseConfiguration config = new HBaseConfiguration();
+            Configuration config = HBaseConfiguration.create();
             HBaseAdmin admin = new HBaseAdmin(config);
 
+            // Do nothing if the table already exists.
+            if (admin.tableExists(TABLE_NAME)) 
+                return;
+
             // Add the column families to the table.
-            HTableDescriptor evidenceDesc = new HTableDescriptor(
-                    tableName.getBytes());
+            HTableDescriptor evidenceDesc = new HTableDescriptor(TABLE_NAME);
             SchemaUtil.addDefaultColumnFamily(evidenceDesc,DEPENDENCY_FEATURE_CF);
             SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_COSINE_CF);
             SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_EUCLIDEAN_CF);
@@ -285,7 +283,7 @@ public class WordNetEvidenceTable implements EvidenceTable {
      */
     public HTable table() {
         try {
-            return new HTable(tableName);
+            return new HTable(TABLE_NAME);
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
