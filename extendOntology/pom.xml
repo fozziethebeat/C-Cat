@@ -12,7 +12,7 @@
     <junit.version>4.7</junit.version>
     <malt.version>1.5.1</malt.version>
     <hadoop.version>0.20.2</hadoop.version>
-    <hbase.version>0.90.1</hbase.version>
+    <hbase.version>0.90.2</hbase.version>
     <mahout.version>0.4</mahout.version>
     <cobertura.version>2.4</cobertura.version> 
     <sspace.version>2.0</sspace.version>
@@ -160,6 +160,14 @@
   </repositories>
  
   <build>
+    <resources>
+        <resource>
+            <directory>${env.HADOOP_HOME}/conf</directory>
+        </resource>
+        <resource>
+            <directory>${env.HBASE_HOME}/conf</directory>
+        </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
