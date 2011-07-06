@@ -129,7 +129,7 @@ public class TrinidadTable implements CorpusTable {
     /**
      * The column qualifier for the cleaned document text.
      */
-    public static final String TEXT_RAW = "text";
+    public static final String TEXT_RAW = "raw";
     
     /**
      * The full column qualifier for the cleaned document text.
@@ -159,18 +159,14 @@ public class TrinidadTable implements CorpusTable {
     /**
      * A connection to the {@link HTable}.
      */
-    private final HTable table;
+    private HTable table;
 
     /**
      * Creates a new {@link TrinidadTable} that uses the default {@lin
      * HBaseConfiguration}.
      */
     public TrinidadTable() {
-        try {
-            table = new HTable(HBaseConfiguration.create(), TABLE_NAME);
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+        table = null;
     }
 
     /**
@@ -249,6 +245,11 @@ public class TrinidadTable implements CorpusTable {
      * {@inheritDoc}
      */
     public HTable table() {
+        try {
+            table = new HTable(HBaseConfiguration.create(), TABLE_NAME);
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
         return table;
     }
 
@@ -288,6 +289,7 @@ public class TrinidadTable implements CorpusTable {
         Put put = new Put(DigestUtils.shaHex(document.key()).getBytes());
         SchemaUtil.add(put, SOURCE_CF, SOURCE_NAME, document.sourceCorpus());
         SchemaUtil.add(put, TEXT_CF, TEXT_ORIGINAL, document.originalText());
+        SchemaUtil.add(put, TEXT_CF, TEXT_RAW, document.rawText());
         SchemaUtil.add(put, TEXT_CF, TEXT_TITLE, document.title());
         SchemaUtil.add(put, TEXT_CF, TEXT_TYPE, XML_MIME_TYPE);
         
@@ -330,6 +332,7 @@ public class TrinidadTable implements CorpusTable {
      */
     public void close() {
         try {
+            table.flushCommits();
             table.close();
         } catch (IOException ioe) {
             throw new IOError(ioe);

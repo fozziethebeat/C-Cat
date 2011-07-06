@@ -23,12 +23,16 @@
 
 package gov.llnl.ontology.mapreduce.table;
 
+import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
 import gov.llnl.ontology.util.Counter;
+import gov.llnl.ontology.util.StringPair;
 
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
 
 /**
@@ -53,24 +57,55 @@ import org.apache.hadoop.hbase.client.Result;
 public interface EvidenceTable {
 
     /**
+     * Initializes the {@link Scan} that will traverse over this {@link
+     * EvidenceTable} so that it will acquire information from all corpora.
+     */
+    void setupScan(Scan scan);
+
+    /**
+     * Initializes the {@link Scan} that will traverse over this {@link
+     * EvidenceTable} so that it will only acquire information from the
+     * specified {@link corpusName}.
+     */
+    void setupScan(Scan scan, String corpusName);
+
+    /**
+     * Returns a {@link StringPair} for the noun pair held in the given {@link
+     * Result}.
+     */
+    StringPair nounPair(Result row);
+
+    /**
      * Returns a new map that contains all of the dependency
      * path counts, regardless of their source.
      */
     Counter<String> getDependencyPaths(Result row);
 
     /**
-     * Stores the dependency path counts gathred from the {@link source} corpus
-     * using the provided {@link Put} object.
-     */
-    void storeDependencyPaths(Put put,
-                              String source,
-                              Counter<String> pathCounts);
-
-    /**
      * Returns a map that contains all of the dependency paths
      * associated with a single noun pair.
      */
     Counter<String> getDependencyPaths(Result row, String source);
+
+    /**
+     * Stores the dependency path counts gathred from the {@link source} corpus
+     * using the provided {@link Put} object.
+     */
+    void putDependencyPaths(String word1, String word2,
+                            String source,
+                            Counter<String> pathCounts);
+
+    /**
+     * Retrieves the {@link HypernymStatus} for the given {@link Result}.  The
+     * status will be the same across all corpora.
+     */
+    HypernymStatus getHypernymStatus(Result row);
+
+    /**
+     * Stores the {@link HypernymStatus} using the given {@link key}.  The
+     * status will be the same across all corpora.
+     */
+    void putHypernymStatus(ImmutableBytesWritable key, HypernymStatus status);
 
     /**
      * Returns the string name of the HBase table.
@@ -138,4 +173,9 @@ public interface EvidenceTable {
      * {@link HConnection}.
      */
     void createTable(HConnection connector);
+
+    /**
+     * Closes any information regarding this table.
+     */
+    void close();
 }

@@ -789,7 +789,7 @@ public class WordNetCorpusReader implements OntologyReader {
      * base directory of the jar.
      */
     public static WordNetCorpusReader initialize(String dictPath,
-                                                                                             boolean readFromJar) {
+                                                 boolean readFromJar) {
         if (corpusReader == null)
             corpusReader = new WordNetCorpusReader(dictPath, readFromJar);
         return corpusReader;

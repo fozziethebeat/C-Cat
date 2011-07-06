@@ -12,6 +12,7 @@
     <junit.version>4.7</junit.version>
     <malt.version>1.5.1</malt.version>
     <hadoop.version>0.20.2</hadoop.version>
+    <maprfs.version>0.1</maprfs.version>
     <hbase.version>0.90.2</hbase.version>
     <mahout.version>0.5</mahout.version>
     <cobertura.version>2.4</cobertura.version> 
@@ -20,6 +21,7 @@
     <stanford.version>2010-11-12</stanford.version>
     <text.version>1.5.2</text.version>
     <logging.version>1.1.1</logging.version>
+    <liblinear.version>1.7</liblinear.version>
     <opennlp.version>1.5.1-incubating</opennlp.version>
   </properties>
 
@@ -73,6 +75,11 @@
     </dependency>
     -->
     <dependency>
+      <groupId>com.maprfs</groupId>
+      <artifactId>maprfs</artifactId>
+      <version>${maprfs.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
       <version>${hbase.version}</version>
@@ -86,6 +93,11 @@
       <groupId>org.maltparser</groupId>
       <artifactId>maltparser</artifactId>
       <version>${malt.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>lib.linear</groupId>
+      <artifactId>liblinear</artifactId>
+      <version>${liblinear.version}</version>
     </dependency>
   </dependencies>
 
@@ -166,6 +178,18 @@
         </resource>
         <resource>
             <directory>${env.HBASE_HOME}/conf</directory>
+        </resource>
+        <resource>
+            <directory>${env.MAPR_HOME}/conf</directory>
+        </resource>
+        <resource>
+            <directory>data</directory>
+        </resource>
+        <resource>
+            <directory>.</directory>
+            <includes>
+                <include>engmalt.linear.mco</include>
+            </includes>
         </resource>
     </resources>
     <plugins>

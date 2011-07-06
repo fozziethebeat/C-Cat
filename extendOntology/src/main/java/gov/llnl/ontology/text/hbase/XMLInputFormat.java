@@ -95,12 +95,11 @@ public class XMLInputFormat
      * Returns a {@link List} of {@link FileSplit}s.  Each {@link FileSplit}
      * will be a gzipped tarball of xml documents.  Each tarred file should
      * contain a single document.
-     */
     public List<InputSplit> getSplits(JobContext context) throws IOException {
         List<InputSplit> splits = new ArrayList<InputSplit>();
 
-        // Get the list of zipped files to be processed and add each zipped file
-        // as an InputSplit.
+        // Get the list of xml files to be processed and add each file as an
+        // InputSplit.
         FileSystem fs = FileSystem.get(context.getConfiguration());
         for (Path file : getInputPaths(context)) {
             // Check that the file exists.  Throw an exception if it does not.
@@ -113,6 +112,7 @@ public class XMLInputFormat
         }
         return splits;
     }
+     */
 
     /**
      * A {@link RecordReader} for processing gzipped tarballs of document files.
@@ -177,7 +177,7 @@ public class XMLInputFormat
             // Get the xml document delmiters for this xml file.
             Configuration config = context.getConfiguration();
             startTag = ("<" + config.get(DELIMITER_TAG)).getBytes();
-            endTag = ("</" + config.get(DELIMITER_TAG)).getBytes();
+            endTag = ("</" + config.get(DELIMITER_TAG) + ">").getBytes();
 
             // Get the file stream for the xml file.
             FileSplit split = (FileSplit) isplit;

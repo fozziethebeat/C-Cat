@@ -23,6 +23,7 @@
 
 package gov.llnl.ontology.mapreduce.ingest;
 
+import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 
 import gov.llnl.ontology.text.Sentence;
@@ -31,9 +32,7 @@ import gov.llnl.ontology.util.MRArgOptions;
 
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SpanAnnotation;
-
 import edu.stanford.nlp.pipeline.Annotation;
-
 import edu.stanford.nlp.util.IntPair;
 
 import edu.ucla.sspace.util.ReflectionUtil;
@@ -44,24 +43,12 @@ import opennlp.tools.postag.POSTagger;
 import opennlp.tools.util.Span;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
-
-import org.apache.hadoop.mapreduce.Job;
-
-import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
 import org.apache.hadoop.hbase.HBaseConfiguration;
-
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
-
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-
-import org.apache.hadoop.hbase.mapreduce.IdentityTableReducer;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 
 import java.io.IOException;
 
@@ -70,21 +57,26 @@ import java.util.List;
 
 
 /**
+ * This Map Reduce job iterates over rows in a {@link CorpusTable} and
+ * applies sentence spans, token spans, and part of speech tags to every
+ * element in the raw text document.
+ *
+ * </p> 
+ *
+ * This class requires that the following types of objects be specified by the
+ * command line:
+ * <ul>
+ *   <li>{@link CorpusTable}: Controls access to the document table.</li>
+ *   <li>{@link SentenceDetector}: Splits documents up in to a series of
+ *       sentences.</li>
+ *   <li>{@link Tokenizer}: Tokenizes words in a sentence.</li>
+ *   <li>{@link POSTagger}: Applies Part of Speech tags to words in a
+ *       sentence.</li>
+ * </ul>
+ *
  * @author Keith Stevens
  */
-public class IngestCorpusMR extends Configured implements Tool {
-
-    /**
-     * The configuration key prefix.
-     */
-    public static String CONF_PREFIX =
-        "gov.llnl.ontology.mapreduce.ingest.IngestCorpusMR";
-
-    /**
-     * The configuration key for setting the {@link CorpusTable}.
-     */
-    public static String TABLE =
-        CONF_PREFIX + ".corpusTable";
+public class IngestCorpusMR extends CorpusTableMR {
 
     /**
      * The configuration key for setting the {@link Tokenizer}.
@@ -108,16 +100,13 @@ public class IngestCorpusMR extends Configured implements Tool {
      * Runs the {@link IngestCorpusMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(new Configuration(), new IngestCorpusMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(), new IngestCorpusMR(), args);
     }
 
     /**
      * {@inheritDoc}
      */
-    public int run(String[] args)
-            throws IOException, InterruptedException, ClassNotFoundException {
-        // Setup the main arguments used.
-        MRArgOptions options = new MRArgOptions();
+    protected void addOptions(MRArgOptions options) {
         options.addOption('s', "sentenceDetector",
                           "Specifies the SentenceDetector to use for " +
                           "splitting sentences.",
@@ -130,55 +119,40 @@ public class IngestCorpusMR extends Configured implements Tool {
                           "Specifies the POSTagger to use for " +
                           "tagging tokens with pos.",
                           true, "CLASSNAME", "Required");
+    }
 
-        // Parse and validate the arguments.
-        options.parseOptions(args);
-        if (!options.hasOption('s') ||
-            !options.hasOption('t') ||
-            !options.hasOption('p')) {
-            System.err.println("usage: java IngestCorpusMR [OPTIONS]\n" +
-                               options.prettyPrint());
-            System.exit(1);
-        }
+    /**
+     * {@inheritDoc}
+     */
+    protected boolean validOptions(MRArgOptions options) {
+        return options.hasOption('s') &&
+               options.hasOption('t') &&
+               options.hasOption('p');
+    }
 
-        // Setup the configuration so that the mappers know which classes to
-        // use.
-        Configuration conf = new HBaseConfiguration();
-        conf.set(TABLE, options.corpusTableType());
+    /**
+     * {@inheritDoc}
+     */
+    protected void setupConfiguration(MRArgOptions options, 
+                                      Configuration conf) {
         conf.set(TOKENIZER, options.getStringOption('t'));
         conf.set(TAGGER, options.getStringOption('p'));
         conf.set(SENTENCE_DETECTOR, options.getStringOption('s'));
-
-        // Create the corpus table and setup the scan.
-        CorpusTable table = options.corpusTable();
-        Scan scan = new Scan();
-        table.setupScan(scan, options.sourceCorpus(), false);
-
-        // Create the job and set the jar.
-        Job job = new Job(conf, "Ingest Corpus");
-        job.setJarByClass(IngestCorpusMR.class);
-
-        // Setup the mapper class.
-        TableMapReduceUtil.initTableMapperJob(table.tableName(),
-                                              scan, 
-                                              IngestCorpusMapper.class,
-                                              ImmutableBytesWritable.class,
-                                              Put.class,
-                                              job);
-
-        // Setup an empty reducer.
-        TableMapReduceUtil.initTableReducerJob(table.tableName(), 
-                                               IdentityTableReducer.class, 
-                                               job);
-        job.setNumReduceTasks(0);
-
-        // Run the job.
-        job.waitForCompletion(true);
-
-        return 0;
     }
 
-    public class IngestCorpusMapper
+    /**
+     * {@inheritDoc}
+     */
+    protected Class mapperClass() {
+        return IngestCorpusMapper.class;
+    }
+
+    /**
+     * This {@link TableMapper} iterates over rows in a {@link CorpusTable} and
+     * applies sentence spans, token spans, and part of speech tags to every
+     * element in the raw text document.
+     */
+    public static class IngestCorpusMapper
             extends TableMapper<ImmutableBytesWritable, Put> {
 
         /**
@@ -210,10 +184,11 @@ public class IngestCorpusMR extends Configured implements Tool {
         public void setup(Context context) {
             Configuration conf = context.getConfiguration();
             table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
+            table.table();
             sentenceDetector = ReflectionUtil.getObjectInstance(
                     conf.get(SENTENCE_DETECTOR));;
             tokenizer = ReflectionUtil.getObjectInstance(conf.get(TOKENIZER));
-            tagger = ReflectionUtil.getObjectInstance(conf.get(TABLE));
+            tagger = ReflectionUtil.getObjectInstance(conf.get(TAGGER));
         }
 
         /**
@@ -228,6 +203,10 @@ public class IngestCorpusMR extends Configured implements Tool {
 
             // Extract the document text for easeier use.
             String docText = table.text(row);
+
+            // Skip any rows that have no raw text.
+            if (docText == null)
+                return;
 
             // Extract the sentence spans found within this document.  For each
             // sentence, we will add a Sentence annotation and then add token
@@ -263,10 +242,20 @@ public class IngestCorpusMR extends Configured implements Tool {
                     sentAnnotation.addAnnotation(i, wordAnnotation);
                 }
                 sentenceAnnotations.add(sentAnnotation);
+
+                context.getCounter("IngestCorpusMR", "Sentences").increment(1);
             }
 
             // Add the list of Sentence annotations.
             table.put(key, sentenceAnnotations);
+            context.getCounter("IngestCorpusMR", "Annotations").increment(1);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        protected void cleanup(Context context) {
+            table.close();
         }
     }
 }
