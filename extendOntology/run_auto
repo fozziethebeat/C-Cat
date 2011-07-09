@@ -1,8 +1,0 @@
-#! /bin/bash
-
-for jar in lib/*.jar; do export cp=$cp:$jar; done
-
-
-ant wordnet &&
-
-java -cp build:$cp -Xmx1g gov.llnl.ontology.wordnet.castanet.Autosummary test-docs/ data/english-stop-words-large.txt
