@@ -226,5 +226,12 @@ public class ImportCorpusMR extends Configured implements Tool {
             table.put(reader.readDocument(value.toString()));
             context.getCounter("ImportCorpusMR", "Documents").increment(1);
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        protected void cleanup(Context context) {
+            table.close();
+        }
     }
 }

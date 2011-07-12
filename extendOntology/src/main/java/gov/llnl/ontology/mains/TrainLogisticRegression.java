@@ -46,7 +46,6 @@ import org.apache.mahout.classifier.sgd.OnlineLogisticRegression;
 import org.apache.mahout.ep.State;
 
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 
 import java.io.File;
@@ -85,7 +84,6 @@ public class TrainLogisticRegression {
         EvidenceTable table = options.evidenceTable();
         Scan scan = new Scan();
         table.setupScan(scan, options.sourceCorpus());
-        ResultScanner scanner = table.table().getScanner(scan);
 
         StringBasisMapping basis = SerializableUtil.load(new File(
                     options.getStringOption('b')));
@@ -97,7 +95,7 @@ public class TrainLogisticRegression {
 
         int numPasses = options.getIntOption('n');
         for (int i = 0; i < numPasses; ++i) {
-            Iterator<Result> resultIter = scanner.iterator();
+            Iterator<Result> resultIter = table.iterator(scan);
             while (resultIter.hasNext()) {
                 Result row = resultIter.next();
 

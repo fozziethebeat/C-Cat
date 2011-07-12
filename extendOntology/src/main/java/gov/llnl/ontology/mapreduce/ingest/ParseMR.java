@@ -37,6 +37,8 @@ import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -70,6 +72,11 @@ import java.util.List;
 public class ParseMR extends CorpusTableMR {
 
     /**
+     * Acquire the logger for this class.
+     */
+    private static final Log LOG = LogFactory.getLog(ParseMR.class);
+
+    /**
      * The configuration key for setting the {@link Tokenizer}.
      */
     public static String PARSER =
@@ -79,7 +86,7 @@ public class ParseMR extends CorpusTableMR {
      * Runs the {@link IngestCorpusMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(HBaseConfiguration.create(), new IngestCorpusMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(), new ParseMR(), args);
     }
 
     /**
@@ -117,7 +124,7 @@ public class ParseMR extends CorpusTableMR {
     /**
      * This {@link TableMapper} does all of the work.
      */
-    public class ParseMapper 
+    public static class ParseMapper 
             extends TableMapper<ImmutableBytesWritable, Put> {
 
         /**
@@ -136,7 +143,10 @@ public class ParseMR extends CorpusTableMR {
          */
         public void setup(Context context) {
             Configuration conf = context.getConfiguration();
+            conf.set("mapred.map.child.java.opts", "-Xmx8g");
+            conf.set("mapred.tasktracker.map.tasks.maximum", "1");
             table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
+            table.table();
             parser = ReflectionUtil.getObjectInstance(conf.get(PARSER));
         }
 
@@ -154,10 +164,24 @@ public class ParseMR extends CorpusTableMR {
             // dependency parse annotations to each token in the sentence
             // annotation.
             List<Sentence> sentences = table.sentences(row);
+
+            // Skip any documents without sentences.
+            if (sentences == null)
+                return;
+
             for (Sentence sentence : sentences) {
+                // Skip any sentences which have already been parsed.  We can
+                // detect this simply by trying to build a dependency parse tree
+                // for each sentence and checking the length.  The non parsed
+                // sentences always have a tree length of 0.
+                if (sentence.dependencyParseTree().length > 0)
+                    continue;
+
+                LOG.info("Parseing sentence of length: " + 
+                         sentence.taggedTokens().length);
                 // Get the dependency parse tree.
                 String parsedSentence = parser.parseText(
-                        "", sentence.taggedTokens());
+                        null, sentence.taggedTokens());
                 context.getCounter("ParseMR", "Parsed Sentence").increment(1);
 
                 // Split the parse tree into each line for each token and add
@@ -177,6 +201,13 @@ public class ParseMR extends CorpusTableMR {
             // Add the list of Sentence annotations.
             table.put(key, sentences);
             context.getCounter("ParseMR", "Annotation").increment(1);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        protected void cleanup(Context context) {
+            table.close();
         }
     }
 }

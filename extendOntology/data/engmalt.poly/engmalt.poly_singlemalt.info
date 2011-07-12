@@ -1,0 +1,113 @@
+CONFIGURATION
+Configuration name:   engmalt.poly
+Configuration type:   singlemalt
+Created:              Wed Apr 13 12:59:46 CEST 2011
+
+SYSTEM
+Operating system architecture: amd64
+Operating system name:         Linux
+JRE vendor name:               Sun Microsystems Inc.
+JRE version number:            1.6.0_20
+
+MALTPARSER
+Version:                       1.5
+Build date:                    April 12 2011
+
+SETTINGS
+2planar
+  reduceonswitch (-2pr)                 false
+  planar_root_handling (-prh)           normal
+analyzer
+  task ( -at)                           projectivity
+config
+  workingdir (  -w)                     user.dir
+  name (  -c)                           engmalt.poly
+  logging ( -cl)                        info
+  flowchart (  -m)                      learn
+  type (  -t)                           singlemalt
+  logfile (-lfi)                        stdout
+  url (  -u)                            
+covington
+  allow_root ( -cr)                     true
+  allow_shift ( -cs)                    false
+graph
+  max_sentence_length (-gsl)            256
+  head_rules (-ghr)                     
+  root_label (-grl)                     ROOT
+guide
+  decision_settings (-gds)              T.TRANS+A.DEPREL
+  kbest_type ( -kt)                     rank
+  data_split_structure (  -s)           Stack[0]
+  learner (  -l)                        libsvm
+  kbest (  -k)                          -1
+  features (  -F)                       /bubo/home/h19/rajohhal/glob/run/engmalt/poly/eng-libsvm.xml
+  classitem_separator (-gcs)            ~
+  data_split_column (  -d)              POSTAG
+  data_split_threshold (  -T)           1000
+input
+  infile (  -i)                         /bubo/home/h19/rajohhal/proj/data/penn/engmalt/training/WSJ02-21+QB.basic.conll
+  reader ( -ir)                         tab
+  iterations ( -it)                     1
+  charset ( -ic)                        UTF-8
+  reader_options (-iro)                 
+  format ( -if)                         /appdata/dataformat/conllx.xml
+lib
+  save_instance_files ( -li)            false
+  external ( -lx)                       /home/rajohhal/proj/tools/ml/libsvm/libsvm-2.91/svm-train
+  verbosity ( -lv)                      silent
+  options ( -lo)                        
+nivre
+  root_handling (  -r)                  normal
+output
+  charset ( -oc)                        UTF-8
+  writer_options (-owo)                 
+  format ( -of)                         
+  writer ( -ow)                         tab
+  outfile (  -o)                        
+planar
+  no_covered_roots (-pcov)               false
+  connectedness (-pcon)                  none
+  acyclicity (-pacy)                     true
+pproj
+  covered_root (-pcr)                   none
+  marking_strategy ( -pp)               none
+  lifting_order (-plo)                  shortest
+singlemalt
+  parsing_algorithm (  -a)              stackproj
+  null_value ( -nv)                     one
+  guide_model ( -gm)                    single
+  propagation ( -fp)                    
+  diagnostics ( -di)                    false
+  use_partial_tree ( -up)               false
+  diafile (-dif)                        stdout
+  mode ( -sm)                           parse
+
+DEPENDENCIES
+--guide-features (  -F)                 eng-libsvm.xml
+
+FEATURE MODEL
+MAIN
+InputColumn(FORM,Lookahead[0])
+InputColumn(FORM,Lookahead[1])
+InputColumn(FORM,Stack[0])
+InputColumn(FORM,Stack[1])
+InputColumn(FORM,Stack[2])
+InputColumn(FORM,ldep(Stack[0]))
+InputColumn(FORM,rdep(Stack[1]))
+InputColumn(POSTAG,Lookahead[0])
+InputColumn(POSTAG,Lookahead[1])
+InputColumn(POSTAG,Lookahead[2])
+InputColumn(POSTAG,Stack[0])
+InputColumn(POSTAG,Stack[1])
+InputColumn(POSTAG,Stack[2])
+InputColumn(POSTAG,Stack[3])
+InputColumn(POSTAG,ldep(Stack[0]))
+InputColumn(POSTAG,ldep(Stack[1]))
+InputColumn(POSTAG,rdep(Stack[0]))
+InputColumn(POSTAG,rdep(Stack[1]))
+OutputColumn(DEPREL,Input[0])
+OutputColumn(DEPREL,ldep(Stack[0]))
+OutputColumn(DEPREL,rdep(Stack[1]))
+
+libsvm INTERFACE
+-s 0 -t 1 -d 2 -g 0.2 -r 0.0 -n 0.5 -m 100 -c 1.0 -e 1.0 -p 0.1 -h 1 -b 0 

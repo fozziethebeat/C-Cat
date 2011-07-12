@@ -22,6 +22,7 @@
     <text.version>1.5.2</text.version>
     <logging.version>1.1.1</logging.version>
     <liblinear.version>1.7</liblinear.version>
+    <libsvm.version>1.0</libsvm.version>
     <opennlp.version>1.5.1-incubating</opennlp.version>
   </properties>
 
@@ -98,6 +99,11 @@
       <groupId>lib.linear</groupId>
       <artifactId>liblinear</artifactId>
       <version>${liblinear.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>lib.svm</groupId>
+      <artifactId>libsvm</artifactId>
+      <version>${libsvm.version}</version>
     </dependency>
   </dependencies>
 
@@ -186,10 +192,7 @@
             <directory>data</directory>
         </resource>
         <resource>
-            <directory>.</directory>
-            <includes>
-                <include>engmalt.linear.mco</include>
-            </includes>
+            <directory>engmalt.linear</directory>
         </resource>
     </resources>
     <plugins>

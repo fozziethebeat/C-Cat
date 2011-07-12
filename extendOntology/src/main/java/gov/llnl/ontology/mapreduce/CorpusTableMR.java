@@ -110,7 +110,7 @@ public abstract class CorpusTableMR extends Configured implements Tool {
         LOG.info("Parse Options");
         options.parseOptions(args);
         if (!validOptions(options)) {
-            System.err.println("usage: java IngestCorpusMR [OPTIONS]\n" +
+            System.err.println("usage: java JobNameMR [OPTIONS]\n" +
                                options.prettyPrint());
             System.exit(1);
         }
@@ -125,7 +125,7 @@ public abstract class CorpusTableMR extends Configured implements Tool {
         LOG.info("Setup Table Scan");
         CorpusTable table = options.corpusTable();
         Scan scan = new Scan();
-        table.setupScan(scan, options.sourceCorpus(), true);
+        table.setupScan(scan, options.sourceCorpus());
 
         // Create the job and set the jar.
         LOG.info("Setup Job");

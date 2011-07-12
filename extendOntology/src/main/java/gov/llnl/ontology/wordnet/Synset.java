@@ -397,6 +397,12 @@ public interface Synset {
     Set<String> getKnownRelationTypes();
 
     /**
+     * Returns the set of all {@link Synset}s that are connected to this {@link
+     * Synset}, regardless of the relation type.
+     */
+    Set<Synset> allRelations();
+
+    /**
      * Returns the set of {@link Synset}s that are connected to this {@link
      * Synset} through the specified {@code relation} string.
      */

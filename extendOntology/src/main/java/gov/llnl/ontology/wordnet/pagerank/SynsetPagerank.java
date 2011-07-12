@@ -94,7 +94,7 @@ public class SynsetPagerank {
      *         mapping for an outward link in {@code synset}
      */
     public static void setTransitionAttribute(Synset synset,
-                                                                                        Map<Synset, Integer> synsetMap) {
+                                              Map<Synset, Integer> synsetMap) {
         double numRelations = synset.getNumRelations();
 
         // Create the set of transition probabilities for this synset.
@@ -124,9 +124,9 @@ public class SynsetPagerank {
      *         mapping for an outward link in any {@link Synset}
      */
     public static void setupTransitionAttributes(List<Synset> synsetList,
-                                                                                             Map<Synset, Integer> synsetMap) {
+                                                 Map<Synset, Integer> synsetMap) {
         for (Synset synset : synsetList) 
-            setTransitionAttribute (synset, synsetMap);
+            setTransitionAttribute(synset, synsetMap);
     }
 
     /**

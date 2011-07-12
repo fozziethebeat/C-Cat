@@ -395,7 +395,7 @@ public class BaseSynset implements Synset {
         StringBuilder sb = new StringBuilder();
         sb.append(getDefinition());
         for (String example : examples)
-            sb.append(";").append(" \"").append(example).append("\" ");
+            sb.append(" ; ").append(" \"").append(example).append("\" ");
         return sb.toString();
     }
 

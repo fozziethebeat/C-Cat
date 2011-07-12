@@ -44,48 +44,13 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import java.io.IOError;
 import java.io.IOException;
 
+import java.util.Iterator;
 import java.util.Map;
 
 
 /**
  * This class documents the schema of the WordNet Evidence table.  Only word
  * pairs where both terms exist in word net should be entered into the table.
- *
- * </br>
- *
- * Table name:
- * <ul>
- * <li>WordNetEvidence</li>
- * </ul>
- * 
- * Key format:
- * <ul>
- * <li>term|term</li>
- * <ul>
- *
- * Column Families:
- * <ul>
- * <li>features</li>
- * <li>class</li>
- * <li>similarity_cluster</li>
- * <li>similarity_cosine</li>
- * <li>similarity_euclidean</li>
- * <li>similarity_kl_divergence</li>
- * <li>similarity_lin</li>
- * </ul>
- *
- * Column identifiers: (in the format CF:id)
- * <ul>
- * <li>features:DependencyFeatures</li>
- * <li>class:hypernymStatusEvidence</li>
- * <li>class:cousinEvidence</li>
- * <li>similarity_cluster:lsh</li>
- * <li>similarity_cosine:hal</li>
- * </ul>
- *
- * All similarity scores are stored as doubles if the word pair exists in a
- * semantic space algorithm, or as an {@code NaN} if the word pair does not
- * exist.
  *
  * @author Keith Stevens
  */
@@ -117,7 +82,7 @@ public class WordNetEvidenceTable implements EvidenceTable {
      * based on the source of the corpus for each dependency feature.
      */
     public static final String DEPENDENCY_FEATURE_CF =
-            "dependencyFeatures";
+        "dependencyFeatures";
 
     /**
      * The column family name for the class family.
@@ -145,6 +110,10 @@ public class WordNetEvidenceTable implements EvidenceTable {
      */
     public static final String COUSIN_EVIDENCE = "cousinEvidence";
 
+    /**
+     * The column family name for any similarity measurements between two noun
+     * pairs.
+     */
     public static final String SIMILARITY_CF = "similarity";
 
     /**
@@ -190,6 +159,9 @@ public class WordNetEvidenceTable implements EvidenceTable {
     public static final String DEPENDENCY_PATH_ANNOTATION_NAME =
         "DependencyPathCounts";
 
+    /**
+     * The underlying {@link HTable}.
+     */
     private HTable table;
 
     /**
@@ -197,13 +169,6 @@ public class WordNetEvidenceTable implements EvidenceTable {
      */
     public String tableName() {
         return TABLE_NAME;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public byte[] tableNameBytes() {
-        return TABLE_NAME.getBytes();
     }
 
     /**
@@ -318,6 +283,17 @@ public class WordNetEvidenceTable implements EvidenceTable {
                            corpusName.getBytes());
         scan.addFamily(CLASS_CF.getBytes());
         scan.addFamily(NOUN_PAIR_CF.getBytes());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Iterator<Result> iterator(Scan scan) {
+        try {
+            return table.getScanner(scan).iterator();
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
 
     /**

@@ -96,6 +96,10 @@ public class Sentence extends Annotation
      * token in the {@link Sentence}.
      */
     public DependencyTreeNode[] dependencyParseTree() {
+        if (tokenAnnotations.length == 0 ||
+            !tokenAnnotations[0].has(CoNLLDepParentIndexAnnotation.class))
+            return new DependencyTreeNode[0];
+
         // Initialize the dependency tree nodes for each token with it's
         // term and part of speech.
         SimpleDependencyTreeNode[] nodes =

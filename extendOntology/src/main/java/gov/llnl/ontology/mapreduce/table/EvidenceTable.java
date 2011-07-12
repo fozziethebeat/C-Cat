@@ -54,20 +54,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  *
  * @author Keith Stevens
  */
-public interface EvidenceTable {
-
-    /**
-     * Initializes the {@link Scan} that will traverse over this {@link
-     * EvidenceTable} so that it will acquire information from all corpora.
-     */
-    void setupScan(Scan scan);
-
-    /**
-     * Initializes the {@link Scan} that will traverse over this {@link
-     * EvidenceTable} so that it will only acquire information from the
-     * specified {@link corpusName}.
-     */
-    void setupScan(Scan scan, String corpusName);
+public interface EvidenceTable extends GenericTable {
 
     /**
      * Returns a {@link StringPair} for the noun pair held in the given {@link
@@ -108,16 +95,6 @@ public interface EvidenceTable {
     void putHypernymStatus(ImmutableBytesWritable key, HypernymStatus status);
 
     /**
-     * Returns the string name of the HBase table.
-     */
-    String tableName();
-
-    /**
-     * Returns the name of the HBase table as a byte array.
-     */
-    byte[] tableNameBytes();
-
-    /**
      * Returns the string name of the dependency path column family.
      */
     String dependencyColumnFamily();
@@ -156,26 +133,4 @@ public interface EvidenceTable {
      * Returns the column name for cousin class labels as a byte array.
      */
     byte[] cousinColumnBytes();
-
-    /**
-     * Creates a new {@link HTable} connection.
-     */
-    HTable table();
-
-    /**
-     * Creates a new instance of this {@link EvidenceTable} using the default
-     * HBase connection.
-     */
-    void createTable();
-
-    /**
-     * Creates a new instance of this {@link EvidenceTable} using the given
-     * {@link HConnection}.
-     */
-    void createTable(HConnection connector);
-
-    /**
-     * Closes any information regarding this table.
-     */
-    void close();
 }

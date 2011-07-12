@@ -20,6 +20,10 @@ mvn install:install-file -DgroupId=org.maltparser -DartifactId=maltparser \
 mvn install:install-file -DgroupId=lib.linear -DartifactId=liblinear \
 -Dversion=1.7 -Dpackaging=jar -Dfile=lib/liblinear-1.7-with-deps.jar
 
+# Add libsvm 1.0 (Not in trunk yet)
+mvn install:install-file -DgroupId=lib.svm -DartifactId=libsvm \
+-Dversion=1.0 -Dpackaging=jar -Dfile=lib/libsvm.jar
+
 # Add map 0.1 (Not in trunk yet)
 mvn install:install-file -DgroupId=com.maprfs -DartifactId=maprfs \
 -Dversion=0.1 -Dpackaging=jar -Dfile=lib/maprfs-0.1.jar

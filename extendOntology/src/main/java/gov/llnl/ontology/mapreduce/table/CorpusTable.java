@@ -58,54 +58,7 @@ import java.util.List;
  *
  * @author Keith Stevens
  */
-public interface CorpusTable { 
-
-    /**
-     * Creates a new instance of the {@link HTable} represented by this {@link
-     * CorpusTable}
-     */
-    void createTable();
-
-    /**
-     * Creates a new instance of the {@link HTable} represented by this {@link
-     * CorpusTable}
-     */
-    void createTable(HConnection connector);
-
-    /**
-     * Initializes a {@link Scan} such that it will request whatever columns and
-     * column families are neccesary for extracting the raw document text,
-     * dependency trees, and document source information.    This method will
-     * only be called once per job.
-     */
-    void setupScan(Scan scan);
-
-    /**
-     * Initializes a {@link Scan} such that it will request columns and
-     * column families are neccesary for extracting the raw document text,
-     * dependency trees, and document source information from the specified
-     * {@code corpusName}.  Dependency parse columns will only be scanned if
-     * {@code getDepParse} is true.  This method will only be called once per
-     * job.
-     */
-    void setupScan(Scan scan, String corpusName, boolean getDepParse);
-
-    /**
-     * Returns an iterator over all of the rows accessible from this {@link
-     * DocumentReader}.
-     */
-    Iterator<Result> iterator(Scan scan);
-
-    /**
-     * Returns the name of the HBase Table that this {@link DocumentReader}
-     * reads from.
-     */
-    String tableName();
-
-    /**
-     * Returns the {@lin HTable} instance attached to this {@link CorpusTable}.
-     */
-    HTable table();
+public interface CorpusTable extends GenericTable { 
 
     /**
      * Returns the cleaned text stored by the given {@code row}.
@@ -142,6 +95,20 @@ public interface CorpusTable {
     void put(ImmutableBytesWritable key, List<Sentence> sentences);
 
     /**
+     * Stores the {@code labelValue} in the column specified by {@code
+     * labelName} in the row index by {@code key}.
+     */
+    void putLabel(ImmutableBytesWritable key, 
+                  String labelName,
+                  String labelValue);
+
+    /**
+     * Returns the label associated with column {@code labelName} inside of
+     * {@code row}.
+     */
+    String getLabel(Result row, String labelName);
+
+    /**
      * Returns true if the given {@code row} should be processed.
      */
     boolean shouldProcessRow(Result row);
@@ -150,9 +117,4 @@ public interface CorpusTable {
      * Marks the row index by {@code key} as having been processed.
      */
     void markRowAsProcessed(ImmutableBytesWritable key, Result row);
-
-    /**
-     * Closes the connection to the document reader.
-     */
-    void close();
 }

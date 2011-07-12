@@ -157,6 +157,16 @@ public class TrinidadTable implements CorpusTable {
     public static final String ANNOTATION_SENTENCE = "sentence";
 
     /**
+     * The column family for word list labels associated wtih each document.
+     */
+    public static final String LABEL_CF = "wordListLabels";
+
+    /**
+     * The column family for word list labels associated wtih each document.
+     */
+    public static final String META_CF = "meta";
+
+    /**
      * A connection to the {@link HTable}.
      */
     private HTable table;
@@ -199,6 +209,8 @@ public class TrinidadTable implements CorpusTable {
             SchemaUtil.addDefaultColumnFamily(docDesc, SOURCE_CF);
             SchemaUtil.addDefaultColumnFamily(docDesc, TEXT_CF);
             SchemaUtil.addDefaultColumnFamily(docDesc, ANNOTATION_CF);
+            SchemaUtil.addDefaultColumnFamily(docDesc, LABEL_CF);
+            SchemaUtil.addDefaultColumnFamily(docDesc, META_CF);
             admin.createTable(docDesc);
         } catch (IOException ioe) {
             throw new IOError(ioe);
@@ -209,17 +221,19 @@ public class TrinidadTable implements CorpusTable {
      * {@inheritDoc}
      */
     public void setupScan(Scan scan) {
-        setupScan(scan, ALL_CORPORA, true);
+        setupScan(scan, ALL_CORPORA);
     }
 
     /**
      * {@inheritDoc}
      */
-    public void setupScan(Scan scan, String corpusName, boolean getDepParse) {
+    public void setupScan(Scan scan, String corpusName) {
         scan.addColumn(SOURCE_CF.getBytes(), SOURCE_NAME.getBytes());
         scan.addColumn(ANNOTATION_CF.getBytes(),
                        ANNOTATION_SENTENCE.getBytes());
         scan.addFamily(TEXT_CF.getBytes());
+        scan.addFamily(LABEL_CF.getBytes());
+        scan.addFamily(META_CF.getBytes());
         if (!corpusName.equals(ALL_CORPORA))
             scan.setFilter(new SingleColumnValueFilter(SOURCE_CF.getBytes(),
                                                        SOURCE_NAME.getBytes(), 
@@ -231,7 +245,11 @@ public class TrinidadTable implements CorpusTable {
      * {@inheritDoc}
      */
     public Iterator<Result> iterator(Scan scan) {
-        return null;
+        try {
+            return table.getScanner(scan).iterator();
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
 
     /**
@@ -292,7 +310,23 @@ public class TrinidadTable implements CorpusTable {
         SchemaUtil.add(put, TEXT_CF, TEXT_RAW, document.rawText());
         SchemaUtil.add(put, TEXT_CF, TEXT_TITLE, document.title());
         SchemaUtil.add(put, TEXT_CF, TEXT_TYPE, XML_MIME_TYPE);
-        
+        put(put);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void put(ImmutableBytesWritable key, List<Sentence> sentences) {
+        Put put = new Put(key.get());
+        SchemaUtil.add(put, ANNOTATION_CF, ANNOTATION_SENTENCE, sentences);
+        put(put);
+    }
+
+    /**
+     * Stores the {@code put} into the {@link HTable}.  This helper method just
+     * encapsulates the error handling code.
+     */
+    private void put(Put put) {
         try {
             table.put(put);
         } catch (IOException ioe) {
@@ -303,15 +337,19 @@ public class TrinidadTable implements CorpusTable {
     /**
      * {@inheritDoc}
      */
-    public void put(ImmutableBytesWritable key, List<Sentence> sentences) {
+    public void putLabel(ImmutableBytesWritable key,
+                         String labelName,
+                         String labelValue) {
         Put put = new Put(key.get());
-        SchemaUtil.add(put, ANNOTATION_CF, ANNOTATION_SENTENCE, sentences);
+        SchemaUtil.add(put, LABEL_CF, labelName, labelValue);
+        put(put);
+    }
 
-        try {
-            table.put(put);
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+    /**
+     * {@inheritDoc}
+     */
+    public String getLabel(Result row, String labelName) {
+        return SchemaUtil.getColumn(row, LABEL_CF, labelName);
     }
 
     /**

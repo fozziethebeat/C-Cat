@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
  * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
  * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
@@ -23,8 +23,6 @@
 
 package gov.llnl.ontology.text.parse;
 
-import gov.llnl.ontology.text.tag.OpenNlpMEPOSTagger;
-import gov.llnl.ontology.text.tokenize.OpenNlpMETokenizer;
 import gov.llnl.ontology.util.StringPair;
 
 import edu.stanford.nlp.ling.TaggedWord;
@@ -60,12 +58,6 @@ import java.util.List;
 public class MaltParser implements Parser {
 
     /**
-     * The default location of the malt parser model.
-     */
-    public static final String PARSER_MODEL =
-        "engmalt.linear";
-
-    /**
      * The {@link Tokenizer} used to split each text document.
      */
     private final Tokenizer tokenizer;
@@ -79,13 +71,6 @@ public class MaltParser implements Parser {
      * The {@link MaltParserService} used to parse sentences.
      */
     private final MaltParserService parser;
-
-    /**
-     * Creates a new {@link MaltParser} using the default model paths.
-     */
-    public MaltParser() {
-        this(PARSER_MODEL, new OpenNlpMETokenizer(), new OpenNlpMEPOSTagger());
-    }
 
     /**
      * Creates a new {@link MaltParser} using the provided model paths.    Note
@@ -175,12 +160,5 @@ public class MaltParser implements Parser {
     private static String buildLine(int lineNum, String word, String tag) {
         return String.format("%d\t%s\t_\t%s\t%s\t_\t_\t_", 
                              lineNum, word, tag, tag);
-    }
-
-    public static void main(String[] args) throws IOException {
-        Parser parser = new MaltParser();
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-                    System.in));
-        System.out.println(parser.parseText(in.readLine(), "" ));
     }
 }

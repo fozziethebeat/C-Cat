@@ -15,6 +15,7 @@ import edu.ucla.sspace.dependency.FilteredDependencyIterator;
 import edu.ucla.sspace.util.ReflectionUtil;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -35,12 +36,28 @@ import java.util.Iterator;
  */
 public class ExtractNounPairsMR extends CorpusTableMR {
 
+    /**
+     * The configuration key for the {@link DependencyPathAcceptor}.
+     */
     public static final String ACCEPTOR = CONF_PREFIX + ".acceptor";
 
+    /**
+     * The configuration key for the maximum valid depenendency path length.
+     */
     public static final String PATH_LENGTH = CONF_PREFIX + ".pathLength";
 
+    /**
+     * The configuration key for the {@link EvidenceTable}.
+     */
     public static final String EVIDENCE = CONF_PREFIX + ".evidence";
 
+    /**
+     * Runs the {@link ExtractNounPairsMR}.
+     */
+    public static void main(String[] args) throws Exception {
+        ToolRunner.run(HBaseConfiguration.create(),
+                       new ExtractNounPairsMR(), args);
+    }
     /**
      * {@inheritDoc}
      */
