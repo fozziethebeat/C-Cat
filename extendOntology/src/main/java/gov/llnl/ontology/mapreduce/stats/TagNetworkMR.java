@@ -2,47 +2,44 @@ package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
-import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.MRArgOptions;
-import gov.llnl.ontology.util.StringPair;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 
 import java.io.IOException;
 
 
 /**
+ * This MapReduce extracts the edges for a Tag-Tag network for documents within
+ * a specific corpus.
+ *
  * @author Keith Stevens
  */
-public class TokenCountMR extends CorpusTableMR {
+public class TagNetworkMR extends CorpusTableMR {
 
     /**
      * Runs the {@link TokenCountMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(HBaseConfiguration.create(), new TokenCountMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(), new TagNetworkMR(), args);
     }
 
     /**
      * {@inheritDoc}
      */
     protected Class mapperClass() {
-        return TokenCountMapper.class;
+        return TagNetworkMapper.class;
     }
 
     /**
@@ -56,7 +53,7 @@ public class TokenCountMR extends CorpusTableMR {
      * Returns the {@link Class} object for the Mapper Value of this task.
      */
     protected Class mapperValueClass() {
-        return IntWritable.class;
+        return Text.class;
     }
 
     /**
@@ -65,18 +62,16 @@ public class TokenCountMR extends CorpusTableMR {
     protected void setupReducer(String tableName,
                                 Job job,
                                 MRArgOptions options) {
-        job.setCombinerClass(IntSumReducer.class);
-        job.setReducerClass(IntSumReducer.class);
+        job.setCombinerClass(WordSumReducer.class);
+        job.setReducerClass(WordSumReducer.class);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(
                 job, new Path(options.getPositionalArg(0)));
         job.setNumReduceTasks(24);
     }
 
-    public static class TokenCountMapper
-            extends TableMapper<Text, IntWritable> {
-
-        private static final IntWritable ONE = new IntWritable(1);
+    public static class TagNetworkMapper 
+            extends TableMapper<Text, Text> {
 
         private CorpusTable table;
 
@@ -97,10 +92,12 @@ public class TokenCountMR extends CorpusTableMR {
                         Result row, 
                         Context context)
                 throws IOException, InterruptedException {
-            for (Sentence sentence : table.sentences(row))
-                for (StringPair tokenPos : sentence.taggedTokens())
-                    context.write(new Text(tokenPos.x), ONE);
+            String[] categories = table.getCategories(row).toArray(
+                    new String[0]);
+            for (int i = 0; i < categories.length; ++i)
+                for (int j = i+1; j < categories.length; ++j)
+                    context.write(new Text(categories[i]),
+                                  new Text(categories[j]));
         }
     }
 }
-

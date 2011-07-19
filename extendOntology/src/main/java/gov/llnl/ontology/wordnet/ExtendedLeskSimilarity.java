@@ -21,9 +21,9 @@ public class ExtendedLeskSimilarity implements SynsetSimilarity {
         synsets1.add(synset1);
 
         Set<Synset> synsets2 = new HashSet<Synset>();
-        synsets1.addAll(synset2.getParents());
-        synsets1.addAll(synset2.getChildren());
-        synsets1.add(synset2);
+        synsets2.addAll(synset2.getParents());
+        synsets2.addAll(synset2.getChildren());
+        synsets2.add(synset2);
 
         double score = 0;
         for (Synset s1 : synsets1) 
@@ -35,6 +35,6 @@ public class ExtendedLeskSimilarity implements SynsetSimilarity {
     private static double score(String gloss1, String gloss2) {
         String[] gTokens1 = gloss1.split("\\s+");
         String[] gTokens2 = gloss2.split("\\s+");
-        return StringUtils.tokenOverlapExp(gTokens1, gTokens1);
+        return StringUtils.tokenOverlapExp(gTokens1, gTokens2);
     }
 }

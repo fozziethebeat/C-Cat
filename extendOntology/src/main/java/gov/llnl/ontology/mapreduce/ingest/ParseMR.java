@@ -102,8 +102,8 @@ public class ParseMR extends CorpusTableMR {
     /**
      * {@inheritDoc}
      */
-    protected boolean validOptions(MRArgOptions options) {
-        return options.hasOption('p');
+    protected void validateOptions(MRArgOptions options) {
+        options.validate("", "", ParseMR.class, 0, 'p');
     }
 
     /**

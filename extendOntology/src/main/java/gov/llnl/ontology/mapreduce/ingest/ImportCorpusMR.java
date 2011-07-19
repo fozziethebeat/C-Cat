@@ -138,12 +138,8 @@ public class ImportCorpusMR extends Configured implements Tool {
         LOG.info("Parse Options");
         // Parse and validate the arguments.
         options.parseOptions(args);
-        if (!options.hasOption('r')) {
-            System.err.println(
-                    "usage: java ImportCorpusMR [OPTIONS] <indir>+\n"+
-                    options.prettyPrint());
-            System.exit(1);
-        }
+        options.validate("", "<indir>+", ImportCorpusMR.class,
+                         0, 'r');
 
         LOG.info("Setup Configuration");
         // Setup the configuration so that the mappers know which classes to

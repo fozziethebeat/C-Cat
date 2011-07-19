@@ -100,10 +100,18 @@ public abstract class SlidingWindowDisambiguation
     }
 
     /**
-     * Adds the given {@link Annotation} to the end of {@code words} if it's for a noun.
+     * Adds the given {@link Annotation} to the end of {@code words} if it's for
+     * a noun.
      */
     private static void offer(Annotation annot, Queue<Annotation> words) {
-        if (AnnotationUtil.pos(annot).startsWith("N"))
+        String pos = AnnotationUtil.pos(annot);
+        if (pos == null)
+            return;
+
+        if (pos.startsWith("N") ||
+            pos.startsWith("V") ||
+            pos.startsWith("J") ||
+            pos.startsWith("R"))
             words.offer(annot);
     }
 }

@@ -120,6 +120,13 @@ public interface OntologyReader {
     public Synset[] getSynsets(String lemma, PartsOfSpeech pos);
 
     /**
+     * Returns the {@link Synset} specified by the full synset name.  The name
+     * should be of the following format:
+     *   lemma.pos.senseNum
+     */
+    public Synset getSynset(String fullSynsetName);
+
+    /**
      * Returns the single {@link Synset} specified by the given lemma name, part
      * of speech tag, and sense number.  Sense numbers start at 1.
      */

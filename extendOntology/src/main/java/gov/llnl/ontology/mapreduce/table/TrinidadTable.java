@@ -26,14 +26,13 @@ package gov.llnl.ontology.mapreduce.table;
 import gov.llnl.ontology.text.Document;
 import gov.llnl.ontology.text.Sentence;
 
+import com.google.gson.reflect.TypeToken;
+
 import org.apache.commons.codec.digest.DigestUtils;
-
 import org.apache.hadoop.conf.Configuration;
-
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnection;
@@ -42,17 +41,15 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
-
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
-
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
 import java.io.IOError;
 import java.io.IOException;
-
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -165,6 +162,11 @@ public class TrinidadTable implements CorpusTable {
      * The column family for word list labels associated wtih each document.
      */
     public static final String META_CF = "meta";
+
+    /**
+     * The column name for categories that a document may fall under, if any.
+     */
+    public static final String CATEGORY_COLUMN = "categories";
 
     /**
      * A connection to the {@link HTable}.
@@ -295,9 +297,17 @@ public class TrinidadTable implements CorpusTable {
     /**
      * {@inheritDoc}
      */
+    public String title(Result row) {
+        return SchemaUtil.getColumn(row, TEXT_CF, TEXT_TITLE);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public List<Sentence> sentences(Result row) {
         return SchemaUtil.getObjectColumn(
-                row, ANNOTATION_CF, ANNOTATION_SENTENCE);
+                row, ANNOTATION_CF, ANNOTATION_SENTENCE,
+                new TypeToken<List<Sentence>>(){}.getType());
     }
 
     /**
@@ -332,6 +342,25 @@ public class TrinidadTable implements CorpusTable {
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void putCategories(ImmutableBytesWritable key,
+                              Set<String> categories) {
+        Put put = new Put(key.get());
+        SchemaUtil.add(put, META_CF, CATEGORY_COLUMN, categories);
+        put(put);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Set<String> getCategories(Result row) {
+        return SchemaUtil.getObjectColumn(
+                row, META_CF, CATEGORY_COLUMN,
+                new TypeToken<Set<String>>(){}.getType());
     }
 
     /**

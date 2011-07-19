@@ -27,8 +27,9 @@ import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
 import gov.llnl.ontology.util.Counter;
 import gov.llnl.ontology.util.StringPair;
 
-import org.apache.commons.codec.digest.DigestUtils;
+import com.google.gson.reflect.TypeToken;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -43,7 +44,6 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
 import java.io.IOError;
 import java.io.IOException;
-
 import java.util.Iterator;
 import java.util.Map;
 
@@ -346,7 +346,9 @@ public class WordNetEvidenceTable implements EvidenceTable {
      */
     public Counter<String> getDependencyPaths(Result row, 
                                               String source) {
-        return SchemaUtil.getObjectColumn(row, DEPENDENCY_FEATURE_CF, source);
+        return SchemaUtil.getObjectColumn(
+                row, DEPENDENCY_FEATURE_CF, source,
+                new TypeToken<Counter<String>>(){}.getType());
     }
 
     /**

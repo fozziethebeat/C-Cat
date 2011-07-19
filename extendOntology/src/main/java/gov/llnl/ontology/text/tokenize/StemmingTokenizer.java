@@ -23,41 +23,43 @@
 
 package gov.llnl.ontology.text.tokenize;
 
-import gov.llnl.ontology.util.StreamUtil;
+import edu.ucla.sspace.text.Stemmer;
 
 import opennlp.tools.tokenize.Tokenizer;
-import opennlp.tools.tokenize.TokenizerME;
-import opennlp.tools.tokenize.TokenizerModel;
-import opennlp.tools.util.Span;
-
-import java.io.IOError;
-import java.io.IOException;
 
 
 /**
+ * A decorator for stemming each token returned by an existing {@link
+ * Tokenizer}, given a {@link Stemmer}.
+ *
  * @author Keith Stevens
  */
-public class OpenNlpMETokenizer extends TokenizerAdaptor {
+public class StemmingTokenizer extends TokenizerAdaptor {
 
-    public static final String DEFAULT_MODEL =
-        "models/OpenNLP/en-token.bin";
+    /**
+     * The {@link Stemmer} used to stem each tokenized word.
+     */
+    private final Stemmer stemmer;
 
-    public OpenNlpMETokenizer() {
-        this(DEFAULT_MODEL, true);
+    /**
+     * Creates a new {@link StemmingTokenizer} that decorates the existing
+     * {@link Tokenizer}.
+     *
+     * @param tokenizer A {@link Tokenizer} to decorate
+     * @param stemmer The {@link Stemmer} used to stem each token
+     */
+    public StemmingTokenizer(Tokenizer tokenizer, Stemmer stemmer) {
+        super(tokenizer);
+        this.stemmer = stemmer;
     }
 
-    public OpenNlpMETokenizer(String modelPath, boolean loadFromJar) {
-        super(loadModel(modelPath, loadFromJar));
-    }
-
-    public static Tokenizer loadModel(String modelPath, boolean loadFromJar) {
-        try {
-            return new TokenizerME(new TokenizerModel(
-                    (loadFromJar)
-                    ? StreamUtil.fromJar(OpenNlpMETokenizer.class, modelPath)
-                    : StreamUtil.fromPath(modelPath)));
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+    /**
+     * {@inheritDoc}
+     */
+    public String[] tokenize(String sentence) {
+        String[] tokens = tokenizer.tokenize(sentence);
+        for (int i = 0; i < tokens.length; ++i)
+            tokens[i] = stemmer.stem(tokens[i]);
+        return tokens;
     }
 }

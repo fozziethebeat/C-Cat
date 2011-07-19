@@ -12,6 +12,11 @@ mvn install:install-file -DgroupId=gov.llnl.text -DartifactId=textCommons \
 mvn install:install-file -DgroupId=edu.ucla.sspace -DartifactId=sspace \
 -Dversion=2.0 -Dpackaging=jar -Dfile=lib/sspace-lib.jar
 
+# Add wordsi 2.0 (Not in trunk yet)
+mvn install:install-file -DgroupId=graph.edu.ucla.sspace \
+-DartifactId=sspace-graph -Dversion=1.0 -Dpackaging=jar \
+-Dfile=lib/sspace-graph.jar
+
 # Add malt 1.5.1 (Not in trunk yet)
 mvn install:install-file -DgroupId=org.maltparser -DartifactId=maltparser \
 -Dversion=1.5.1 -Dpackaging=jar -Dfile=lib/malt.jar

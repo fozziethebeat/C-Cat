@@ -86,7 +86,7 @@ public class WordNetCorpusReader implements OntologyReader {
      * A simple mapping from part of speech characters their respective {@link
      * ParstOfSpeech} enumerations.
      */
-    static final Map<String, PartsOfSpeech> POS_MAP =
+    public static final Map<String, PartsOfSpeech> POS_MAP =
         new HashMap<String, PartsOfSpeech>();
 
     static {
@@ -831,6 +831,17 @@ public class WordNetCorpusReader implements OntologyReader {
                 allSynsets.addAll(Arrays.asList(lemmaSynsets[pos.ordinal()]));
         }
         return allSynsets.toArray(new Synset[allSynsets.size()]);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Synset getSynset(String fullSynsetName) {
+        String[] parts = fullSynsetName.split("\\.");
+        String lemma = parts[0];
+        PartsOfSpeech pos = POS_MAP.get(parts[1]);
+        int senseNum = Integer.parseInt(parts[2]);
+        return getSynset(lemma, pos, senseNum);
     }
 
     /**
