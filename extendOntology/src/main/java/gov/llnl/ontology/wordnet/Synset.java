@@ -25,6 +25,7 @@ package gov.llnl.ontology.wordnet;
 
 import edu.ucla.sspace.util.MultiMap;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -400,7 +401,7 @@ public interface Synset {
      * Returns the set of all {@link Synset}s that are connected to this {@link
      * Synset}, regardless of the relation type.
      */
-    Set<Synset> allRelations();
+    Collection<Synset> allRelations();
 
     /**
      * Returns the set of {@link Synset}s that are connected to this {@link

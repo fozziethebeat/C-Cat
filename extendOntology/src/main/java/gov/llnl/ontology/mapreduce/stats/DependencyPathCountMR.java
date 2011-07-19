@@ -11,6 +11,7 @@ import edu.ucla.sspace.util.ReflectionUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -36,7 +37,8 @@ public class DependencyPathCountMR extends EvidenceTableMR {
      * Runs the {@link DependencyPathCountMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(new Configuration(), new DependencyPathCountMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(),
+                       new DependencyPathCountMR(), args);
     }
 
     /**

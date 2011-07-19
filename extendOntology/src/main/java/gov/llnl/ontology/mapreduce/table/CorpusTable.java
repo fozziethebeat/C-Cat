@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -69,6 +70,11 @@ public interface CorpusTable extends GenericTable {
      * Returns the raw document text stored in {@code row}.
      */
     String textSource(Result row);
+
+    /**
+     * Retuns the title of the document stored in {@code row}.
+     */
+    String title(Result row);
 
     /**
      * Returns the source corpus that this row contains.
@@ -107,6 +113,19 @@ public interface CorpusTable extends GenericTable {
      * {@code row}.
      */
     String getLabel(Result row, String labelName);
+
+    /**
+     * Store the {@code categories} associated with the document indexed by
+     * {@code key}.
+     */
+    void putCategories(ImmutableBytesWritable key,
+                       Set<String> categories); 
+
+    /**
+     * Returns the set of {@code categories} associated with the document in
+     * {@code row}.
+     */
+    Set<String> getCategories(Result row);
 
     /**
      * Returns true if the given {@code row} should be processed.

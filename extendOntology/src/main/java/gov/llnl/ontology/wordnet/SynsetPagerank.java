@@ -21,7 +21,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.llnl.ontology.wordnet.pagerank;
+package gov.llnl.ontology.wordnet;
 
 import gov.llnl.ontology.wordnet.DoubleVectorAttribute;
 import gov.llnl.ontology.wordnet.Synset;
@@ -123,8 +123,9 @@ public class SynsetPagerank {
      * @throws NullPointerException if {@code synsetMap} does not contain a
      *         mapping for an outward link in any {@link Synset}
      */
-    public static void setupTransitionAttributes(List<Synset> synsetList,
-                                                 Map<Synset, Integer> synsetMap) {
+    public static void setupTransitionAttributes(
+            List<Synset> synsetList,
+            Map<Synset, Integer> synsetMap) {
         for (Synset synset : synsetList) 
             setTransitionAttribute(synset, synsetMap);
     }
@@ -183,9 +184,9 @@ public class SynsetPagerank {
 
                 // Get the transition probabilities.
                 Synset synset = synsetList.get(index);
+                Attribute attribute = synset.getAttribute(TRANSITION_ATTRIBUTE);
                 SparseDoubleVector transitionProbs =
-                    (SparseDoubleVector) synset.getAttribute(
-                            TRANSITION_ATTRIBUTE).object();
+                    (SparseDoubleVector) attribute.object();
 
                 // Increase the page rank for each outgoing link based on the
                 // probability of following that link.
@@ -210,8 +211,7 @@ public class SynsetPagerank {
             // this by first computing the difference between indices in the old
             // page rank scores and the new page rank scores.  We then simply
             // add in the l1 norm of all the indices in the new page rank scores
-            // that were not in the old page
-            // rank scores.
+            // that were not in the old page rank scores.
             double delta = 0;
             Set<Integer> oldIndices = new HashSet<Integer>();
             for (int index : pageRanks.getNonZeroIndices()) {
@@ -223,7 +223,6 @@ public class SynsetPagerank {
                     delta += Math.abs(newRanks.get(index));
             }
 
-            System.out.println("finished one iteration: " + delta);
             // Save the new page rank scores.
             pageRanks = newRanks;
         }

@@ -42,43 +42,43 @@ import java.util.Set;
  */
 public class CombinedSet<T> extends AbstractSet<T> {
 
-  /**
-   * The list of sets that this {@link CombinedSet} combines.
-   */
-  private List<Set<T>> sets;
+    /**
+    * The list of sets that this {@link CombinedSet} combines.
+    */
+    private List<Set<T>> sets;
 
-  /**
-   * Creates a {@link CombinedSet} from all of the provided {@link Set}s.
-   */
-  public CombinedSet(Set<T>...sets) {
-    this(Arrays.asList(sets));
-  }
+    /**
+    * Creates a {@link CombinedSet} from all of the provided {@link Set}s.
+    */
+    public CombinedSet(Set<T>...sets) {
+        this(Arrays.asList(sets));
+    }
 
-  /**
-   * Creates a {@link CombinedSet} from all of the provided {@link Set}s.
-   */
-  public CombinedSet(Collection<Set<T>> setCollection) {
-    this.sets = new ArrayList<Set<T>>();
-    this.sets.addAll(setCollection);
-  }
+    /**
+    * Creates a {@link CombinedSet} from all of the provided {@link Set}s.
+    */
+    public CombinedSet(Collection<Set<T>> setCollection) {
+        this.sets = new ArrayList<Set<T>>();
+        this.sets.addAll(setCollection);
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public Iterator<T> iterator() {
-    List<Iterator<T>> iters = new ArrayList<Iterator<T>>();
-    for (Set<T> set : sets)
-      iters.add(set.iterator());
-    return new CombinedIterator<T>(iters);
-  }
+    /**
+    * {@inheritDoc}
+    */
+    public Iterator<T> iterator() {
+        List<Iterator<T>> iters = new ArrayList<Iterator<T>>();
+        for (Set<T> set : sets)
+            iters.add(set.iterator());
+        return new CombinedIterator<T>(iters);
+    }
 
-  /**
-   * {@inheritDoc}
-   */
-  public int size() {
-    int size = 0;
-    for (Set<T> set : sets)
-      size += set.size();
-    return size;
-  }
-}
+    /**
+    * {@inheritDoc}
+    */
+    public int size() {
+        int size = 0;
+        for (Set<T> set : sets)
+            size += set.size();
+        return size;
+    }
+    }

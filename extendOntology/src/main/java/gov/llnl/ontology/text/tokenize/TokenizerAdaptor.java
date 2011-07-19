@@ -23,41 +23,45 @@
 
 package gov.llnl.ontology.text.tokenize;
 
-import gov.llnl.ontology.util.StreamUtil;
-
 import opennlp.tools.tokenize.Tokenizer;
-import opennlp.tools.tokenize.TokenizerME;
-import opennlp.tools.tokenize.TokenizerModel;
 import opennlp.tools.util.Span;
-
-import java.io.IOError;
-import java.io.IOException;
 
 
 /**
+ * This Adaptor class simplifies extending functionality of an already existing
+ * {@link Tokenizer}.  Subclasses can call the underlying {@link Tokenizer} and
+ * then reprocess the the tokenized results.
+ *
  * @author Keith Stevens
  */
-public class OpenNlpMETokenizer extends TokenizerAdaptor {
+public class TokenizerAdaptor implements Tokenizer {
 
-    public static final String DEFAULT_MODEL =
-        "models/OpenNLP/en-token.bin";
+    /**
+     * The underlying {@link Tokenizer}
+     */
+    protected final Tokenizer tokenizer;
 
-    public OpenNlpMETokenizer() {
-        this(DEFAULT_MODEL, true);
+    /**
+     * Creates a new {@link Tokenizer} that decorates the functionality of the
+     * existing {@link Tokenizer}.
+     *
+     * @param tokenizer The {@link Tokenizer} to decorate
+     */
+    public TokenizerAdaptor(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
     }
 
-    public OpenNlpMETokenizer(String modelPath, boolean loadFromJar) {
-        super(loadModel(modelPath, loadFromJar));
+    /**
+     * {@inheritDoc}
+     */
+    public String[] tokenize(String sentence) {
+        return tokenizer.tokenize(sentence);
     }
 
-    public static Tokenizer loadModel(String modelPath, boolean loadFromJar) {
-        try {
-            return new TokenizerME(new TokenizerModel(
-                    (loadFromJar)
-                    ? StreamUtil.fromJar(OpenNlpMETokenizer.class, modelPath)
-                    : StreamUtil.fromPath(modelPath)));
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+    /**
+     * {@inheritDoc}
+     */
+    public Span[] tokenizePos(String sentence) {
+        return tokenizer.tokenizePos(sentence);
     }
 }

@@ -21,43 +21,47 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.llnl.ontology.text.tokenize;
+package gov.llnl.ontology.util;
 
-import gov.llnl.ontology.util.StreamUtil;
+import edu.ucla.sspace.util.CombinedIterator;
 
-import opennlp.tools.tokenize.Tokenizer;
-import opennlp.tools.tokenize.TokenizerME;
-import opennlp.tools.tokenize.TokenizerModel;
-import opennlp.tools.util.Span;
-
-import java.io.IOError;
-import java.io.IOException;
-
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Keith Stevens
  */
-public class OpenNlpMETokenizer extends TokenizerAdaptor {
+public class ExtendedSet<T> extends AbstractSet<T> {
 
-    public static final String DEFAULT_MODEL =
-        "models/OpenNLP/en-token.bin";
+    private Set<T> initialSet;
 
-    public OpenNlpMETokenizer() {
-        this(DEFAULT_MODEL, true);
+    private Set<T> secondSet;
+
+    public ExtendedSet(Set<T> initialSet) {
+        this(initialSet, new HashSet<T>());
     }
 
-    public OpenNlpMETokenizer(String modelPath, boolean loadFromJar) {
-        super(loadModel(modelPath, loadFromJar));
+    public ExtendedSet(Set<T> initialSet, Set<T> secondSet) {
+        this.initialSet = initialSet;
+        this.secondSet = secondSet;
     }
 
-    public static Tokenizer loadModel(String modelPath, boolean loadFromJar) {
-        try {
-            return new TokenizerME(new TokenizerModel(
-                    (loadFromJar)
-                    ? StreamUtil.fromJar(OpenNlpMETokenizer.class, modelPath)
-                    : StreamUtil.fromPath(modelPath)));
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+    public boolean add(T item) {
+        if (initialSet.contains(item))
+            return false;
+        return secondSet.add(item);
+    }
+
+    public Iterator<T> iterator() {
+        return new CombinedIterator<T>(
+                initialSet.iterator(), secondSet.iterator());
+    }
+
+    public int size() {
+        return initialSet.size() + secondSet.size();
     }
 }

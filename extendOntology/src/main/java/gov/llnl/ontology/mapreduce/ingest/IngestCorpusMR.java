@@ -124,10 +124,9 @@ public class IngestCorpusMR extends CorpusTableMR {
     /**
      * {@inheritDoc}
      */
-    protected boolean validOptions(MRArgOptions options) {
-        return options.hasOption('s') &&
-               options.hasOption('t') &&
-               options.hasOption('p');
+    protected void validateOptions(MRArgOptions options) {
+        options.validate("", "", IngestCorpusMR.class,
+                         0, 's', 't', 'p');
     }
 
     /**

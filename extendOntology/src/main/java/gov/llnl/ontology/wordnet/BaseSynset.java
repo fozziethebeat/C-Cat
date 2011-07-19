@@ -28,6 +28,7 @@ import edu.ucla.sspace.util.HashMultiMap;
 import edu.ucla.sspace.util.MultiMap;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,8 +133,36 @@ public class BaseSynset implements Synset {
     /**
      * Creates a {@link BaseSynset} with a byte offset value.
      */
+    public BaseSynset(String synsetName) {
+        String[] namePosId = synsetName.split("\\.");
+        lemmas = new ArrayList<Lemma>();
+        lemmas.add(new BaseLemma(this, namePosId[0], "", 0, 0, ""));
+        pos = WordNetCorpusReader.POS_MAP.get(namePosId[1]);
+        senseNumber = Integer.parseInt(namePosId[2]);
+
+        relations = new HashMultiMap<String, Synset>();
+        attributes = new HashMap<String, Attribute>();
+        relatedForms = new HashMap<Synset, RelatedForm>();
+        examples = new ArrayList<String>();
+        frameIds = new int[0];
+        lemmaIds = new int[0];
+
+        this.offset = 0;
+        this.definition = "";
+        this.senseKey = "";
+        this.numRelations = 0;
+        this.minDepth = -1;
+        this.maxDepth = -1;
+        this.offsetSize = -1;
+    }
+
+    /**
+     * Creates a {@link BaseSynset} with a byte offset value.
+     */
     public BaseSynset(int offset, PartsOfSpeech pos) {
         this.offset = offset;
+        this.pos = pos;
+
         relations = new HashMultiMap<String, Synset>();
         attributes = new HashMap<String, Attribute>();
         relatedForms = new HashMap<Synset, RelatedForm>();
@@ -142,7 +171,6 @@ public class BaseSynset implements Synset {
         frameIds = new int[0];
         lemmaIds = new int[0];
 
-        this.pos = pos;
         this.definition = "";
         this.senseKey = "";
         this.senseNumber = 0;
@@ -235,6 +263,13 @@ public class BaseSynset implements Synset {
      */
     public Set<String> getKnownRelationTypes() {
         return relations.keySet();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Collection<Synset> allRelations() {
+        return relations.values();
     }
 
     /**

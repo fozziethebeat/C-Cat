@@ -7,7 +7,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -52,8 +51,7 @@ public abstract class CorpusTableMR extends Configured implements Tool {
      * Returns true if the {@link MRArgOptions} contains a valid value for each
      * requried option.
      */
-    protected boolean validOptions(MRArgOptions options) {
-        return true;
+    protected void validateOptions(MRArgOptions options) {
     }
 
     /**
@@ -109,11 +107,7 @@ public abstract class CorpusTableMR extends Configured implements Tool {
         // Parse and validate the arguments.
         LOG.info("Parse Options");
         options.parseOptions(args);
-        if (!validOptions(options)) {
-            System.err.println("usage: java JobNameMR [OPTIONS]\n" +
-                               options.prettyPrint());
-            System.exit(1);
-        }
+        validateOptions(options);
 
         // Setup the configuration.
         LOG.info("Setup Configuration");
