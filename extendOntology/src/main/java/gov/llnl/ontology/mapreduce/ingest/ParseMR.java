@@ -183,6 +183,7 @@ public class ParseMR extends CorpusTableMR {
                 String parsedSentence = parser.parseText(
                         null, sentence.taggedTokens());
                 context.getCounter("ParseMR", "Parsed Sentence").increment(1);
+                context.setStatus("DON'T KILL MEEEEEEEEE");
 
                 // Split the parse tree into each line for each token and add
                 // the parent node index and the relationship as an annotation
