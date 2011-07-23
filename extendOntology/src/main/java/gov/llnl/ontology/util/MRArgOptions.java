@@ -107,4 +107,62 @@ public class MRArgOptions extends ArgOptions {
     public String sourceCorpus() {
         return getStringOption('S', "");
     }
+
+    /**
+     * Validates the parsed options.  If any of the required options do not
+     * exist, an error {@code message} will be printed instructing the user with
+     * the available options and the program will immediately exit.  When
+     * exiting, the format output format will be:
+     *
+     * usage: java CLASSNAME [OPTIONS] extraAgs
+     * </br>
+     * Options:
+     * </br>
+     * . . .
+     * </br>
+     * {@code message}
+     * </br>
+     *
+     * @param message An error message to print that is specific to the calling
+     *        program
+     * @param extraOptionDescription A one line summary of the extra positional
+     *        options that are expcted
+     * @param c The class type of the running program
+     * @param expectedPosArgs The number of expected positional arguments
+     * @param requiredList A list of chars denoting the required options
+     */
+    public void validate(String message, String extraOptionDescription,
+                         Class c, int expectedPosArgs, char ...requiredList) {
+        for (char required : requiredList)
+            if (!hasOption(required))
+                fail(message, extraOptionDescription, c);
+        if (numPositionalArgs() != expectedPosArgs)
+            fail(message, extraOptionDescription, c);
+    }
+
+    /**
+     * Reports an usage message to the user and exits with failure.  The usage
+     * message will be in the following format.
+     *
+     * usage: java CLASSNAME [OPTIONS] extraAgs
+     * </br>
+     * Options:
+     * </br>
+     * . . .
+     * </br>
+     * {@code message}
+     * </br>
+     *
+     * @param message An error message to print that is specific to the calling
+     *        program
+     * @param extraOptionDescription A one line summary of the extra positional
+     *        options that are expcted
+     * @param c The class type of the running program
+     */
+    public void fail(String message, String extraOptionDescription, Class c) {
+        System.out.printf("usage: java %s [OPTIONS] %s\n%s\n%s\n",
+                          c.getName(), message,
+                          extraOptionDescription, prettyPrint());
+        System.exit(1);
+    }
 }

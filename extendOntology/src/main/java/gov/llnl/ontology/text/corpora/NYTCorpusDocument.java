@@ -41,6 +41,8 @@ package gov.llnl.ontology.text.corpora;
 
 import gov.llnl.ontology.text.Document;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -575,7 +577,9 @@ public class NYTCorpusDocument implements Document {
      * {@inheritDoc}
      */
     public String key() {
-        return alternateURL.toString();
+        return (alternateURL != null)
+            ? alternateURL.toString()
+            : url.toString();
     }
 
     /**
@@ -1123,7 +1127,7 @@ public class NYTCorpusDocument implements Document {
 	 *            the body to set
 	 */
 	public void setBody(String body) {
-		this.body = body;
+		this.body = StringEscapeUtils.unescapeXml(body);
 	}
 
 	/**

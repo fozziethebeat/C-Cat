@@ -12,15 +12,21 @@
     <junit.version>4.7</junit.version>
     <malt.version>1.5.1</malt.version>
     <hadoop.version>0.20.2</hadoop.version>
+    <maprfs.version>0.1</maprfs.version>
     <hbase.version>0.90.2</hbase.version>
     <mahout.version>0.5</mahout.version>
     <cobertura.version>2.4</cobertura.version> 
     <sspace.version>2.0</sspace.version>
+    <sspace-graph.version>1.0</sspace-graph.version>
     <berkeley.version>1.0.1</berkeley.version>
     <stanford.version>2010-11-12</stanford.version>
     <text.version>1.5.2</text.version>
     <logging.version>1.1.1</logging.version>
+    <liblinear.version>1.7</liblinear.version>
+    <libsvm.version>1.0</libsvm.version>
     <opennlp.version>1.5.1-incubating</opennlp.version>
+    <gson.version>1.7.1</gson.version>
+    <guava.version>r09</guava.version>
   </properties>
 
   <dependencies>
@@ -41,6 +47,11 @@
       <groupId>edu.ucla.sspace</groupId>
       <artifactId>sspace</artifactId>
       <version>${sspace.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>graph.edu.ucla.sspace</groupId>
+      <artifactId>sspace-graph</artifactId>
+      <version>${sspace-graph.version}</version>
     </dependency>
     <dependency>
       <groupId>gov.llnl.text</groupId>
@@ -80,6 +91,11 @@
     </dependency>
     -->
     <dependency>
+      <groupId>com.maprfs</groupId>
+      <artifactId>maprfs</artifactId>
+      <version>${maprfs.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
       <version>${hbase.version}</version>
@@ -93,6 +109,26 @@
       <groupId>org.maltparser</groupId>
       <artifactId>maltparser</artifactId>
       <version>${malt.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>lib.linear</groupId>
+      <artifactId>liblinear</artifactId>
+      <version>${liblinear.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>lib.svm</groupId>
+      <artifactId>libsvm</artifactId>
+      <version>${libsvm.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>${gson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
     </dependency>
   </dependencies>
 
@@ -167,6 +203,23 @@
   </repositories>
  
   <build>
+    <resources>
+        <resource>
+            <directory>${env.HADOOP_HOME}/conf</directory>
+        </resource>
+        <resource>
+            <directory>${env.HBASE_HOME}/conf</directory>
+        </resource>
+        <resource>
+            <directory>${env.MAPR_HOME}/conf</directory>
+        </resource>
+        <resource>
+            <directory>data</directory>
+        </resource>
+        <resource>
+            <directory>engmalt.linear</directory>
+        </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>

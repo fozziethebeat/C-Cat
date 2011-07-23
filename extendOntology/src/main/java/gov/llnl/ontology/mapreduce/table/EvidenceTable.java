@@ -23,12 +23,16 @@
 
 package gov.llnl.ontology.mapreduce.table;
 
+import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
 import gov.llnl.ontology.util.Counter;
+import gov.llnl.ontology.util.StringPair;
 
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
 
 /**
@@ -50,7 +54,13 @@ import org.apache.hadoop.hbase.client.Result;
  *
  * @author Keith Stevens
  */
-public interface EvidenceTable {
+public interface EvidenceTable extends GenericTable {
+
+    /**
+     * Returns a {@link StringPair} for the noun pair held in the given {@link
+     * Result}.
+     */
+    StringPair nounPair(Result row);
 
     /**
      * Returns a new map that contains all of the dependency
@@ -59,28 +69,30 @@ public interface EvidenceTable {
     Counter<String> getDependencyPaths(Result row);
 
     /**
-     * Stores the dependency path counts gathred from the {@link source} corpus
-     * using the provided {@link Put} object.
-     */
-    void storeDependencyPaths(Put put,
-                              String source,
-                              Counter<String> pathCounts);
-
-    /**
      * Returns a map that contains all of the dependency paths
      * associated with a single noun pair.
      */
     Counter<String> getDependencyPaths(Result row, String source);
 
     /**
-     * Returns the string name of the HBase table.
+     * Stores the dependency path counts gathred from the {@link source} corpus
+     * using the provided {@link Put} object.
      */
-    String tableName();
+    void putDependencyPaths(String word1, String word2,
+                            String source,
+                            Counter<String> pathCounts);
 
     /**
-     * Returns the name of the HBase table as a byte array.
+     * Retrieves the {@link HypernymStatus} for the given {@link Result}.  The
+     * status will be the same across all corpora.
      */
-    byte[] tableNameBytes();
+    HypernymStatus getHypernymStatus(Result row);
+
+    /**
+     * Stores the {@link HypernymStatus} using the given {@link key}.  The
+     * status will be the same across all corpora.
+     */
+    void putHypernymStatus(ImmutableBytesWritable key, HypernymStatus status);
 
     /**
      * Returns the string name of the dependency path column family.
@@ -121,21 +133,4 @@ public interface EvidenceTable {
      * Returns the column name for cousin class labels as a byte array.
      */
     byte[] cousinColumnBytes();
-
-    /**
-     * Creates a new {@link HTable} connection.
-     */
-    HTable table();
-
-    /**
-     * Creates a new instance of this {@link EvidenceTable} using the default
-     * HBase connection.
-     */
-    void createTable();
-
-    /**
-     * Creates a new instance of this {@link EvidenceTable} using the given
-     * {@link HConnection}.
-     */
-    void createTable(HConnection connector);
 }

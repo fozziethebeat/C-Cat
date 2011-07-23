@@ -23,23 +23,28 @@
 
 package gov.llnl.ontology.mapreduce.table;
 
+import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
 import gov.llnl.ontology.util.Counter;
+import gov.llnl.ontology.util.StringPair;
 
+import com.google.gson.reflect.TypeToken;
+
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.hadoop.conf.Configuration;
-
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
-
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
 import java.io.IOError;
 import java.io.IOException;
-
+import java.util.Iterator;
 import java.util.Map;
 
 
@@ -47,45 +52,14 @@ import java.util.Map;
  * This class documents the schema of the WordNet Evidence table.  Only word
  * pairs where both terms exist in word net should be entered into the table.
  *
- * </br>
- *
- * Table name:
- * <ul>
- * <li>WordNetEvidence</li>
- * </ul>
- * 
- * Key format:
- * <ul>
- * <li>term|term</li>
- * <ul>
- *
- * Column Families:
- * <ul>
- * <li>features</li>
- * <li>class</li>
- * <li>similarity_cluster</li>
- * <li>similarity_cosine</li>
- * <li>similarity_euclidean</li>
- * <li>similarity_kl_divergence</li>
- * <li>similarity_lin</li>
- * </ul>
- *
- * Column identifiers: (in the format CF:id)
- * <ul>
- * <li>features:DependencyFeatures</li>
- * <li>class:hypernymStatusEvidence</li>
- * <li>class:cousinEvidence</li>
- * <li>similarity_cluster:lsh</li>
- * <li>similarity_cosine:hal</li>
- * </ul>
- *
- * All similarity scores are stored as doubles if the word pair exists in a
- * semantic space algorithm, or as an {@code NaN} if the word pair does not
- * exist.
- *
  * @author Keith Stevens
  */
 public class WordNetEvidenceTable implements EvidenceTable {
+
+    /**
+     * A marker to request all corpora types when scanning.
+     */
+    public static final String ALL_CORPORA = "";
 
     /**
      * table name for this schema
@@ -93,11 +67,22 @@ public class WordNetEvidenceTable implements EvidenceTable {
     public static final String TABLE_NAME = "WordNetEvidence";
 
     /**
+     * The column family name for the noun pair for each row.  
+     */
+    public static final String NOUN_PAIR_CF =
+            "nounPair";
+
+    /**
+     * The column name for the noun pair.
+     */
+    public static final String NOUN_PAIR_COLUMN = "key";
+
+    /**
      * The column family name for the dependency features.  Column names will be
      * based on the source of the corpus for each dependency feature.
      */
     public static final String DEPENDENCY_FEATURE_CF =
-            "dependencyFeatures";
+        "dependencyFeatures";
 
     /**
      * The column family name for the class family.
@@ -126,10 +111,16 @@ public class WordNetEvidenceTable implements EvidenceTable {
     public static final String COUSIN_EVIDENCE = "cousinEvidence";
 
     /**
+     * The column family name for any similarity measurements between two noun
+     * pairs.
+     */
+    public static final String SIMILARITY_CF = "similarity";
+
+    /**
      * The column family name for the cluster based similarity column family.
      * All values are stored as doubles.
      */
-    public static final String SIMILARITY_CLUSTER_CF = "similarity_cluster";
+    public static final String CLUSTER_SIMILARITY = "cluster";
 
     /**
      * The column name for clusters of similiarity lists generated via Locality
@@ -141,26 +132,26 @@ public class WordNetEvidenceTable implements EvidenceTable {
      * The column family name for the cosine based similarity column family.
      * All values are stored as doubles.
      */
-    public static final String SIMILARITY_COSINE_CF = "similarity_cosine";
+    public static final String COSINE_SIMILARITY = "cosine";
 
     /**
      * The column family name for the euclidean based similarity column family.
      * All values are stored as doubles.
      */
-    public static final String SIMILARITY_EUCLIDEAN_CF = "similarity_euclidean";
+    public static final String EUCLIDEAN_SIMILARITY = "euclidean";
 
     /**
      * The column family name for the kl-divergence based similarity column
      * family.  All values are stored as doubles.  Note that this metric is not
      * symmetric.
      */
-    public static final String SIMILARITY_KL_CF = "similarity_kl_divergence";
+    public static final String KL_SIMILARITY = "kl_divergence";
 
     /**
      * The column family name for the Lin based similarity column family.  All
      * values are stored as doubles.
      */
-    public static final String SIMILARITY_LIN_CF = "similarity_lin";
+    public static final String LIN_SIMILARITY = "lin";
 
     /**
      * The annotation name for dependency path counts.
@@ -169,17 +160,15 @@ public class WordNetEvidenceTable implements EvidenceTable {
         "DependencyPathCounts";
 
     /**
-     * {@inheritDoc}
+     * The underlying {@link HTable}.
      */
-    public String tableName() {
-        return TABLE_NAME;
-    }
+    private HTable table;
 
     /**
      * {@inheritDoc}
      */
-    public byte[] tableNameBytes() {
-        return TABLE_NAME.getBytes();
+    public String tableName() {
+        return TABLE_NAME;
     }
 
     /**
@@ -265,14 +254,43 @@ public class WordNetEvidenceTable implements EvidenceTable {
                 return;
 
             // Add the column families to the table.
-            HTableDescriptor evidenceDesc = new HTableDescriptor(TABLE_NAME);
-            SchemaUtil.addDefaultColumnFamily(evidenceDesc,DEPENDENCY_FEATURE_CF);
-            SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_COSINE_CF);
-            SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_EUCLIDEAN_CF);
-            SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_KL_CF);
-            SchemaUtil.addDefaultColumnFamily(evidenceDesc,SIMILARITY_LIN_CF);
-            SchemaUtil.addDefaultColumnFamily(evidenceDesc,CLASS_CF);
-            admin.createTable(evidenceDesc);
+            HTableDescriptor desc = new HTableDescriptor(TABLE_NAME);
+            SchemaUtil.addDefaultColumnFamily(desc, NOUN_PAIR_CF);
+            SchemaUtil.addDefaultColumnFamily(desc, DEPENDENCY_FEATURE_CF);
+            SchemaUtil.addDefaultColumnFamily(desc, SIMILARITY_CF);
+            SchemaUtil.addDefaultColumnFamily(desc, CLASS_CF);
+            admin.createTable(desc);
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setupScan(Scan scan) {
+        setupScan(scan, ALL_CORPORA);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setupScan(Scan scan, String corpusName) {
+        if (corpusName.equals(ALL_CORPORA))
+            scan.addFamily(DEPENDENCY_FEATURE_CF.getBytes());
+        else
+            scan.addColumn(DEPENDENCY_FEATURE_CF.getBytes(),
+                           corpusName.getBytes());
+        scan.addFamily(CLASS_CF.getBytes());
+        scan.addFamily(NOUN_PAIR_CF.getBytes());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Iterator<Result> iterator(Scan scan) {
+        try {
+            return table.getScanner(scan).iterator();
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
@@ -283,18 +301,21 @@ public class WordNetEvidenceTable implements EvidenceTable {
      */
     public HTable table() {
         try {
-            return new HTable(TABLE_NAME);
+            if (table == null)
+                table = new HTable(TABLE_NAME);
+            return table;
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
     }
 
     /**
-     * Instantiates a new table.
+     * {@inheritDoc}
      */
-    public static void main(String[] args) {
-        WordNetEvidenceTable table = new WordNetEvidenceTable();
-        table.createTable();
+    public StringPair nounPair(Result row) {
+        String key = SchemaUtil.getColumn(row, NOUN_PAIR_CF, NOUN_PAIR_COLUMN);
+        String[] nouns = key.split(":");
+        return new StringPair(nouns[0], nouns[1]);
     }
 
     /**
@@ -310,6 +331,9 @@ public class WordNetEvidenceTable implements EvidenceTable {
             if (sourceCounts == null)
                 continue;
 
+            if (qualifierValueMap.size() == 1)
+                return sourceCounts;
+
             for (Map.Entry<String, Integer> newCount : sourceCounts) 
                 pathCounts.count(newCount.getKey(), newCount.getValue());
         }
@@ -322,15 +346,57 @@ public class WordNetEvidenceTable implements EvidenceTable {
      */
     public Counter<String> getDependencyPaths(Result row, 
                                               String source) {
-        return SchemaUtil.getObjectColumn(row, DEPENDENCY_FEATURE_CF, source);
+        return SchemaUtil.getObjectColumn(
+                row, DEPENDENCY_FEATURE_CF, source,
+                new TypeToken<Counter<String>>(){}.getType());
     }
 
     /**
      * {@inheritDoc}
      */
-    public void storeDependencyPaths(Put put,
-                                     String source,
-                                     Counter<String> pathCounts) {
+    public void putDependencyPaths(String word1, String word2,
+                                   String source,
+                                   Counter<String> pathCounts) {
+        String key = word1 + ":" + word2;
+        Put put = new Put(DigestUtils.shaHex(key).getBytes());
         SchemaUtil.add(put, DEPENDENCY_FEATURE_CF, source, pathCounts);
+        SchemaUtil.add(put, NOUN_PAIR_CF, NOUN_PAIR_COLUMN, key);
+        put(put);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public HypernymStatus getHypernymStatus(Result row) {
+        return HypernymStatus.valueOf(
+                SchemaUtil.getColumn(row, CLASS_CF, HYPERNYM_EVIDENCE));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void putHypernymStatus(ImmutableBytesWritable key, 
+                                  HypernymStatus status) {
+        Put put = new Put(key.get());
+        SchemaUtil.add(put, CLASS_CF, HYPERNYM_EVIDENCE,
+                       status.toString());
+        put(put);
+    }
+
+    public void close() {
+        try {
+            table.flushCommits();
+            table.close();
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
+    }
+
+    private void put(Put put) {
+        try {
+            table.put(put);
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
 }

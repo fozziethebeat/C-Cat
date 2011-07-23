@@ -61,7 +61,10 @@ import java.util.zip.GZIPInputStream;
 
 /**
  * A {@link FileInputFormat} for handling gzipped tarball files with each
- * internal file containing data for a single document.
+ * internal file containing data for a single document.  This assumes that the
+ * file, or files, being processed are in raw text format and contain one file
+ * path per line of gzipped tarballs.  Each entry in the gzipped tarball will be
+ * considered a single document.
  *
  * @author Keith Stevens
  */
@@ -90,13 +93,18 @@ public class GzipTarInputFormat
         // as an InputSplit.
         FileSystem fs = FileSystem.get(context.getConfiguration());
         for (Path file : getInputPaths(context)) {
-            // Check that the file exists.  Throw an exception if it does not.
+            // Check that the list of files exists.  Throw an exception if it
+            // does not.
             if (fs.isDirectory(file) || !fs.exists(file))
                 throw new IOException("File does not exist: " + file);
 
-            // Get the length of the file and then add a new FileSplit.
-            long length = fs.getFileStatus(file).getLen();
-            splits.add(new FileSplit(file, 0, length, null));
+            // Read the contents of the file list and add each line as a
+            // FileSplit.
+            BufferedReader br = new BufferedReader(new InputStreamReader(
+                        fs.open(file)));
+            for (String line = null; (line = br.readLine()) != null; )
+                splits.add(new FileSplit(
+                            new Path(line), 0, Integer.MAX_VALUE, null));
         }
         return splits;
     }
@@ -144,6 +152,7 @@ public class GzipTarInputFormat
             parentName = filePath.getParent().getName();
             InputStream is = fs.open(filePath);
 
+            System.err.println(filePath.toString());
             // Unzip the file and get a tarball reader.
             GZIPInputStream gis = new GZIPInputStream(is);
             tarStream = new TarInputStream(gis);

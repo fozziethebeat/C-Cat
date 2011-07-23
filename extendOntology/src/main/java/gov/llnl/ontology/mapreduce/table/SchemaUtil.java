@@ -30,6 +30,7 @@ import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_TTL;
 import static org.apache.hadoop.hbase.HColumnDescriptor.DEFAULT_VERSIONS;
 
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 import edu.ucla.sspace.dependency.SimpleDependencyTreeNode;
@@ -48,6 +49,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import org.apache.hadoop.mapreduce.Counter;
 
+import java.lang.reflect.Type;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOError;
@@ -55,7 +57,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
-
 import java.util.Map;
 
 
@@ -68,6 +69,8 @@ import java.util.Map;
 public class SchemaUtil {
 
     private static final Log LOG = LogFactory.getLog(SchemaUtil.class);
+
+    private static final Gson gson = new Gson();
 
     /**
      * Returns the text of a given column.
@@ -120,22 +123,26 @@ public class SchemaUtil {
      * Returns the {@link Object} stored in this row at the given column family
      * and column qualifier.  If no data exists, this returns {@code null}.
      */
-    public static <T> T getObjectColumn(Result row, String col, String qual) {
-        try {
-            byte[] bytes = row.getValue(col.getBytes(), qual.getBytes());
-            if (bytes == null)
-                return null;
-            ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-            ObjectInputStream dis = new ObjectInputStream(bis);
-            Object value = dis.readObject();
-            dis.close();
-            bis.close();
-            return (T) value;
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        } catch (ClassNotFoundException cnfe) {
-            throw new IOError(cnfe);
-        }
+    public static <T> T getObjectColumn(Result row, String col, String qual,
+                                        Class<T> classOfT) {
+        byte[] bytes = row.getValue(col.getBytes(), qual.getBytes());
+        if (bytes == null)
+            return null;
+        String json = new String(bytes);
+        return gson.fromJson(json, classOfT);
+    }
+
+    /**
+     * Returns the {@link Object} stored in this row at the given column family
+     * and column qualifier.  If no data exists, this returns {@code null}.
+     */
+    public static <T> T getObjectColumn(Result row, String col, String qual,
+                                        Type typeOfT) {
+        byte[] bytes = row.getValue(col.getBytes(), qual.getBytes());
+        if (bytes == null)
+            return null;
+        String json = new String(bytes);
+        return (T) gson.fromJson(json, typeOfT);
     }
 
     /**
@@ -144,18 +151,9 @@ public class SchemaUtil {
      * {@link Serializable}.
      */
     public static void add(Put put, String col, String qual, Object object) {
-        try {
-            if (object == null)
-                return;
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream dos = new ObjectOutputStream(bos);
-            dos.writeObject(object);
-            dos.close();
-            bos.close();
-            put.add(col.getBytes(), qual.getBytes(), bos.toByteArray());
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+        if (object == null)
+            return;
+        add(put, col, qual, gson.toJson(object));
     }
 
     /**

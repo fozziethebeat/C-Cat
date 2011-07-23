@@ -23,39 +23,29 @@
 
 package gov.llnl.ontology.mapreduce.ingest;
 
+import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 
-import gov.llnl.ontology.text.Parser;
+import gov.llnl.ontology.text.parse.Parser;
 import gov.llnl.ontology.text.Sentence;
 
 import gov.llnl.ontology.util.MRArgOptions;
 
 import edu.stanford.nlp.ling.CoreAnnotations.CoNLLDepTypeAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.CoNLLDepParentIndexAnnotation;
-
 import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
-
-import org.apache.hadoop.mapreduce.Job;
-
-import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
 import org.apache.hadoop.hbase.HBaseConfiguration;
-
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
-
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-
-import org.apache.hadoop.hbase.mapreduce.IdentityTableReducer;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 
 import java.io.IOException;
 
@@ -64,21 +54,27 @@ import java.util.List;
 
 
 /**
+ * This Map Reduce job iterates over rows in a {@link CorpusTable} and
+ * produces a dependency parse tree for each sentence in each document.  These
+ * parse trees are then storred as an annotation in the {@link CorpusTable}.
+ *
+ * </p> 
+ *
+ * This class requires that the following types of objects be specified by the
+ * command line:
+ * <ul>
+ *   <li>{@link CorpusTable}: Controls access to the document table.</li>
+ *   <li>{@link Parser}: Parses sentences in the {@link CorpusTable}.</li>
+ * </ul>
+ *
  * @author Keith Stevens
  */
-public class ParseMR extends Configured implements Tool {
+public class ParseMR extends CorpusTableMR {
 
     /**
-     * The configuration key prefix.
+     * Acquire the logger for this class.
      */
-    public static String CONF_PREFIX =
-        "gov.llnl.ontology.mapreduce.ingest.ParseMR";
-
-    /**
-     * The configuration key for setting the {@link CorpusTable}.
-     */
-    public static String TABLE =
-        CONF_PREFIX + ".corpusTable";
+    private static final Log LOG = LogFactory.getLog(ParseMR.class);
 
     /**
      * The configuration key for setting the {@link Tokenizer}.
@@ -90,65 +86,45 @@ public class ParseMR extends Configured implements Tool {
      * Runs the {@link IngestCorpusMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(new Configuration(), new IngestCorpusMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(), new ParseMR(), args);
     }
 
     /**
      * {@inheritDoc}
      */
-    public int run(String[] args)
-            throws IOException, InterruptedException, ClassNotFoundException {
-        // Setup the main arguments used.
-        MRArgOptions options = new MRArgOptions();
+    protected void addOptions(MRArgOptions options) {
         options.addOption('p', "parser",
                           "Specifies the Parser to use for " +
                           "dependency parsing sentences.",
                           true, "CLASSNAME", "Required");
-
-        // Parse and validate the arguments.
-        options.parseOptions(args);
-        if (!options.hasOption('p')) {
-            System.err.println("usage: java IngestCorpusMR [OPTIONS]\n" +
-                               options.prettyPrint());
-            System.exit(1);
-        }
-
-        // Setup the configuration so that the mappers know which classes to
-        // use.
-        Configuration conf = new HBaseConfiguration();
-        conf.set(TABLE, options.corpusTableType());
-        conf.set(PARSER, options.getStringOption('p'));
-
-        // Create the corpus table and setup the scan.
-        CorpusTable table = options.corpusTable();
-        Scan scan = new Scan();
-        table.setupScan(scan, options.sourceCorpus(), false);
-
-        // Create the job and set the jar.
-        Job job = new Job(conf, "Parse Corpus");
-        job.setJarByClass(ParseMR.class);
-
-        // Setup the mapper class.
-        TableMapReduceUtil.initTableMapperJob(table.tableName(),
-                                              scan, 
-                                              ParseMapper.class,
-                                              ImmutableBytesWritable.class,
-                                              Put.class,
-                                              job);
-
-        // Setup an empty reducer.
-        TableMapReduceUtil.initTableReducerJob(table.tableName(), 
-                                               IdentityTableReducer.class, 
-                                               job);
-        job.setNumReduceTasks(0);
-
-        // Run the job.
-        job.waitForCompletion(true);
-
-        return 0;
     }
 
-    public class ParseMapper 
+    /**
+     * {@inheritDoc}
+     */
+    protected void validateOptions(MRArgOptions options) {
+        options.validate("", "", ParseMR.class, 0, 'p');
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setupConfiguration(MRArgOptions options, 
+                                      Configuration conf) {
+        conf.set(PARSER, options.getStringOption('p'));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected Class mapperClass() {
+        return ParseMapper.class;
+    }
+
+    /**
+     * This {@link TableMapper} does all of the work.
+     */
+    public static class ParseMapper 
             extends TableMapper<ImmutableBytesWritable, Put> {
 
         /**
@@ -167,7 +143,10 @@ public class ParseMR extends Configured implements Tool {
          */
         public void setup(Context context) {
             Configuration conf = context.getConfiguration();
+            conf.set("mapred.map.child.java.opts", "-Xmx8g");
+            conf.set("mapred.tasktracker.map.tasks.maximum", "1");
             table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
+            table.table();
             parser = ReflectionUtil.getObjectInstance(conf.get(PARSER));
         }
 
@@ -181,11 +160,33 @@ public class ParseMR extends Configured implements Tool {
             if (!table.shouldProcessRow(row))
                 return;
 
+            // Iterate over each sentence in the document for this row.  Add the
+            // dependency parse annotations to each token in the sentence
+            // annotation.
             List<Sentence> sentences = table.sentences(row);
-            for (Sentence sentence : sentences) {
-                String parsedSentence = parser.parseText(
-                        "", sentence.taggedTokens());
 
+            // Skip any documents without sentences.
+            if (sentences == null)
+                return;
+
+            for (Sentence sentence : sentences) {
+                // Skip any sentences which have already been parsed.  We can
+                // detect this simply by trying to build a dependency parse tree
+                // for each sentence and checking the length.  The non parsed
+                // sentences always have a tree length of 0.
+                if (sentence.dependencyParseTree().length > 0)
+                    continue;
+
+                LOG.info("Parseing sentence of length: " + 
+                         sentence.taggedTokens().length);
+                // Get the dependency parse tree.
+                String parsedSentence = parser.parseText(
+                        null, sentence.taggedTokens());
+                context.getCounter("ParseMR", "Parsed Sentence").increment(1);
+
+                // Split the parse tree into each line for each token and add
+                // the parent node index and the relationship as an annotation
+                // to the relevant token annotation.
                 Iterator<Annotation> tokens = sentence.iterator();
                 for (String line : parsedSentence.split("\\n+")) {
                     Annotation token = tokens.next();
@@ -199,6 +200,14 @@ public class ParseMR extends Configured implements Tool {
 
             // Add the list of Sentence annotations.
             table.put(key, sentences);
+            context.getCounter("ParseMR", "Annotation").increment(1);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        protected void cleanup(Context context) {
+            table.close();
         }
     }
 }
