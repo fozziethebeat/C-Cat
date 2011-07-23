@@ -41,6 +41,8 @@ package gov.llnl.ontology.text.corpora;
 
 import gov.llnl.ontology.text.Document;
 
+import com.google.common.collect.Sets;
+
 import org.apache.commons.lang.StringEscapeUtils;
 
 import java.io.File;
@@ -48,6 +50,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -594,6 +597,13 @@ public class NYTCorpusDocument implements Document {
      */
     public String title() {
         return headline;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Set<String> categories() {
+        return Sets.newHashSet(taxonomicClassifiers.iterator());
     }
 
 	/**
