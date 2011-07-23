@@ -139,7 +139,7 @@ public class ImportCorpusMR extends Configured implements Tool {
         // Parse and validate the arguments.
         options.parseOptions(args);
         options.validate("", "<indir>+", ImportCorpusMR.class,
-                         0, 'r');
+                         -1, 'r');
 
         LOG.info("Setup Configuration");
         // Setup the configuration so that the mappers know which classes to

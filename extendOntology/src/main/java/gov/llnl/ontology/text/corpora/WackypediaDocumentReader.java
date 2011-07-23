@@ -6,7 +6,7 @@ package gov.llnl.ontology.text.corpora;
  */
 public class WackypediaDocumentReader extends UkWacDocumentReader {
 
-    public static final String CORPUS_NAME = "wakypedia";
+    public static final String CORPUS_NAME = "wackypedia";
 
     public String corpusName() {
         return CORPUS_NAME;
