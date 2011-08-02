@@ -10,7 +10,7 @@
 
   <properties>
     <junit.version>4.7</junit.version>
-    <malt.version>1.5.1</malt.version>
+    <malt.version>1.5.3</malt.version>
     <hadoop.version>0.20.2</hadoop.version>
     <maprfs.version>0.1</maprfs.version>
     <hbase.version>0.90.2</hbase.version>
