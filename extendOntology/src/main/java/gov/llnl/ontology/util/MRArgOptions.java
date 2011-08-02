@@ -136,9 +136,8 @@ public class MRArgOptions extends ArgOptions {
         for (char required : requiredList)
             if (!hasOption(required))
                 fail(message, extraOptionDescription, c);
-        if (expectedPosArgs >= 0)
-            if (numPositionalArgs() != expectedPosArgs)
-                fail(message, extraOptionDescription, c);
+        if (expectedPosArgs >= 0 && numPositionalArgs() != expectedPosArgs)
+            fail(message, extraOptionDescription, c);
     }
 
     /**
