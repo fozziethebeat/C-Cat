@@ -23,6 +23,8 @@
 
 package gov.llnl.ontology.text;
 
+import java.util.Set;
+
 
 /**
  * A simple struct based implementation of a {@link Document}.
@@ -61,6 +63,11 @@ public class SimpleDocument implements Document {
     private final String title;
 
     /**
+     * The set of category labels applied to this {@link Document}.
+     */
+    private final Set<String> categories;
+
+    /**
      * Constructs a new {@link SimpleDocument} using the given data values.
      *
      * @param corpusName the name of the corpus that this document came from
@@ -74,13 +81,15 @@ public class SimpleDocument implements Document {
                           String originalText,
                           String key, 
                           long id, 
-                          String title) {
+                          String title,
+                          Set<String> categories) {
         this.corpusName = corpusName;
         this.docText = docText;
         this.originalText = originalText;
         this.key = key;
         this.id = id;
         this.title = title;
+        this.categories = categories;
     }
 
     /**
@@ -123,5 +132,12 @@ public class SimpleDocument implements Document {
      */
     public String title() {
         return title;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Set<String> categories() {
+        return categories;
     }
 }

@@ -320,6 +320,7 @@ public class TrinidadTable implements CorpusTable {
         SchemaUtil.add(put, TEXT_CF, TEXT_RAW, document.rawText());
         SchemaUtil.add(put, TEXT_CF, TEXT_TITLE, document.title());
         SchemaUtil.add(put, TEXT_CF, TEXT_TYPE, XML_MIME_TYPE);
+        SchemaUtil.add(put, META_CF, CATEGORY_COLUMN, document.categories());
         put(put);
     }
 

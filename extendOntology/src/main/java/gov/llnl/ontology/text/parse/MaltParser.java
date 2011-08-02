@@ -58,6 +58,13 @@ import java.util.List;
 public class MaltParser implements Parser {
 
     /**
+     * A hard limit on the number of sentences the parser can handle.  This is
+     * done to try and flush the memory usage of the parser after it's processed
+     * a large number of sentences.
+     */
+    public static final int SENTENCE_LIMIT = 30000;
+
+    /**
      * The {@link Tokenizer} used to split each text document.
      */
     private final Tokenizer tokenizer;
@@ -70,7 +77,11 @@ public class MaltParser implements Parser {
     /**
      * The {@link MaltParserService} used to parse sentences.
      */
-    private final MaltParserService parser;
+    private MaltParserService parser;
+
+    private int sentenceCount;
+
+    private String modelPath;
 
     /**
      * Creates a new {@link MaltParser} using the provided model paths.    Note
@@ -82,9 +93,11 @@ public class MaltParser implements Parser {
         try {
             this.tagger = tagger;
             this.tokenizer = tokenizer;
+            this.modelPath = maltParserModelPath;
             parser = new MaltParserService();
             parser.initializeParserModel
-                ("-c " + maltParserModelPath + " -m parse");
+                ("-c " + modelPath + " -m parse");
+            sentenceCount = 0;
         } catch (MaltChainedException ioe) {
             throw new RuntimeException(ioe);
         }
@@ -123,7 +136,8 @@ public class MaltParser implements Parser {
 
         // Parse the sentence and write the graph to the string builder.
         try {
-            DependencyStructure graph = parser.parse(tokens);
+            MaltParserService p = parser;
+            DependencyStructure graph = p.parse(tokens);
 
             if (header != null && !header.equals(""))
                 builder.append(header).append("\n");
@@ -154,6 +168,19 @@ public class MaltParser implements Parser {
             return "";
         }
 
+        synchronized(this) {
+            if (++sentenceCount >= SENTENCE_LIMIT) {
+                sentenceCount = 0;
+                try {
+                    MaltParserService p = new MaltParserService();
+                    p.initializeParserModel
+                        ("-c " + modelPath + " -m parse");
+                    parser = p;
+                } catch (MaltChainedException ioe) {
+                    throw new RuntimeException(ioe);
+                }
+            }
+        }
         return builder.toString();
     }
 

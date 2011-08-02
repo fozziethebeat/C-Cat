@@ -23,6 +23,8 @@
 
 package gov.llnl.ontology.text;
 
+import java.util.Set;
+
 
 /**
  * An interface for representing a document.
@@ -60,4 +62,9 @@ public interface Document {
      * Returns the title of this document, if any exists.
      */
     String title();
+
+    /**
+     * Returns the set of categories that this document has, if any.
+     */
+    Set<String> categories();
 }

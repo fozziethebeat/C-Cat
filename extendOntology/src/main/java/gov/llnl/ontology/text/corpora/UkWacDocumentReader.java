@@ -8,6 +8,8 @@ import org.apache.commons.lang.StringEscapeUtils;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.util.HashSet;
+
 
 /**
  * @author Keith Stevens
@@ -42,6 +44,6 @@ public class UkWacDocumentReader implements DocumentReader {
         }
 
         return new SimpleDocument(corpusName(), builder.toString(), doc, 
-                                  key, id, key);
+                                  key, id, key, new HashSet<String>());
     }
 }
