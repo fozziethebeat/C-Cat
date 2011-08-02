@@ -21,29 +21,31 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
-package gov.llnl.ontology.wordnet;
-
-import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+package gov.llnl.ontology.text.corpora;
 
 
 /**
+ * A {@link DocumentReader} for the SemEval2010 test corpus.  This automatically
+ * removes the {@code TargetSentence} tags from the document.  It uses the
+ * instance name as the key, the title is just the keyterm.  The id is the
+ * token index of the word that matches the title when both are stemmed.  It
+ * does not generate any labels for a document.  
+ *
+ * </p>
+ *
+ * This is <b>not</b> thread safe.
+ *
  * @author Keith Stevens
  */
-public class WordNetCorpusReaderTest {
+public class SemEval2010TestDocumentReader
+        extends SemEval2010TrainDocumentReader {
 
-    @Test public void testSynsetMerge() {
-        OntologyReader reader = WordNetCorpusReader.initialize("data/dict/");
+    public static final String CORPUS_NAME = "semeval2010_test";
 
-        Synset first = reader.getSynset("cat", PartsOfSpeech.NOUN, 1);
-        Synset second = reader.getSynset("feline", PartsOfSpeech.NOUN, 1);
-        first.merge(second);
-        System.out.println(first.getParentPaths());
+    /**
+     * Returns {@link #CORPUS_NAME}
+     */
+    public String corpusName() {
+        return CORPUS_NAME;
     }
 }

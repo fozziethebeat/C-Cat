@@ -33,34 +33,60 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
+ * An extended {@link Set}.  Given a base set, additional items can be stored
+ * into a secondary set that does not modify the base set.  This is useful if you
+ * need to share a base set accross a number of jobs that may add items to the
+ * set in different ways, but should not see these changes accross jobs.
+ *
  * @author Keith Stevens
  */
 public class ExtendedSet<T> extends AbstractSet<T> {
 
+    /**
+     * The initial set that is unmodified.
+     */
     private Set<T> initialSet;
 
+    /**
+     * The secondary set that stores new additions.
+     */
     private Set<T> secondSet;
 
+    /**
+     * Creates the {@link ExtendedSet}
+     */
     public ExtendedSet(Set<T> initialSet) {
         this(initialSet, new HashSet<T>());
     }
 
+    /**
+     * Creates the {@link ExtendedSet}
+     */
     public ExtendedSet(Set<T> initialSet, Set<T> secondSet) {
         this.initialSet = initialSet;
         this.secondSet = secondSet;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public boolean add(T item) {
         if (initialSet.contains(item))
             return false;
         return secondSet.add(item);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Iterator<T> iterator() {
         return new CombinedIterator<T>(
                 initialSet.iterator(), secondSet.iterator());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int size() {
         return initialSet.size() + secondSet.size();
     }

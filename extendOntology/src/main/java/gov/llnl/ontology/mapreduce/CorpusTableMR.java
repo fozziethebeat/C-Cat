@@ -48,6 +48,13 @@ public abstract class CorpusTableMR extends Configured implements Tool {
     }
 
     /**
+     * Returns a descriptive job name for this map reduce task.
+     */
+    protected String jobName() {
+        return "Ingest Corpus";
+    }
+
+    /**
      * Returns true if the {@link MRArgOptions} contains a valid value for each
      * requried option.
      */
@@ -123,7 +130,7 @@ public abstract class CorpusTableMR extends Configured implements Tool {
 
         // Create the job and set the jar.
         LOG.info("Setup Job");
-        Job job = new Job(conf, "Ingest Corpus");
+        Job job = new Job(conf, jobName());
         job.setJarByClass(CorpusTableMR.class);
 
         // Setup the mapper class.

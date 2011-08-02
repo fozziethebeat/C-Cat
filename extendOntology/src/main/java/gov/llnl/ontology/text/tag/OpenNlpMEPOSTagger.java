@@ -40,6 +40,9 @@ import java.util.List;
 
 
 /**
+ * A wrapper around the {@link POSTaggerME} {@link POSTagger} so that it can be
+ * loaded with a no argument constructor using a predefined model.
+ *
  * @author Keith Stevens
  */
 public class OpenNlpMEPOSTagger implements POSTagger {
@@ -49,10 +52,18 @@ public class OpenNlpMEPOSTagger implements POSTagger {
 
     private final POSTagger tagger;
 
+    /**
+     * Loads the model configuration from {@link #DEFAULT_MODEL}
+     */
     public OpenNlpMEPOSTagger() {
         this(DEFAULT_MODEL, true);
     }
 
+    /**
+     * Loads a {@link POSTaggerME} model from {@code modelPath}.  If {@code
+     * loadFromJar} is true, the binary file will found within the running class
+     * path.
+     */
     public OpenNlpMEPOSTagger(String modelPath, boolean loadFromJar) {
         try {
             InputStream in = (loadFromJar)

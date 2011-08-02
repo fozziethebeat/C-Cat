@@ -19,7 +19,7 @@ mvn install:install-file -DgroupId=graph.edu.ucla.sspace \
 
 # Add malt 1.5.1 (Not in trunk yet)
 mvn install:install-file -DgroupId=org.maltparser -DartifactId=maltparser \
--Dversion=1.5.1 -Dpackaging=jar -Dfile=lib/malt.jar
+-Dversion=1.5.3 -Dpackaging=jar -Dfile=lib/malt.jar
 
 # Add liblinear 1.7 (Not in trunk yet)
 mvn install:install-file -DgroupId=lib.linear -DartifactId=liblinear \
@@ -30,6 +30,6 @@ mvn install:install-file -DgroupId=lib.svm -DartifactId=libsvm \
 -Dversion=1.0 -Dpackaging=jar -Dfile=lib/libsvm.jar
 
 # Add map 0.1 (Not in trunk yet)
-mvn install:install-file -DgroupId=com.maprfs -DartifactId=maprfs \
--Dversion=0.1 -Dpackaging=jar -Dfile=lib/maprfs-0.1.jar
+#mvn install:install-file -DgroupId=com.maprfs -DartifactId=maprfs \
+#-Dversion=0.1 -Dpackaging=jar -Dfile=lib/maprfs-0.1.jar
 #noop

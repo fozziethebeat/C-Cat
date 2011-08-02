@@ -21,11 +21,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+package gov.llnl.ontology.text.corpora;
 
-
-package gov.llnl.ontology.wordnet;
-
-import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
+import gov.llnl.ontology.text.Document;
+import gov.llnl.ontology.text.DocumentReader;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -36,14 +35,24 @@ import static org.junit.Assert.*;
 /**
  * @author Keith Stevens
  */
-public class WordNetCorpusReaderTest {
+public class SenseEval2007DocumentReaderTest {
 
-    @Test public void testSynsetMerge() {
-        OntologyReader reader = WordNetCorpusReader.initialize("data/dict/");
+    public static final String TEST_SENT =
+        "   <instance id=\"explain.v.4\" corpus=\"wsj\">\n" +
+        "OPEC Secretary-General Subroto <head> explains </head> " +
+        ": Consumers offer security of markets " +
+        "</instance>";
 
-        Synset first = reader.getSynset("cat", PartsOfSpeech.NOUN, 1);
-        Synset second = reader.getSynset("feline", PartsOfSpeech.NOUN, 1);
-        first.merge(second);
-        System.out.println(first.getParentPaths());
+    @Test public void testReadDocument() {
+        DocumentReader reader = new SenseEval2007DocumentReader();
+        Document doc = reader.readDocument(TEST_SENT);
+        assertEquals("explain.v.4", doc.key());
+        assertEquals("explain", doc.title());
+        assertEquals(3, doc.id());
+        assertEquals(TEST_SENT, doc.originalText());
+        assertEquals("senseeval2007", doc.sourceCorpus());
+        assertTrue(doc.rawText().contains("explain "));
+        assertFalse(doc.rawText().contains("head"));
     }
 }
+

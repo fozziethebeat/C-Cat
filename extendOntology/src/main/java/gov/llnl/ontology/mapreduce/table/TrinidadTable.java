@@ -25,7 +25,12 @@ package gov.llnl.ontology.mapreduce.table;
 
 import gov.llnl.ontology.text.Document;
 import gov.llnl.ontology.text.Sentence;
+import gov.llnl.ontology.util.StringPair;
 
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.util.IntPair;
+
+import com.google.common.collect.Lists;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -154,6 +159,11 @@ public class TrinidadTable implements CorpusTable {
     public static final String ANNOTATION_SENTENCE = "sentence";
 
     /**
+     * The column qualifier for the token level document annotations.
+     */
+    public static final String ANNOTATION_TOKEN = "token";
+
+    /**
      * The column family for word list labels associated wtih each document.
      */
     public static final String LABEL_CF = "wordListLabels";
@@ -233,6 +243,8 @@ public class TrinidadTable implements CorpusTable {
         scan.addColumn(SOURCE_CF.getBytes(), SOURCE_NAME.getBytes());
         scan.addColumn(ANNOTATION_CF.getBytes(),
                        ANNOTATION_SENTENCE.getBytes());
+        scan.addColumn(ANNOTATION_CF.getBytes(),
+                       ANNOTATION_TOKEN.getBytes());
         scan.addFamily(TEXT_CF.getBytes());
         scan.addFamily(LABEL_CF.getBytes());
         scan.addFamily(META_CF.getBytes());
@@ -305,9 +317,13 @@ public class TrinidadTable implements CorpusTable {
      * {@inheritDoc}
      */
     public List<Sentence> sentences(Result row) {
-        return SchemaUtil.getObjectColumn(
-                row, ANNOTATION_CF, ANNOTATION_SENTENCE,
-                new TypeToken<List<Sentence>>(){}.getType());
+        // First read in and parse the meta data for the sentences.
+        String sentenceText = SchemaUtil.getColumn(
+                row, ANNOTATION_CF, ANNOTATION_SENTENCE);
+        // Next read in and parse the meta data for each token.
+        String tokenText = SchemaUtil.getColumn(
+                row, ANNOTATION_CF, ANNOTATION_TOKEN);
+        return Sentence.readSentences(sentenceText, tokenText);
     }
 
     /**
@@ -328,8 +344,10 @@ public class TrinidadTable implements CorpusTable {
      * {@inheritDoc}
      */
     public void put(ImmutableBytesWritable key, List<Sentence> sentences) {
+        StringPair annots = Sentence.writeSentences(sentences);
         Put put = new Put(key.get());
-        SchemaUtil.add(put, ANNOTATION_CF, ANNOTATION_SENTENCE, sentences);
+        SchemaUtil.add(put, ANNOTATION_CF, ANNOTATION_SENTENCE, annots.x);
+        SchemaUtil.add(put, ANNOTATION_CF, ANNOTATION_TOKEN, annots.y);
         put(put);
     }
 

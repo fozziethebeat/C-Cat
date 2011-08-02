@@ -36,6 +36,7 @@ import edu.ucla.sspace.dependency.DependencyTreeNode;
 import edu.ucla.sspace.dependency.SimpleDependencyTreeNode;
 import edu.ucla.sspace.dependency.DependencyRelation;
 import edu.ucla.sspace.dependency.SimpleDependencyRelation;
+import edu.ucla.sspace.util.SerializableUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,8 +55,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOError;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
@@ -141,6 +140,7 @@ public class SchemaUtil {
         byte[] bytes = row.getValue(col.getBytes(), qual.getBytes());
         if (bytes == null)
             return null;
+        //return (T) SerializableUtil.load(new ByteArrayInputStream(bytes));
         String json = new String(bytes);
         return (T) gson.fromJson(json, typeOfT);
     }
@@ -153,6 +153,9 @@ public class SchemaUtil {
     public static void add(Put put, String col, String qual, Object object) {
         if (object == null)
             return;
+        //ByteArrayOutputStream ous = new ByteArrayOutputStream();
+        //SerializableUtil.save(object, ous);
+        //add(put, col, qual, ous.toString());
         add(put, col, qual, gson.toJson(object));
     }
 

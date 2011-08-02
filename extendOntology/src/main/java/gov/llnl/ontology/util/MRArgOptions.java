@@ -162,8 +162,7 @@ public class MRArgOptions extends ArgOptions {
      */
     public void fail(String message, String extraOptionDescription, Class c) {
         System.out.printf("usage: java %s [OPTIONS] %s\n%s\n%s\n",
-                          c.getName(), message,
-                          extraOptionDescription, prettyPrint());
+                          c.getName(), extraOptionDescription, message, prettyPrint());
         System.exit(1);
     }
 }

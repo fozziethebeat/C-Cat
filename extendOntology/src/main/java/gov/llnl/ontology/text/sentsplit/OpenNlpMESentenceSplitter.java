@@ -39,6 +39,10 @@ import java.io.IOError;
 
 
 /**
+ * A wrapper around the {@link SentenceDetectorME} {@link SentenceDetector} so
+ * that it can be loaded with a no argument constructor using a predefined
+ * model.
+ *
  * @author Keith Stevens
  */
 public class OpenNlpMESentenceSplitter implements SentenceDetector {
@@ -46,12 +50,23 @@ public class OpenNlpMESentenceSplitter implements SentenceDetector {
     public static final String DEFAULT_MODEL =
         "models/OpenNLP/en-sent.bin";
 
+    /**
+     * The internal {@link SentenceDetector}
+     */
     private final SentenceDetector detector;
 
+    /**
+     * Loads the model configuration from {@link #DEFAULT_MODEL}
+     */
     public OpenNlpMESentenceSplitter() {
         this(DEFAULT_MODEL, true);
     }
 
+    /**
+     * Loads a {@link SentenceDetectorME} model from {@code modelPath}.  If
+     * {@code loadFromJar} is true, the binary file will found within the
+     * running class path.
+     */
     public OpenNlpMESentenceSplitter(String modelPath, boolean loadFromJar) {
         try {
             InputStream in = (loadFromJar)
@@ -62,6 +77,7 @@ public class OpenNlpMESentenceSplitter implements SentenceDetector {
             throw new IOError(ioe);
         }
     }
+
     /**
      * {@inheritDoc}
      */

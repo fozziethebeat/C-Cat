@@ -79,8 +79,14 @@ public class MaltParser implements Parser {
      */
     private MaltParserService parser;
 
+    /**
+     * The number of sentences parsed so far.
+     */
     private int sentenceCount;
 
+    /**
+     * The serialzied model path.
+     */
     private String modelPath;
 
     /**
@@ -131,7 +137,7 @@ public class MaltParser implements Parser {
         return parseTokens(lines, header);
     }
 
-    private String parseTokens(String[] tokens, String header) {
+    private synchronized String parseTokens(String[] tokens, String header) {
         StringBuilder builder = new StringBuilder();
 
         // Parse the sentence and write the graph to the string builder.
@@ -168,21 +174,35 @@ public class MaltParser implements Parser {
             return "";
         }
 
-        synchronized(this) {
-            if (++sentenceCount >= SENTENCE_LIMIT) {
-                sentenceCount = 0;
-                try {
-                    MaltParserService p = new MaltParserService();
-                    p.initializeParserModel
-                        ("-c " + modelPath + " -m parse");
-                    parser = p;
-                } catch (MaltChainedException ioe) {
-                    throw new RuntimeException(ioe);
-                }
-            }
-        }
         return builder.toString();
     }
+
+    /**
+     * Previously used to restart the parser periodically to ensure that the
+     * memory overhead does not grow beyond a limit.  As of Malt 1.5.3, this
+     * problem should be fixed, but you never know.
+    private MaltParserService getParser() {
+        if (++sentenceCount >= SENTENCE_LIMIT) {
+            sentenceCount = 0;
+
+            try {
+                // Destroy the old parser model and throw away the symbol tables
+                // and any other related information.
+                parser.terminateParserModel();
+
+                // Discard the old parser so that the garbage collector can
+                // reclaim any memory.
+                parser = null;
+                // Create the new one and initialize it.
+                parser = new MaltParserService();
+                parser.initializeParserModel("-c " + modelPath + " -m parse");
+            } catch (MaltChainedException mce) {
+                throw new RuntimeException(mce);
+            }
+        }
+        return parser;
+    }
+    */
 
     private static String buildLine(int lineNum, String word, String tag) {
         return String.format("%d\t%s\t_\t%s\t%s\t_\t_\t_", 

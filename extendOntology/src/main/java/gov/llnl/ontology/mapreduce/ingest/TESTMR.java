@@ -28,7 +28,6 @@ import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.DocumentReader;
 
 import gov.llnl.ontology.text.hbase.GzipTarInputFormat;
-import gov.llnl.ontology.text.hbase.GzipXmlInputFormat;
 import gov.llnl.ontology.text.hbase.XMLInputFormat;
 
 import gov.llnl.ontology.util.MRArgOptions;
@@ -83,13 +82,13 @@ import java.util.Map;
  * </ul>
  * @author Keith Stevens
  */
-public class ImportCorpusMR extends Configured implements Tool {
+public class TESTMR extends Configured implements Tool {
 
     /**
      * The configuration key prefix.
      */
     public static String CONF_PREFIX =
-        "gov.llnl.ontology.mapreduce.ingest.ImportCorpusMR";
+        "gov.llnl.ontology.mapreduce.ingest.TESTMR";
 
     /**
      * The configuration key for setting the {@link CorpusTable}.
@@ -106,13 +105,13 @@ public class ImportCorpusMR extends Configured implements Tool {
     /**
      * Acquire the logger for this class.
      */
-    private static final Log LOG = LogFactory.getLog(ImportCorpusMR.class);
+    private static final Log LOG = LogFactory.getLog(TESTMR.class);
 
     /**
      * Runs the {@link IngestCorpusMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(HBaseConfiguration.create(), new ImportCorpusMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(), new TESTMR(), args);
     }
 
     /**
@@ -132,21 +131,19 @@ public class ImportCorpusMR extends Configured implements Tool {
                           "and end of a document",
                           true, "String", "Required (One of)");
         options.addOption('g', "useGZippedReader",
-                          "Set to true if the files are listed in a gzipped " +
+                          "Set to true if the files are in a gzipped " +
                           "tarball format",
                           false, null, "Required (One of)");
-        options.addOption('z', "useGzipXmlReader",
-                          "Set to true if the files are listed in a file as " +
-                          "a series of gzipped xml files.  When set, " +
-                          "provide the tag that delimits the start and end " +
-                          "of a document",
-                          true, "String", "Required (One of)");
 
         LOG.info("Parse Options");
         // Parse and validate the arguments.
         options.parseOptions(args);
-        options.validate("", "<indir>+", ImportCorpusMR.class,
-                         -1, 'r');
+        if (!options.hasOption('r')) {
+            System.err.println(
+                    "usage: java TESTMR [OPTIONS] <indir>+\n"+
+                    options.prettyPrint());
+            System.exit(1);
+        }
 
         LOG.info("Setup Configuration");
         // Setup the configuration so that the mappers know which classes to
@@ -160,9 +157,9 @@ public class ImportCorpusMR extends Configured implements Tool {
         LOG.info("Setup Input Data Format");
         // Create the job and set the jar.
         Job job = new Job(conf, "Import Corpus");
-        job.setJarByClass(ImportCorpusMR.class);
+        job.setJarByClass(TESTMR.class);
 
-        job.setMapperClass(ImportCorpusMapper.class);
+        job.setMapperClass(TESTMapper.class);
 
         // Set the input format class based on the option given.
         if (options.hasOption('g'))
@@ -170,9 +167,6 @@ public class ImportCorpusMR extends Configured implements Tool {
         else if (options.hasOption('x')) {
             job.setInputFormatClass(XMLInputFormat.class);
             XMLInputFormat.setXMLTags(job, options.getStringOption('x'));
-        } else if (options.hasOption('z')) {
-            job.setInputFormatClass(GzipXmlInputFormat.class);
-            GzipXmlInputFormat.setXMLTags(job, options.getStringOption('z'));
         }
 
         // Set the path for the input file which contains a list of files to
@@ -187,7 +181,7 @@ public class ImportCorpusMR extends Configured implements Tool {
                 table.tableName(), IdentityTableReducer.class, job);
         job.setNumReduceTasks(0);
 
-        LOG.info("Start ImportCorpusMapper job"); 
+        LOG.info("Start TESTMapper job"); 
         // Run the job.
         job.waitForCompletion(true);
         LOG.info("Job Completed");
@@ -200,7 +194,7 @@ public class ImportCorpusMR extends Configured implements Tool {
      * various document details and the raw document text.  All of the extracted
      * information is stored in a {@link CorpusTable}.
      */
-    public static class ImportCorpusMapper
+    public static class TESTMapper
             extends Mapper<ImmutableBytesWritable, Text, Text, Text> {
         
         /**
@@ -218,8 +212,6 @@ public class ImportCorpusMR extends Configured implements Tool {
          */
         public void setup(Context context) {
             Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
             reader = ReflectionUtil.getObjectInstance(conf.get(READER));
         }
 
@@ -229,15 +221,14 @@ public class ImportCorpusMR extends Configured implements Tool {
         public void map(ImmutableBytesWritable key, 
                         Text value,
                         Context context) {
-            table.put(reader.readDocument(value.toString()));
-            context.getCounter("ImportCorpusMR", "Documents").increment(1);
+            reader.readDocument(value.toString());
+            context.getCounter("TESTMR", "Documents").increment(1);
         }
 
         /**
          * {@inheritDoc}
          */
         protected void cleanup(Context context) {
-            table.close();
         }
     }
 }

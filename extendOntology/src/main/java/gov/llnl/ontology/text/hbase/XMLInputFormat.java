@@ -47,9 +47,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-import org.apache.tools.tar.TarEntry;
-import org.apache.tools.tar.TarInputStream;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,15 +67,10 @@ import java.util.zip.GZIPInputStream;
 public class XMLInputFormat
         extends FileInputFormat<ImmutableBytesWritable, Text> {
 
-    public static final String CONF_PREFIX =
-        "gov.llnl.ontology.text.hbase.XMLInputFormat";
-
-    public static final String DELIMITER_TAG =
-        CONF_PREFIX + ".tag";
 
     public static void setXMLTags(Job job, String delimiter) {
         Configuration conf = job.getConfiguration();
-        conf.set(DELIMITER_TAG, delimiter);
+        conf.set(XMLRecordReader.DELIMITER_TAG, delimiter);
     }
 
     /**
@@ -89,198 +81,5 @@ public class XMLInputFormat
                                            TaskAttemptContext context)
             throws IOException, InterruptedException {
         return new XMLRecordReader();
-    }
-
-    /**
-     * Returns a {@link List} of {@link FileSplit}s.  Each {@link FileSplit}
-     * will be a gzipped tarball of xml documents.  Each tarred file should
-     * contain a single document.
-    public List<InputSplit> getSplits(JobContext context) throws IOException {
-        List<InputSplit> splits = new ArrayList<InputSplit>();
-
-        // Get the list of xml files to be processed and add each file as an
-        // InputSplit.
-        FileSystem fs = FileSystem.get(context.getConfiguration());
-        for (Path file : getInputPaths(context)) {
-            // Check that the file exists.  Throw an exception if it does not.
-            if (fs.isDirectory(file) || !fs.exists(file))
-                throw new IOException("File does not exist: " + file);
-
-            // Get the length of the file and then add a new FileSplit.
-            long length = fs.getFileStatus(file).getLen();
-            splits.add(new FileSplit(file, 0, length, null));
-        }
-        return splits;
-    }
-     */
-
-    /**
-     * A {@link RecordReader} for processing gzipped tarballs of document files.
-     * It is assumed that each tarballed file is a single document, or will be
-     * processed further by other stages.
-     */
-    public class XMLRecordReader
-            extends RecordReader<ImmutableBytesWritable, Text> {
-
-        /**
-         * The current {@link ImmutableBytesWritable} key read.
-         */
-        private ImmutableBytesWritable currentKey;
-
-        /**
-         * The current {@link Text} document.
-         */
-        private Text currentDocument;
-
-        /**
-         * The tag that begins a single XML document.
-         */
-        private byte[] startTag;
-
-        /**
-         * The tag that ends a single XML document.
-         */
-        private byte[] endTag;
-
-        /**
-         * A file stream for reading xml data that needs to be partitioned.
-         */
-        private InputStream fsin;
-
-        /**
-         * The start byte position of the current record.
-         */
-        private long start;
-
-        /**
-         * The end byte position of the current record.
-         */
-        private long end;
-
-        /**
-         * The current position in the file stream.
-         */
-        private long pos;
-
-        /**
-         * An output buffer for storing characters that will compose a single
-         * record.
-         */
-        private final DataOutputBuffer buffer = new DataOutputBuffer();
-    
-        /**
-         * Extract the {@link Path} for the file to be processed by this {@link
-         * XMLRecordReader}.
-         */
-        public void initialize(InputSplit isplit, TaskAttemptContext context) 
-                throws IOException, InterruptedException {
-            // Get the xml document delmiters for this xml file.
-            Configuration config = context.getConfiguration();
-            startTag = ("<" + config.get(DELIMITER_TAG)).getBytes();
-            endTag = ("</" + config.get(DELIMITER_TAG) + ">").getBytes();
-
-            // Get the file stream for the xml file.
-            FileSplit split = (FileSplit) isplit;
-            Path file = split.getPath();
-            FileSystem fs = file.getFileSystem(config);
-            fsin = fs.open(split.getPath());
-
-            // Setup the limits of the xml file.
-            start = split.getStart();
-            end = start + split.getLength();
-            pos = 0;
-        }
-
-        /**
-         * Advances the reader one step to point to the next tarball file.  It
-         * returns {@code null} when there are no more files in the tarball.
-         */
-        public boolean nextKeyValue() throws IOException {
-            currentKey = new ImmutableBytesWritable();
-            currentDocument = new Text();
-            buffer.reset();
-
-            if (pos < end) {
-                if (readUntilMatch(startTag, false)) {
-                    // Write the start tag.
-                    buffer.write(startTag);
-
-                    // Read the record into the buffer.
-                    if (readUntilMatch(endTag, true)) {
-                        // Write the key and value for this record.
-                        currentKey.set(Long.toString(pos).getBytes());
-                        currentDocument.set(
-                                buffer.getData(), 0, buffer.getLength());
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public ImmutableBytesWritable getCurrentKey() {
-            return currentKey;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public Text getCurrentValue() {
-            return currentDocument;
-        }
-        
-        /**
-         * {@inheritDoc}
-         */
-        public float getProgress() throws IOException, InterruptedException {
-            return (pos - start) / (float) (end - start);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void close() throws IOException {
-            fsin.close();
-        }
-
-        /**
-         * Reads characters from the file stream until a set of characters match
-         * the text in {@code match}.  Returns true if a valid match was found
-         * and false if the end of file was reached but no valid match was
-         * found.  If {@code withinBlock} is true, characters read will be
-         * stored in {@code buffer}.
-         */
-        private boolean readUntilMatch(byte[] match, boolean withinBlock)
-                throws IOException {
-            int i = 0;
-            while (true) {
-                // Read the next byte.
-                int b = fsin.read();
-                pos++;
-
-                // Check for end of file.
-                if (b == -1)
-                    return false;
-            // Save to the buffer.
-            if (withinBlock)
-                buffer.write(b);
-            
-            // Check if we're matching:
-            if (b == match[i]) {
-                i++;
-                if (i >= match.length)
-                    return true;
-            } else
-                i = 0;
-
-            // Return false if we're still reading a record but the file has
-            // ended.
-            if (!withinBlock && i == 0 && pos >= end)
-                return false;
-            }
-        }
     }
 }

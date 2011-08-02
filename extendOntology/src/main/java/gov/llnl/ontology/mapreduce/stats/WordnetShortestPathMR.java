@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the C-Cat package and is covered under the terms and
+ * conditions therein.
+ *
+ * The C-Cat package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
@@ -30,24 +53,33 @@ import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
 
 /**
+ * A Map/Reduce job that computes the shortest path between every wordnet
+ * synset.
+ *
  * @author Keith Stevens
  */
 public class WordnetShortestPathMR extends Configured implements Tool {
 
+    /**
+     * The base name for every configuration setting.
+     */
     public static final String CONF_BASE =
         "gov.llnl.ontology.mapreduce.stats.WordnetShortestPathMR";
 
+    /**
+     * The configuration setting for the wordnet directory.
+     */
     public static final String WORDNET =
         CONF_BASE + ".wordnet";
 
-    public static final String URI_BASE = "maprfs:///";
-
+    /**
+     * A temp file name for the synset pairwise combinations.
+     */
     public static final String TEMP_TERM_PAIR_PATH = "wordnet-pair-file";
 
     /**
@@ -58,7 +90,11 @@ public class WordnetShortestPathMR extends Configured implements Tool {
                        new WordnetShortestPathMR(), args);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int run(String[] args) throws Exception {
+        // Setup and valdiate the arguments.
         ArgOptions options = new ArgOptions();
         options.addOption('w', "wordnetDir",
                           "The directory path to the wordnet data files",
@@ -127,23 +163,35 @@ public class WordnetShortestPathMR extends Configured implements Tool {
      */
     private static PrintStream createPrintStream() throws Exception {
         Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(URI.create(URI_BASE), conf);
+        FileSystem fs = FileSystem.get(conf);
         Path finalPath = new Path(TEMP_TERM_PAIR_PATH);
         FSDataOutputStream ostr = fs.create(finalPath);
         return new PrintStream(ostr);
     }
 
+    /**
+     * The {@link Mapper} responsible for the real work.
+     */
     public static class WordnetShortestPathMapper
             extends Mapper<LongWritable, Text, Text, IntWritable> {
 
+        /**
+         * The {@link OntologyReader} needed for accessing any {@link Synset}.
+         */
         private OntologyReader reader;
 
+        /**
+         * {@inheritDoc}
+         */
         public void setup(Context context)
                 throws IOException, InterruptedException {
             Configuration conf = context.getConfiguration();
             reader = WordNetCorpusReader.initialize(conf.get(WORDNET));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException {
             String[] terms = value.toString().split("\\|");

@@ -29,10 +29,9 @@ import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.parse.Parser;
 import gov.llnl.ontology.text.Sentence;
 
+import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.util.MRArgOptions;
 
-import edu.stanford.nlp.ling.CoreAnnotations.CoNLLDepTypeAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.CoNLLDepParentIndexAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.ReflectionUtil;
@@ -83,7 +82,7 @@ public class ParseMR extends CorpusTableMR {
         CONF_PREFIX + ".parser";
 
     /**
-     * Runs the {@link IngestCorpusMR}.
+     * Runs the {@link ParseMR}.
      */
     public static void main(String[] args) throws Exception {
         ToolRunner.run(HBaseConfiguration.create(), new ParseMR(), args);
@@ -143,10 +142,9 @@ public class ParseMR extends CorpusTableMR {
          */
         public void setup(Context context) {
             Configuration conf = context.getConfiguration();
-            conf.set("mapred.map.child.java.opts", "-Xmx8g");
-            conf.set("mapred.tasktracker.map.tasks.maximum", "1");
             table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
             table.table();
+            context.setStatus("Setting up parser");
             parser = ReflectionUtil.getObjectInstance(conf.get(PARSER));
         }
 
@@ -163,6 +161,7 @@ public class ParseMR extends CorpusTableMR {
             // Iterate over each sentence in the document for this row.  Add the
             // dependency parse annotations to each token in the sentence
             // annotation.
+            context.setStatus("Decoding Sentence");
             List<Sentence> sentences = table.sentences(row);
 
             // Skip any documents without sentences.
@@ -178,12 +177,16 @@ public class ParseMR extends CorpusTableMR {
                     continue;
 
                 LOG.info("Parseing sentence of length: " + 
-                         sentence.taggedTokens().length);
+                         sentence.numTokens());
                 // Get the dependency parse tree.
                 String parsedSentence = parser.parseText(
                         null, sentence.taggedTokens());
+
+                // Skip sentences that were skipped due to length.
+                if (parsedSentence.equals(""))
+                    continue;
+
                 context.getCounter("ParseMR", "Parsed Sentence").increment(1);
-                context.setStatus("DON'T KILL MEEEEEEEEE");
 
                 // Split the parse tree into each line for each token and add
                 // the parent node index and the relationship as an annotation
@@ -193,9 +196,9 @@ public class ParseMR extends CorpusTableMR {
                     Annotation token = tokens.next();
                     String[] toks = line.split("\\s+");
 
-                    token.set(CoNLLDepParentIndexAnnotation.class,
-                              Integer.parseInt(toks[6]));
-                    token.set(CoNLLDepTypeAnnotation.class, toks[7]);
+                    AnnotationUtil.setDependencyParent(
+                            token, Integer.parseInt(toks[6]));
+                    AnnotationUtil.setDependencyRelation(token, toks[7]);
                 }
             }
 

@@ -35,6 +35,9 @@ import java.io.IOException;
 
 
 /**
+ * A wrapper around the {@link TokenizerME} {@link Tokenizer} so that it can be
+ * loaded with a no argument constructor using a predefined model.
+ *
  * @author Keith Stevens
  */
 public class OpenNlpMETokenizer extends TokenizerAdaptor {
@@ -42,14 +45,28 @@ public class OpenNlpMETokenizer extends TokenizerAdaptor {
     public static final String DEFAULT_MODEL =
         "models/OpenNLP/en-token.bin";
 
+    /**
+     * Loads the model configuration from {@link #DEFAULT_MODEL}
+     */
     public OpenNlpMETokenizer() {
         this(DEFAULT_MODEL, true);
     }
 
+    /**
+     * Loads a {@link TokenizerME} model from {@code modelPath}.  If {@code
+     * loadFromJar} is true, the binary file will found within the running class
+     * path.
+     */
     public OpenNlpMETokenizer(String modelPath, boolean loadFromJar) {
         super(loadModel(modelPath, loadFromJar));
     }
 
+    /**
+     * Returns a {@link Tokenizer} stored in the file specified by {@code
+     * modelPath}.  This is static so that the constructor can simply pass the
+     * loaded {@link Tokenizer} to the constructor of the {@link
+     * TokenizerAdaptor}.
+     */
     public static Tokenizer loadModel(String modelPath, boolean loadFromJar) {
         try {
             return new TokenizerME(new TokenizerModel(

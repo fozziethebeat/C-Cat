@@ -25,10 +25,16 @@ package gov.llnl.ontology.text;
 
 
 /**
+ * A collection of text utilities.
+ *
  * @author Keith Stevens
  */
 public class TextUtil {
 
+    /**
+     * Removes any pucntuation from {@code term} and replaces it with the remove
+     * characters with the string.
+     */
     public static String cleanTerm(String term) {
         while (term.length() > 0 && term.startsWith("-"))
                 term = term.substring(1, term.length());

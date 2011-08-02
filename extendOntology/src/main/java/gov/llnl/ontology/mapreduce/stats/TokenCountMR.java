@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the C-Cat package and is covered under the terms and
+ * conditions therein.
+ *
+ * The C-Cat package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
@@ -27,15 +50,41 @@ import java.io.IOException;
 
 
 /**
+ * A Map/Reduce job that counts the number of occurrences for each token in a
+ * corpus.
+ *
  * @author Keith Stevens
  */
 public class TokenCountMR extends CorpusTableMR {
+
+    /**
+     * The job description used in help text.
+     *
+    public static final String ABOUT =
+        "Computes token counts from a particular corpus.  " +
+        "If no corpus is specified, then all corpora will be used to compute " +
+        "the frequencies.  The co-occurrence counts will be stored in reduce " +
+        "parts on hdfs under the specified <outdir>.";
 
     /**
      * Runs the {@link TokenCountMR}.
      */
     public static void main(String[] args) throws Exception {
         ToolRunner.run(HBaseConfiguration.create(), new TokenCountMR(), args);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void validateOptions(MRArgOptions options) {
+        options.validate(ABOUT, "<outdir>", TokenCountMR.class, 1, 'C');
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected String jobName() {
+        return "Token Count";
     }
 
     /**
@@ -73,11 +122,20 @@ public class TokenCountMR extends CorpusTableMR {
         job.setNumReduceTasks(24);
     }
 
+    /**
+     * The {@link TableMapper} responsible for most of the work.
+     */
     public static class TokenCountMapper
             extends TableMapper<Text, IntWritable> {
 
+        /**
+         * Represents a single occurrence.
+         */
         private static final IntWritable ONE = new IntWritable(1);
 
+        /**
+         * The {@link CorpusTable} responsible for reading a row's data.
+         */
         private CorpusTable table;
 
         /**
@@ -99,7 +157,8 @@ public class TokenCountMR extends CorpusTableMR {
                 throws IOException, InterruptedException {
             for (Sentence sentence : table.sentences(row))
                 for (StringPair tokenPos : sentence.taggedTokens())
-                    context.write(new Text(tokenPos.x), ONE);
+                    if (tokenPos.x != null)
+                        context.write(new Text(tokenPos.x), ONE);
         }
     }
 }

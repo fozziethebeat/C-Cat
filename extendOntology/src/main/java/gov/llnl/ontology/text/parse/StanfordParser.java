@@ -64,7 +64,7 @@ public class StanfordParser implements Parser {
      * The default location of the stanford parser information.
      */
     public static final String PARSER_MODEL =
-        "data/models/stanford/englishPCFG.ser";
+        "models/stanford/englishPCFG.ser.gz";
 
     /**
      * The {@link LexicalizedParser} responsible for parsing sentences.
@@ -130,7 +130,8 @@ public class StanfordParser implements Parser {
     public String parseText(String header, StringPair[] sentence) {
         List<HasWord> tokens = new ArrayList<HasWord>(sentence.length);
         for (StringPair word : sentence)
-            tokens.add(new TaggedWord(word.x, word.y));
+            if (word.x != null && word.y != null)
+                tokens.add(new TaggedWord(word.x, word.y));
         StringBuilder builder = new StringBuilder();
         parseTokens(builder, header, tokens);
         return builder.toString();
@@ -196,12 +197,5 @@ public class StanfordParser implements Parser {
             builder.append("\n");
         }
         builder.append("\n");
-    }
-
-    public static void main(String[] args) throws Exception {
-        Parser parser = new StanfordParser();
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-                    System.in));
-        System.out.println(parser.parseText(in.readLine(), "" ));
     }
 }
