@@ -59,7 +59,7 @@ public class TokenCountMR extends CorpusTableMR {
 
     /**
      * The job description used in help text.
-     *
+     */
     public static final String ABOUT =
         "Computes token counts from a particular corpus.  " +
         "If no corpus is specified, then all corpora will be used to compute " +
