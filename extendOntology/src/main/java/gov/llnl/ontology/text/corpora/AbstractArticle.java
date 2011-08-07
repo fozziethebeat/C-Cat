@@ -1,5 +1,7 @@
 package gov.llnl.ontology.text.corpora;
 
+import gov.llnl.ontology.text.Document;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
@@ -8,7 +10,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -16,23 +17,21 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.Set;
 
-import gov.llnl.ontology.text.Document;
-
+import org.apache.commons.lang.StringEscapeUtils;
 import org.htmlparser.nodes.TextNode;
 import org.htmlparser.filters.AndFilter;
 import org.htmlparser.filters.OrFilter;
 import org.htmlparser.filters.HasAttributeFilter;
 import org.htmlparser.filters.NodeClassFilter;
 import org.htmlparser.filters.TagNameFilter;
-
 import org.htmlparser.Parser;
 import org.htmlparser.util.NodeList;
 import org.htmlparser.util.ParserException;
 import org.htmlparser.util.SimpleNodeIterator;
-
 import org.htmlparser.Node;
 import org.htmlparser.util.NodeIterator;
 import org.htmlparser.util.SimpleNodeIterator;
+import org.htmlparser.visitors.TextExtractingVisitor;
 
 /**
  * This class represents an abstract article. Implementations of future {@link Article}s
@@ -50,6 +49,8 @@ import org.htmlparser.util.SimpleNodeIterator;
  * </pre>
  * 
  * In this example the attribute name = "id", and attribute value = "content".
+ * 
+ * @author Terry Huang
  */
 public abstract class AbstractArticle implements Document {
 
@@ -84,26 +85,31 @@ public abstract class AbstractArticle implements Document {
     /**
      *  Filter that is used to accept only text nodes.
      */ 
-    private final static NodeClassFilter textFilter = 
+    private static final NodeClassFilter textFilter = 
 	new NodeClassFilter(TextNode.class);
 
     /**
      *  Filter that is used to find the main content of the article.
      */
     private static HasAttributeFilter storyBodyFilter;
-
+    private static final TagNameFilter titleFilter = new TagNameFilter("title");
     /**
      *  Filter that is used to find HTML paragraph elements (<p>). The idea of 
      *  searching for <p> tags is that most sites surround the sentences of their
      *  content in <p> tags.
      */
-    private final static TagNameFilter pFilter = new TagNameFilter("p");
+    private static final TagNameFilter pFilter = new TagNameFilter("p");
 
     /**
      * The corpus name for any {@link Document} returned by this class.
      */
     private static String CORPUS_NAME;
 
+    /**
+     *  The title of the article.
+     */ 
+    private String ARTICLE_TITLE;
+    
     protected AbstractArticle(String attributeName, 
 			      String attributeValue,
 			      String corpusName,
@@ -111,11 +117,11 @@ public abstract class AbstractArticle implements Document {
 	ARTICLE_BODY_ATTRIBUTE_NAME = attributeName;
 	ARTICLE_BODY_ATTRIBUTE_VALUE = attributeValue;
 	storyBodyFilter = new HasAttributeFilter(ARTICLE_BODY_ATTRIBUTE_NAME,
-			       ARTICLE_BODY_ATTRIBUTE_VALUE);
-
+						 ARTICLE_BODY_ATTRIBUTE_VALUE);
+	
 	this.content = new ArrayList<String>();
-	CORPUS_NAME = corpusName;
 	this.articleURL = articleUrl;
+	CORPUS_NAME = corpusName;
     }
     
     public String sourceCorpus() {
@@ -151,7 +157,7 @@ public abstract class AbstractArticle implements Document {
     }
 
     /**
-     *  Getter for the content of the article, as a list of sentences (Strings).
+     *  Getter for the content of the article, as a list of sentences (Strings).  
      */
     public List<String> getContent() {
 	return Collections.unmodifiableList(content);
@@ -191,7 +197,9 @@ public abstract class AbstractArticle implements Document {
      * @return The status of the fetch (true if successful, false if not).
      */
     public boolean fetchAndParseContent() {
+	NodeList mainNode = null;
 	NodeList storyNodes = null;
+	NodeList titleNode = null;
 
 	// Try to fetch the content of the article
 	if (!fetch())
@@ -200,7 +208,13 @@ public abstract class AbstractArticle implements Document {
 	try {
 	    // Attempt to fetch and parse the article.
 	    Parser parser = new Parser(rawHTML, null);
-	    storyNodes = parser.parse(storyBodyFilter);
+	    mainNode = parser.parse(null);
+	    
+	    // Grab the main content
+	    storyNodes = mainNode.extractAllNodesThatMatch(storyBodyFilter, true);
+
+	    // Grab the title
+	    extractTitle(mainNode);
 	} catch(ParserException pe) {
 	    StringBuffer errorMessage = new StringBuffer();
 	    errorMessage.append("Article URL = ")
@@ -208,25 +222,22 @@ public abstract class AbstractArticle implements Document {
 	    LOGGER.warning(errorMessage.toString());
 	    return false;
 	}
-
-	SimpleNodeIterator iter =
+	
+	SimpleNodeIterator storyBodyIter =
 	    storyNodes.elementAt(0).getChildren().elements();
-	
+
 	// Go through the nodelist and find all the text nodes.
-	while(iter.hasMoreNodes()) {
-	    Node nextNode = iter.nextNode();
-	
+	while(storyBodyIter.hasMoreNodes()) {
+	    Node nextNode = storyBodyIter.nextNode();
 	    if (pFilter.accept(nextNode)) {
 		NodeList textNodes = extractTextNodes(nextNode.getChildren());
 		SimpleNodeIterator nodeIter = textNodes.elements();
-
 		while (nodeIter.hasMoreNodes()) {
 		    Node innerNode = nodeIter.nextNode();
-		    content.add(innerNode.toHtml());
+		    content.add(StringEscapeUtils.unescapeHtml(innerNode.toHtml()));
 		}
 	    }
 	}
-
 	return true;
     }
     
@@ -254,6 +265,18 @@ public abstract class AbstractArticle implements Document {
      *  @return A list of text {@link Node}.
      */
     protected NodeList extractTextNodes(NodeList nodes) {
-        return nodes.extractAllNodesThatMatch(textFilter);
+        return nodes.extractAllNodesThatMatch(textFilter, true);
+    }
+    
+    /**
+     *  Extract the title from articles.
+     */
+    protected void extractTitle(NodeList rootNode) throws ParserException {
+	NodeList titleNode = rootNode.extractAllNodesThatMatch(titleFilter, true);
+	NodeList titleTextNode = extractTextNodes(titleNode);
+	System.out.println(titleTextNode);
+	ARTICLE_TITLE = StringEscapeUtils
+	    .unescapeHtml(titleTextNode.toHtml());
+		
     }
 }
