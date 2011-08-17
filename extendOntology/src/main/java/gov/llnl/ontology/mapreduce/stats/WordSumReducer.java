@@ -51,10 +51,17 @@ public class WordSumReducer extends Reducer<Text, Text, Text, Text> {
     public void reduce(Text key, Iterable<Text> values, Context context)
             throws IOException, InterruptedException {
         Counter<String> occurrences = new Counter<String>();
-        for (Text item : values)
-            occurrences.count(item.toString());
+        for (Text item : values) {
+            String[] parts = item.toString().split("\\|[0-9]*");
+            int count = 1;
+            if (parts.length == 2)
+                count = Integer.parseInt(parts[1]);
+
+            occurrences.count(parts[0], count);
+        }
+
         for (Map.Entry<String, Integer> e : occurrences)
             context.write(new Text(key.toString()),
-                          new Text(e.getKey() + " " + e.getValue()));
+                          new Text(e.getKey() + "|" + e.getValue()));
     }
 }

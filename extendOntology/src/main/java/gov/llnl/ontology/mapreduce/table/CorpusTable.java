@@ -89,6 +89,17 @@ public interface CorpusTable extends GenericTable {
     List<Sentence> sentences(Result row);
 
     /**
+     * Returns the {@link List} of {@link Sentence} stored in {@code row} that
+     * correspond to the word senses created with {@code labelName}.
+     */
+    List<Sentence> wordSenses(Result row, String labelName);
+
+    /**
+     * Returns the {@link Document} associated with this row.
+     */
+    Document document(Result row);
+
+    /**
      * Stores the text of {@link Document} in this {@link CorpusTable}.
      */
     void put(Document document);
@@ -99,6 +110,14 @@ public interface CorpusTable extends GenericTable {
      * object or as a seperate set of smaller {@link Annotation}s.
      */
     void put(ImmutableBytesWritable key, List<Sentence> sentences);
+
+    /**
+     * Stores the {@link List} of {@link Sentences} containing only word senses
+     * in this table.
+     */
+    void putSenses(ImmutableBytesWritable key,
+                   List<Sentence> senses,
+                   String senseLabel);
 
     /**
      * Stores the {@code labelValue} in the column specified by {@code

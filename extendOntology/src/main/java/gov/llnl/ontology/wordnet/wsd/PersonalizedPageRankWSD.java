@@ -63,19 +63,50 @@ import java.util.Set;
  *
  * </p>
  *
- * This class <b>is</b> thread safe.
+ * This class performs pagerank over each word in a sentence by creating a fake
+ * {@link Synset} that connects to it's possible target sense in the wordnet
+ * graph.  Context words are also given a pseudo {@link Synset}.  The algorithm
+ * then runs the standard PageRank algorithm over this extended graph centering
+ * the initial probabilities over the pseudo {@link Synset} to bias the system
+ * towards flowing information from those nodes in the graph. The target {@link
+ * Synset} with the highest page rank for each word will be selected as the
+ * correct sense.
  *
+ * </p>
+ *
+ * This class <b>is</b> thread safe.  It modifies the {@link Synsets} in the
+ * wordnet graph ones with a {@link #LINK} tag during setup.  Afterwords, no
+ * changes are made to the graph structure.
+ *
+ * @see GraphConnectivityDisambiguation
  * @author Keith Stevens
  */
 public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
 
+    /**
+     * The {@link Synset} relation name for links created in the page rank
+     * graph.
+     */
     public static final String LINK = "related";
+
+    /**
+     * The {@link OntologyReader} used to determine the link structure.
+     */
     private OntologyReader wordnet;
     
+    /**
+     * A mapping from {@link Synset}s to unique integers.
+     */
     private Map<Synset, Integer> synsetMap;
 
+    /**
+     * A list of the original {@link Synset}s in the wordnet graph.
+     */
     private List<Synset> synsetList;
 
+    /**
+     * {@inheritDoc}
+     */
     public void setup(OntologyReader wordnet) {
         this.wordnet = wordnet;
 
@@ -96,7 +127,11 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
         SynsetPagerank.setupTransitionAttributes(synsetList, synsetMap);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected void processContext(Annotation focus,
+                                  Annotation result,
                                   Queue<Annotation> prevWords,
                                   Queue<Annotation> nextWords) {
         Map<Synset, Integer> localMap = new ExtendedMap<Synset, Integer>(
@@ -140,7 +175,7 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
         }
 
         // Store the word sense annotation.
-        AnnotationUtil.setWordSense(focus, maxSynset.getName());
+        AnnotationUtil.setWordSense(result, maxSynset.getName());
     }
 
     /**
@@ -169,5 +204,13 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
         synsetList.add(termSynset);
         localMap.put(termSynset, localMap.size());
         return 1;
+    }
+
+    /**
+     * Returns "ppd", the acronyms for this {@link WordSenseDisambiguation}
+     * algorithm.
+     */
+    public String toString() {
+        return "ppd";
     }
 }

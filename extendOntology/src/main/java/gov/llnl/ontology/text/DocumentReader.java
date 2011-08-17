@@ -37,4 +37,10 @@ public interface DocumentReader {
      * Returns a {@link Document} represented by the given string.
      */
     Document readDocument(String doc);
+
+    /**
+     * Returns a {@link Document} represented by the given string and uses
+     * {@code corpusName} as the corpus name for the returned {@link Document}.
+     */
+    Document readDocument(String doc, String corpusName);
 }

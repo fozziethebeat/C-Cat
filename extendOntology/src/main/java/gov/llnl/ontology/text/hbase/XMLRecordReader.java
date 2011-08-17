@@ -163,6 +163,7 @@ public class XMLRecordReader
             startTag = ("<" + fileNameBase).getBytes();
             endTag = ("</" + fileNameBase).getBytes();
         }
+        context.setStatus(file.getName() + " " + pos + " " + end);
     }
 
     /**
@@ -248,22 +249,23 @@ public class XMLRecordReader
             // Check for end of file.
             if (b == -1)
                 return false;
-        // Save to the buffer.
-        if (withinBlock)
-            buffer.write(b);
-        
-        // Check if we're matching:
-        if (b == match[i]) {
-            i++;
-            if (i >= match.length)
-                return true;
-        } else
-            i = 0;
 
-        // Return false if we're still reading a record but the file has
-        // ended.
-        if (!withinBlock && i == 0 && pos >= end)
-            return false;
+            // Save to the buffer.
+            if (withinBlock)
+                buffer.write(b);
+            
+            // Check if we're matching:
+            if (b == match[i]) {
+                i++;
+                if (i >= match.length)
+                    return true;
+            } else
+                i = 0;
+
+            // Return false if we're still reading a record but the file has
+            // ended.
+            if (!withinBlock && i == 0 && pos >= end)
+                return false;
         }
     }
 }

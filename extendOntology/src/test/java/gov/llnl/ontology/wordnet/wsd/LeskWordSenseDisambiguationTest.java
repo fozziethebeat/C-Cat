@@ -79,17 +79,19 @@ public class LeskWordSenseDisambiguationTest {
         WordSenseDisambiguation wsdAlg = new LeskWordSenseDisambiguation();
         List<Sentence> sentences = getSentences(TEST_SENTENCE, TEST_POS);
         wsdAlg.setup(new GenericMockReader(SYNSET_DATA));
-        wsdAlg.disambiguate(sentences);
 
-        assertEquals(1, sentences.size());
-        boolean foundCat = false;
-        for (Annotation annot : sentences.get(0)) {
-            if (AnnotationUtil.word(annot).equals("cat")) {
-                foundCat = true;
-                assertEquals(SYNSET_DATA[0][0],
-                             AnnotationUtil.wordSense(annot));
-            }
-        }
-        assertTrue(foundCat);
+        List<Sentence> results = wsdAlg.disambiguate(sentences);
+
+        assertEquals(sentences.size(), results.size());
+        Sentence sent = results.get(0);
+        Sentence expected = sentences.get(0);
+        assertEquals(expected.numTokens(), sent.numTokens());
+        assertEquals(expected.start(), sent.start());
+        assertEquals(expected.end(), sent.end());
+
+        Annotation word = sent.getAnnotation(1);
+        assertNotNull(word);
+        assertEquals(SYNSET_DATA[0][0], AnnotationUtil.wordSense(word));
+        wsdAlg.disambiguate(sentences);
     }
 }

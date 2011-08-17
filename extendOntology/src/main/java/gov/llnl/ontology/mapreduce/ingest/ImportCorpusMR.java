@@ -104,6 +104,13 @@ public class ImportCorpusMR extends Configured implements Tool {
         CONF_PREFIX + ".docReader";
 
     /**
+     * The configuration key for setting the non-default corpus name 
+     */
+    public static String CORP =
+        CONF_PREFIX + ".corpusName";
+
+    /**
+    /**
      * Acquire the logger for this class.
      */
     private static final Log LOG = LogFactory.getLog(ImportCorpusMR.class);
@@ -153,6 +160,7 @@ public class ImportCorpusMR extends Configured implements Tool {
         Configuration conf = getConf();
         conf.set(TABLE, options.corpusTableType());
         conf.set(READER, options.getStringOption('r'));
+        conf.set(CORP, options.getStringOption('S'));
 
         CorpusTable table = options.corpusTable();
 
@@ -213,6 +221,11 @@ public class ImportCorpusMR extends Configured implements Tool {
         private DocumentReader reader;
 
         /**
+         * Set to non-empty if the corpus name for the documents differs from
+         * the value reported by the {@link DocumentReader}.
+         */
+        private String corpusName;
+        /**
          * {@inheritDoc}
          */
         public void setup(Context context) {
@@ -220,6 +233,7 @@ public class ImportCorpusMR extends Configured implements Tool {
             table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
             table.table();
             reader = ReflectionUtil.getObjectInstance(conf.get(READER));
+            corpusName = conf.get(CORP, "");
         }
 
         /**
@@ -228,7 +242,10 @@ public class ImportCorpusMR extends Configured implements Tool {
         public void map(ImmutableBytesWritable key, 
                         Text value,
                         Context context) {
-            table.put(reader.readDocument(value.toString()));
+            if (corpusName.length() != 0)
+                table.put(reader.readDocument(value.toString(), corpusName));
+            else
+                table.put(reader.readDocument(value.toString()));
             context.getCounter("ImportCorpusMR", "Documents").increment(1);
         }
 

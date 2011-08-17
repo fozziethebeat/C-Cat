@@ -235,9 +235,9 @@ public class Sentence extends Annotation
      */
     public static List<Sentence> readSentences(String sentenceText, 
                                                String tokenText) {
-        // Return null if no valid text was provided.
+        // Return an empty list if no valid text was provided.
         if (sentenceText == null || tokenText == null)
-            return null;
+            return Lists.newArrayList();
 
         // First parse the meta data for the sentences themselves.
         List<Sentence> sentences = Lists.newArrayList();

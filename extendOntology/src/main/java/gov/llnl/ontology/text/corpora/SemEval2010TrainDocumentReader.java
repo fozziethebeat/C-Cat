@@ -73,6 +73,13 @@ public class SemEval2010TrainDocumentReader implements DocumentReader {
      * {@inheritDoc}
      */
     public Document readDocument(String doc) {
+        return readDocument(doc, corpusName());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Document readDocument(String doc, String corpusName) {
         // Determine where the tag starts and ends.
         int titleStart = doc.indexOf("<")+1;
         int titleEnd = doc.indexOf(">");
@@ -93,7 +100,7 @@ public class SemEval2010TrainDocumentReader implements DocumentReader {
             if (keyWord.equals(stemmer.stem(tokens[i])))
                 id = i;
 
-        return new SimpleDocument(corpusName(), text, doc, 
+        return new SimpleDocument(corpusName, text, doc, 
                                   key, id, keyWord, new HashSet<String>());
     }
 }

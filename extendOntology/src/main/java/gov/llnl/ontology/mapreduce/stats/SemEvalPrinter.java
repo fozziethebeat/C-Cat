@@ -25,12 +25,12 @@ package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
+import gov.llnl.ontology.text.Document;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.StringCounter;
+import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.util.MRArgOptions;
-import gov.llnl.ontology.util.StringPair;
 
-import com.google.common.collect.Maps;
+import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
@@ -41,74 +41,64 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 
 /**
- * A Map/Reduce job that counts the co-occurrence statistics between a word and
- * a documen tag.
- *
  * @author Keith Stevens
  */
-public class TagWordStatsMR extends CorpusTableMR {
+public class SemEvalPrinter extends CorpusTableMR {
 
-    /**
-     * The job description used in the help text.
-     */
     public static final String ABOUT =
-        "Computes the co-occurrence frequency between document tags and " +
-        "words in the documents for a particular corpus.  If no corpus " +
-        "is specified, all documents will be used.  The co-occurrence " +
-        "counts will be stored in reduce parts on hdfs under the " +
-        "specified <outdir";
+        "Extracts the dependency parsed data for SemEval corpora and " +
+        "stores it to hdfs.";
 
     /**
-     * The main.
+     * Runs the {@link TokenCountMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(HBaseConfiguration.create(), new TagWordStatsMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(), new SemEvalPrinter(), args);
     }
 
     /**
      * {@inheritDoc}
      */
     protected void validateOptions(MRArgOptions options) {
-        options.validate(ABOUT, "<outdir>", TagWordStatsMR.class, 1, 'C');
+        options.validate(ABOUT, "<outdir>", SemEvalPrinter.class, 1, 'C');
     }
 
     /**
      * {@inheritDoc}
      */
     protected String jobName() {
-        return "Tag Word Stats";
+        return "SemEval Printer";
     }
 
     /**
      * {@inheritDoc}
      */
-    public Class mapperClass() {
-        return TagWordStatsMapper.class;
+    protected Class mapperClass() {
+        return SemEvalPrinterMapper.class;
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the {@link Class} object for the Mapper Value of this task.
      */
-    public Class mapperKeyClass() {
-        return StringPair.class;
+    protected Class mapperKeyClass() {
+        return Text.class;
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the {@link Class} object for the Mapper Value of this task.
      */
-    public Class mapperValueClass() {
-        return IntWritable.class;
+    protected Class mapperValueClass() {
+        return Text.class;
     }
 
     /**
@@ -117,40 +107,57 @@ public class TagWordStatsMR extends CorpusTableMR {
     protected void setupReducer(String tableName,
                                 Job job,
                                 MRArgOptions options) {
-        job.setCombinerClass(WordCountSumReducer.class);
-        job.setReducerClass(WordCountSumReducer.class);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(
                 job, new Path(options.getPositionalArg(0)));
-        job.setNumReduceTasks(24);
     }
 
     /**
      * The {@link TableMapper} responsible for the real work.
      */
-    public static class TagWordStatsMapper
-            extends CorpusTableMR.CorpusTableMapper<StringPair, IntWritable> {
+    public static class SemEvalPrinterMapper 
+            extends CorpusTableMR.CorpusTableMapper<Text, Text> {
 
         /**
          * {@inheritDoc}
          */
-        public void map(ImmutableBytesWritable key,
+        public void map(ImmutableBytesWritable rowKey,
                         Result row, 
                         Context context)
                 throws IOException, InterruptedException {
-            context.setStatus("Processing Documents");
+            Document doc = table.document(row);
+            List<Sentence> sentences = table.sentences(row);
+            StringBuilder sb = new StringBuilder();
+            String key = doc.key();
+            String keyWord = doc.title();
+            int index = (int) doc.id();
 
-            StringCounter counter = new StringCounter();
-            for (Sentence sentence : table.sentences(row))
-                for (StringPair word : sentence.taggedTokens())
-                    counter.count(word.x);
+            for (Sentence sentence : sentences) {
+                int i = 0;
+                for (Annotation token : sentence) {
+                    sb.append(i).append("\t");
+                    if (index == 0)
+                        sb.append(keyWord).append("\t").append(key).append("\t");
+                    else {
+                        String word = AnnotationUtil.word(token);
+                        sb.append(word).append("\t").append("_").append("\t");
+                    }
 
-            Map<String, StringCounter> tagWordCounters = Maps.newHashMap();
-            for (String category : table.getCategories(row))
-                tagWordCounters.put(category, counter);
+                    String pos = AnnotationUtil.pos(token);
+                    sb.append(pos).append("\t").append(pos).append("\t");
 
-            WordCountSumReducer.emitCounts(tagWordCounters, context);
-            context.getCounter("TagWordStatsMR", "Documents").increment(1);
+                    sb.append("_\t");
+                    sb.append(AnnotationUtil.dependencyParent(token)).append("\t");
+                    sb.append(AnnotationUtil.dependencyRelation(token)).append("\t");
+
+                    sb.append("||");
+
+                    ++i;
+                    --index;
+                }
+            }
+            context.write(new Text(key), new Text(sb.toString()));
         }
     }
 }
+

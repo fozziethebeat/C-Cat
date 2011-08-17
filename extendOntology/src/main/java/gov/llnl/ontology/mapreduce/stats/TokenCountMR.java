@@ -37,12 +37,12 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 
@@ -126,27 +126,12 @@ public class TokenCountMR extends CorpusTableMR {
      * The {@link TableMapper} responsible for most of the work.
      */
     public static class TokenCountMapper
-            extends TableMapper<Text, IntWritable> {
+            extends CorpusTableMR.CorpusTableMapper<Text, IntWritable> {
 
         /**
          * Represents a single occurrence.
          */
         private static final IntWritable ONE = new IntWritable(1);
-
-        /**
-         * The {@link CorpusTable} responsible for reading a row's data.
-         */
-        private CorpusTable table;
-
-        /**
-         * {@inheritDoc}
-         */
-        public void setup(Context context)
-                throws IOException, InterruptedException {
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
-        }
 
         /**
          * {@inheritDoc}
@@ -159,6 +144,7 @@ public class TokenCountMR extends CorpusTableMR {
                 for (StringPair tokenPos : sentence.taggedTokens())
                     if (tokenPos.x != null)
                         context.write(new Text(tokenPos.x), ONE);
+            context.getCounter("TokenCountMR", "Document").increment(1);
         }
     }
 }

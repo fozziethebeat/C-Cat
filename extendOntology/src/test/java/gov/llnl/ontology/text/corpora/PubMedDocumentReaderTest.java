@@ -91,17 +91,21 @@ public class PubMedDocumentReaderTest {
         "<ChemicalList>" +
         "<Chemical>" +
         "<RegistryNumber>0</RegistryNumber>" +
-        "<NameOfSubstance>Anti-Chicken Agents</NameOfSubstance>" +
+        "<NameOfSubstance>Chicken Agents</NameOfSubstance>" +
         "</Chemical>" +
         "<Chemical>" +
         "<RegistryNumber>0</RegistryNumber>" +
-        "<NameOfSubstance>Non-geese</NameOfSubstance>" +
+        "<NameOfSubstance>Non-geeze</NameOfSubstance>" +
         "</Chemical>" +
         "</ChemicalList>" +
         "<CitationSubset>IM</CitationSubset>" +
         "<MeshHeadingList>" +
         "<MeshHeading>" +
-        "<DescriptorName MajorTopicYN=\"N\">Pro Chicken Authorities</DescriptorName>" +
+        "<DescriptorName MajorTopicYN=\"N\">Anit-Chicken Agents</DescriptorName>" +
+        "<QualifierName MajorTopicYN=\"N\">featured use</QualifierName>" +
+        "</MeshHeading>" +
+        "<MeshHeading>" +
+        "<DescriptorName MajorTopicYN=\"N\">Non-geese</DescriptorName>" +
         "<QualifierName MajorTopicYN=\"N\">featured use</QualifierName>" +
         "</MeshHeading>" +
         "</MeshHeadingList>" +
@@ -162,17 +166,21 @@ public class PubMedDocumentReaderTest {
         "<ChemicalList>" +
         "<Chemical>" +
         "<RegistryNumber>0</RegistryNumber>" +
-        "<NameOfSubstance>Human-Chicken Resistance</NameOfSubstance>" +
+        "<NameOfSubstance>NOT_USED</NameOfSubstance>" +
         "</Chemical>" +
         "<Chemical>" +
         "<RegistryNumber>0</RegistryNumber>" +
-        "<NameOfSubstance>Pro-Fowl</NameOfSubstance>" +
+        "<NameOfSubstance>BLAH</NameOfSubstance>" +
         "</Chemical>" +
         "</ChemicalList>" +
         "<CitationSubset>IM</CitationSubset>" +
         "<MeshHeadingList>" +
         "<MeshHeading>" +
-        "<DescriptorName MajorTopicYN=\"N\">Anti Chicken Authorities</DescriptorName>" +
+        "<DescriptorName MajorTopicYN=\"N\">Human-Chicken Resistance</DescriptorName>" +
+        "<QualifierName MajorTopicYN=\"N\">featured use</QualifierName>" +
+        "</MeshHeading>" +
+        "<MeshHeading>" +
+        "<DescriptorName MajorTopicYN=\"N\">Pro-Fowl</DescriptorName>" +
         "<QualifierName MajorTopicYN=\"N\">featured use</QualifierName>" +
         "</MeshHeading>" +
         "</MeshHeadingList>" +
@@ -189,7 +197,7 @@ public class PubMedDocumentReaderTest {
         assertEquals("And once there was a chicken.", doc.rawText());
         assertEquals(DOCUMENT_ONE, doc.originalText());
         assertEquals(2, doc.categories().size());
-        assertTrue(doc.categories().contains("Anti-Chicken Agents"));
+        assertTrue(doc.categories().contains("Anit-Chicken Agents"));
         assertTrue(doc.categories().contains("Non-geese"));
 
         doc = reader.readDocument(DOCUMENT_TWO);

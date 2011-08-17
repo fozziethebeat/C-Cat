@@ -145,7 +145,7 @@ public class PubMedDocumentReader extends DefaultHandler
     /**
      * {@inheritDoc}
      */
-    public Document readDocument(String originalText) {
+    public Document readDocument(String originalText, String corpusName) {
         // Reset all the tracking parameters.
         inAbstract = false;
         inTitle = false;
@@ -164,8 +164,15 @@ public class PubMedDocumentReader extends DefaultHandler
         }
 
         // Return the discovered content.
-        return new SimpleDocument("pubmed", docText, originalText,
+        return new SimpleDocument(corpusName, docText, originalText,
                                   key, id, title, labels);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Document readDocument(String originalText) {
+        return readDocument(originalText, "pubmed");
     }
 
     @Override
@@ -179,7 +186,7 @@ public class PubMedDocumentReader extends DefaultHandler
             } else if (ignorableAbstractTags.contains(name)) {
                 inIgnoreAbstract = true;
             }
-        } else if ("NameOfSubstance".equals(name)) {
+        } else if ("DescriptorName".equals(name)) {
             inChemicalName = true;
         } else if ("PMID".equals(name)) {
             inPMID = true;
@@ -215,7 +222,7 @@ public class PubMedDocumentReader extends DefaultHandler
             key = b.toString().trim();
             id = Long.parseLong(key);
             b.setLength(0);
-        } else if ("NameOfSubstance".equals(name)) {
+        } else if ("DescriptorName".equals(name)) {
             inChemicalName = false;
             labels.add(b.toString().trim());
             b.setLength(0);

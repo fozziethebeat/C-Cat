@@ -26,11 +26,11 @@ package gov.llnl.ontology.mapreduce.stats;
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.StringCounter;
 import gov.llnl.ontology.util.MRArgOptions;
+import gov.llnl.ontology.util.StringCounter;
 import gov.llnl.ontology.util.StringPair;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
@@ -39,8 +39,8 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper.Context;
@@ -52,62 +52,57 @@ import java.util.Set;
 
 
 /**
- * A Map/Reduce job that counts the co-occurrence statistics between a word and
- * a documen tag.
- *
  * @author Keith Stevens
  */
-public class TagWordStatsMR extends CorpusTableMR {
+public class TermDocOccurrenceCountMR extends CorpusTableMR {
 
-    /**
-     * The job description used in the help text.
-     */
     public static final String ABOUT =
-        "Computes the co-occurrence frequency between document tags and " +
-        "words in the documents for a particular corpus.  If no corpus " +
-        "is specified, all documents will be used.  The co-occurrence " +
-        "counts will be stored in reduce parts on hdfs under the " +
-        "specified <outdir";
+        "Computes a bag of words co-occurrence count between all words in a " +
+        "document.  Each document co-occurrence will only be counted once " +
+        "for each term pair from a particular corpus in a CorpusTable.  The " +
+        "resulting counts will be stored on HDFS.";
 
     /**
-     * The main.
+     * Runs the {@link TokenCountMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(HBaseConfiguration.create(), new TagWordStatsMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(),
+                       new TermDocOccurrenceCountMR(), args);
     }
 
     /**
      * {@inheritDoc}
      */
     protected void validateOptions(MRArgOptions options) {
-        options.validate(ABOUT, "<outdir>", TagWordStatsMR.class, 1, 'C');
+        options.validate(ABOUT, "<outdir>",
+                         TermDocOccurrenceCountMR.class, 1, 'C', 'S');
     }
 
     /**
      * {@inheritDoc}
      */
-    protected String jobName() {
-        return "Tag Word Stats";
+    public String jobName() {
+        return "TermDocOccurrenceCountMR";
     }
 
     /**
      * {@inheritDoc}
      */
-    public Class mapperClass() {
-        return TagWordStatsMapper.class;
+    protected Class mapperClass() {
+        return TermDocOccurrenceCountMapper.class;
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the {@link Class} object for the Mapper Value of this task.
      */
-    public Class mapperKeyClass() {
+    protected Class mapperKeyClass() {
         return StringPair.class;
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the {@link Class} object for the Mapper Value of this task.
      */
-    public Class mapperValueClass() {
+    protected Class mapperValueClass() {
         return IntWritable.class;
     }
 
@@ -125,11 +120,10 @@ public class TagWordStatsMR extends CorpusTableMR {
         job.setNumReduceTasks(24);
     }
 
-    /**
-     * The {@link TableMapper} responsible for the real work.
-     */
-    public static class TagWordStatsMapper
-            extends CorpusTableMR.CorpusTableMapper<StringPair, IntWritable> {
+    public static class TermDocOccurrenceCountMapper
+                extends CorpusTableMR.CorpusTableMapper<StringPair, IntWritable> {
+
+        public static final IntWritable ONE = new IntWritable(1);
 
         /**
          * {@inheritDoc}
@@ -138,19 +132,17 @@ public class TagWordStatsMR extends CorpusTableMR {
                         Result row, 
                         Context context)
                 throws IOException, InterruptedException {
-            context.setStatus("Processing Documents");
-
-            StringCounter counter = new StringCounter();
+            context.setStatus("Processing Docs");
+            Set<String> terms = Sets.newHashSet();
             for (Sentence sentence : table.sentences(row))
                 for (StringPair word : sentence.taggedTokens())
-                    counter.count(word.x);
+                    terms.add(word.x);
 
-            Map<String, StringCounter> tagWordCounters = Maps.newHashMap();
-            for (String category : table.getCategories(row))
-                tagWordCounters.put(category, counter);
+            for (String focus : terms)
+                for (String other : terms)
+                    context.write(new StringPair(focus, other), ONE);
 
-            WordCountSumReducer.emitCounts(tagWordCounters, context);
-            context.getCounter("TagWordStatsMR", "Documents").increment(1);
+            context.getCounter("TermDocOccurrenceCountMR", "Documents").increment(1);
         }
     }
 }

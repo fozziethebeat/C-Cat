@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the C-Cat package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package gov.llnl.ontology.wordnet.wsd;
 
 import gov.llnl.ontology.text.Sentence;
@@ -5,6 +28,8 @@ import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
+
+import com.google.common.collect.Lists;
 
 import edu.stanford.nlp.pipeline.Annotation;
 
@@ -22,6 +47,29 @@ import java.util.Deque;
 
 
 /**
+ * An abstract base class for any of the graph centrality Word Sense Disambiguation
+ * algorithms described in the following paper:
+ *
+ * <ul>
+ *  <li style="font-family:Garamond, Georgia, serif">Navigli, R.; Lapata, M.; ,
+ *  "An Experimental Study of Graph Connectivity for Unsupervised Word Sense
+ *  Disambiguation," Pattern Analysis and Machine Intelligence, IEEE
+ *  Transactions on , vol.32, no.4, pp.678-692, April 2010.  Available 
+ *  <a href="http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4782967&isnumber=5420323">here</a>
+ *  </li>
+ * </ul>
+ *
+ * </p>
+ *
+ * This base class extracts a small connected graph from the wordnet heirarchy
+ * that is centered around content words in a sentence that needs to be
+ * disambiguated.  The target sense for each content word will be included in
+ * the graph, along with any {@link Synset}s in the shortest path connecting
+ * these target senses.  The extracted graph structure for each focus word to be
+ * disambiguated will passed to subclasses as an affinity {@link Matrix} that
+ * records the known edges.  
+ *
+ * </p>
  * @author Keith Stevens
  */
 public abstract class GraphConnectivityDisambiguation
@@ -35,7 +83,9 @@ public abstract class GraphConnectivityDisambiguation
      * setnence.
      *
      * @param targetWords A list of {@link Annotation}s and their possible
-     *        senses that need to be disambiguated.
+     *        senses that need to be disambiguated.  The {@link
+     *        Annotation} in each {@link AnnotationSynset} should be updated
+     *        with the selected word sense.
      * @param synsets The set of {@link Synset}s to consider for any graph
      *        traversal.
      * @param synsetBasis A mapping from {@link Synset} names to indices in a
@@ -59,8 +109,15 @@ public abstract class GraphConnectivityDisambiguation
     /**
      * {@inheritDoc}
      */
-    public void disambiguate(List<Sentence> sentences) {
+    public List<Sentence> disambiguate(List<Sentence> sentences) {
+        List<Sentence> resultSentences = Lists.newArrayList();
+
         for (Sentence sentence : sentences) {
+            // Create the new disambiguated sentence.
+            Sentence disambiguated = new Sentence(
+                    sentence.start(), sentence.end(), sentence.numTokens());
+            resultSentences.add(disambiguated);
+
             // Create the data structures needed to represent the carved out
             // WordNet graph for this sentence.
 
@@ -80,11 +137,16 @@ public abstract class GraphConnectivityDisambiguation
             // Carve out a connected graph for the words in this sentence.  Only
             // select content words, i.e., Nouns, Verbs, Adverbs, or Ajdectives.
 
-            List<AnnotationSynset> targetWords =
-                new ArrayList<AnnotationSynset>();
+            List<AnnotationSynset> targetWords = Lists.newArrayList();
+
             // First select the senses for the content words already in the
             // sentence.
+            int i = 0;
             for (Annotation annot : sentence) {
+                Annotation result = new Annotation();
+                AnnotationUtil.setSpan(result, AnnotationUtil.span(annot));
+                disambiguated.addAnnotation(i++, result);
+
                 PartsOfSpeech pos = AnnotationUtil.synsetPos(annot);
                 if (pos == null)
                     continue;
@@ -94,7 +156,7 @@ public abstract class GraphConnectivityDisambiguation
                 for (Synset sense : annotSenses)
                     synsets.add(sense);
 
-                targetWords.add(new AnnotationSynset(annotSenses, annot));
+                targetWords.add(new AnnotationSynset(annotSenses, result));
             }
 
             // Now perform a depth first search starting from the known synsets
@@ -112,7 +174,10 @@ public abstract class GraphConnectivityDisambiguation
             // class which will do the rest of the disambiguation.
             processSentenceGraph(targetWords, synsets,
                                  synsetBasis, adjacencyMatrix);
+
         }
+
+        return resultSentences;
     }
 
     /**
@@ -175,10 +240,25 @@ public abstract class GraphConnectivityDisambiguation
         return current;
     }
 
+    /**
+     * A structure class that represents a {@link Annotation} that needs to be
+     * disambiguated and it's possible target {@link Synset}s.
+     */
     public class AnnotationSynset {
+
+        /**
+         * The target {@link Synset}s.
+         */
         Synset[] senses;
+
+        /**
+         * The {@link Annotation} to be disambiguated.
+         */
         Annotation annotation;
 
+        /**
+         * Creates a new {@link AnnotationSynset}.
+         */
         public AnnotationSynset(Synset[] senses, Annotation annotation) {
             this.senses = senses;
             this.annotation = annotation;

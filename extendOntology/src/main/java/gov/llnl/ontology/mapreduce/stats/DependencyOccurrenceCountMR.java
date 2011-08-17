@@ -26,7 +26,7 @@ package gov.llnl.ontology.mapreduce.stats;
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.Counter;
+import gov.llnl.ontology.util.StringCounter;
 import gov.llnl.ontology.util.MRArgOptions;
 
 import com.google.common.collect.Maps;
@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
@@ -184,7 +185,7 @@ public class DependencyOccurrenceCountMR extends CorpusTableMR {
      * Returns the {@link Class} object for the Mapper Value of this task.
      */
     protected Class mapperValueClass() {
-        return Text.class;
+        return StringCounter.class;
     }
 
     /**
@@ -207,12 +208,7 @@ public class DependencyOccurrenceCountMR extends CorpusTableMR {
      * is emitted with it's total count in the whole document.
      */
     public static class DependencyOccurrenceCountMapper 
-            extends TableMapper<Text, Text> {
-
-        /**
-         * The {@link CorpusTable} that accesses documents.
-         */
-        private CorpusTable table;
+            extends CorpusTableMR.CorpusTableMapper<Text, Text> {
 
         /**
          * The maximum valid path length.
@@ -233,11 +229,8 @@ public class DependencyOccurrenceCountMR extends CorpusTableMR {
         /**
          * {@inheritDoc}
          */
-        public void setup(Context context)
+        public void setup(Context context, Configuration conf)
                 throws IOException, InterruptedException {
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
             pathLength = Integer.parseInt(conf.get(PATH_LENGTH));
             acceptor = ReflectionUtil.getObjectInstance(
                     conf.get(PATH_ACCEPTOR));
@@ -254,7 +247,7 @@ public class DependencyOccurrenceCountMR extends CorpusTableMR {
             // Setup a local count of co-occurrences in this document.  We do
             // this to try and reduce the amount of data written from the map to
             // the reducer.
-            Map<String, Counter<String>> wocCounts = Maps.newHashMap();
+            Map<String, StringCounter> wocCounts = Maps.newHashMap();
 
             // Iterate over each sentence and extract the dependency
             // co-occurrence statistics.
@@ -265,9 +258,9 @@ public class DependencyOccurrenceCountMR extends CorpusTableMR {
                 // terms connected by a valid dependency path.
                 for (DependencyTreeNode focus : tree) {
                     // Get the counts for this focus word.
-                    Counter<String> counts = wocCounts.get(focus.word());
+                    StringCounter counts = wocCounts.get(focus.word());
                     if (counts == null) {
-                        counts = new Counter<String>();
+                        counts = new StringCounter();
                         wocCounts.put(focus.word(), counts);
                     }
 

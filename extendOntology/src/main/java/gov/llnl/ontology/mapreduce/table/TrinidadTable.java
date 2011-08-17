@@ -25,6 +25,7 @@ package gov.llnl.ontology.mapreduce.table;
 
 import gov.llnl.ontology.text.Document;
 import gov.llnl.ontology.text.Sentence;
+import gov.llnl.ontology.text.hbase.DynamicDocument;
 import gov.llnl.ontology.util.StringPair;
 
 import edu.stanford.nlp.pipeline.Annotation;
@@ -164,6 +165,16 @@ public class TrinidadTable implements CorpusTable {
     public static final String ANNOTATION_TOKEN = "token";
 
     /**
+     * The column qualifier prefix for sentence level word sense annotations.
+     */
+    public static final String SENSE_SENTENCE_PREFIX = "wss";
+
+    /**
+     * The column qualifier prefix for token level word sense annotations.
+     */
+    public static final String SENSE_TOKEN_PREFIX = "wst";
+
+    /**
      * The column family for word list labels associated wtih each document.
      */
     public static final String LABEL_CF = "wordListLabels";
@@ -177,6 +188,16 @@ public class TrinidadTable implements CorpusTable {
      * The column name for categories that a document may fall under, if any.
      */
     public static final String CATEGORY_COLUMN = "categories";
+
+    /**
+     * The column name for the document key.
+     */
+    public static final String DOC_KEY = "key";
+
+    /**
+     * The column name for the document id.
+     */
+    public static final String DOC_ID = "id";
 
     /**
      * A connection to the {@link HTable}.
@@ -329,13 +350,43 @@ public class TrinidadTable implements CorpusTable {
     /**
      * {@inheritDoc}
      */
+    public List<Sentence> wordSenses(Result row, String senseLabel) {
+        // First read in and parse the meta data for the sentences.
+        String sentenceText = SchemaUtil.getColumn(
+                row, ANNOTATION_CF, SENSE_SENTENCE_PREFIX+senseLabel);
+        // Next read in and parse the meta data for each token.
+        String tokenText = SchemaUtil.getColumn(
+                row, ANNOTATION_CF, SENSE_TOKEN_PREFIX+senseLabel);
+        return Sentence.readSentences(sentenceText, tokenText);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Document document(Result row) {
+        return new DynamicDocument(row, SOURCE_CF+":"+SOURCE_NAME, TEXT_CF+":"+TEXT_RAW,
+                                   TEXT_CF+":"+TEXT_ORIGINAL, META_CF+":"+DOC_KEY,
+                                   META_CF+":"+DOC_ID, TEXT_CF+":"+TEXT_TITLE,
+                                   META_CF+":"+CATEGORY_COLUMN);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void put(Document document) {
+        if (document == null)
+            return;
+
         Put put = new Put(DigestUtils.shaHex(document.key()).getBytes());
+        // Temporarily blank everything else out so that we can add in the keys
+        // and ids to every document that's already been added.
         SchemaUtil.add(put, SOURCE_CF, SOURCE_NAME, document.sourceCorpus());
         SchemaUtil.add(put, TEXT_CF, TEXT_ORIGINAL, document.originalText());
         SchemaUtil.add(put, TEXT_CF, TEXT_RAW, document.rawText());
         SchemaUtil.add(put, TEXT_CF, TEXT_TITLE, document.title());
         SchemaUtil.add(put, TEXT_CF, TEXT_TYPE, XML_MIME_TYPE);
+        SchemaUtil.add(put, META_CF, DOC_KEY, document.key());
+        SchemaUtil.add(put, META_CF, DOC_ID, Long.toString(document.id()));
         SchemaUtil.add(put, META_CF, CATEGORY_COLUMN, document.categories());
         put(put);
     }
@@ -344,10 +395,31 @@ public class TrinidadTable implements CorpusTable {
      * {@inheritDoc}
      */
     public void put(ImmutableBytesWritable key, List<Sentence> sentences) {
+        if (sentences == null)
+            return;
+
         StringPair annots = Sentence.writeSentences(sentences);
         Put put = new Put(key.get());
         SchemaUtil.add(put, ANNOTATION_CF, ANNOTATION_SENTENCE, annots.x);
         SchemaUtil.add(put, ANNOTATION_CF, ANNOTATION_TOKEN, annots.y);
+        put(put);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void putSenses(ImmutableBytesWritable key,
+                          List<Sentence> sentences,
+                          String senseLabel) {
+        if (sentences == null)
+            return;
+
+        StringPair annots = Sentence.writeSentences(sentences);
+        Put put = new Put(key.get());
+        SchemaUtil.add(put, ANNOTATION_CF, SENSE_SENTENCE_PREFIX+senseLabel,
+                       annots.x);
+        SchemaUtil.add(put, ANNOTATION_CF, SENSE_TOKEN_PREFIX+senseLabel,
+                       annots.y);
         put(put);
     }
 

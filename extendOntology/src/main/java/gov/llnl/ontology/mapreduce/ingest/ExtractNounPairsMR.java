@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -58,6 +59,14 @@ public class ExtractNounPairsMR extends CorpusTableMR {
         ToolRunner.run(HBaseConfiguration.create(),
                        new ExtractNounPairsMR(), args);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected String jobName() {
+        return "ExtractNounPairsMapper";
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -113,13 +122,7 @@ public class ExtractNounPairsMR extends CorpusTableMR {
     }
 
     public static class ExtractNounPairsMapper 
-            extends TableMapper<Text, Text> {
-
-        /**
-         * The {@link CorpusTable} that dictates the structure of the table
-         * containing a corpus.
-         */
-        private CorpusTable table;
+            extends CorpusTableMR.CorpusTableMapper<Text, Text> {
 
         private DependencyPathAcceptor acceptor;
 
@@ -128,10 +131,7 @@ public class ExtractNounPairsMR extends CorpusTableMR {
         /**
          * {@inheritDoc}
          */
-        public void setup(Context context) {
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
+        public void setup(Context context, Configuration conf) {
             acceptor = ReflectionUtil.getObjectInstance(conf.get(ACCEPTOR));
             maxLength = Integer.parseInt(conf.get(PATH_LENGTH));
         }

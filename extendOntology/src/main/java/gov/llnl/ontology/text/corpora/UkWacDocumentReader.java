@@ -62,6 +62,14 @@ public class UkWacDocumentReader implements DocumentReader {
      * {@inheritDoc}
      */
     public gov.llnl.ontology.text.Document readDocument(String doc) {
+        return readDocument(doc, corpusName());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public gov.llnl.ontology.text.Document readDocument(String doc,
+                                                        String corpusName) {
         String[] lines = doc.split("\\n");
 
         // Find the title.
@@ -82,7 +90,7 @@ public class UkWacDocumentReader implements DocumentReader {
             builder.append(toks[0]).append(" ");
         }
 
-        return new SimpleDocument(corpusName(), builder.toString(), doc, 
+        return new SimpleDocument(corpusName, builder.toString(), doc, 
                                   key, id, key, new HashSet<String>());
     }
 }

@@ -44,7 +44,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import java.io.IOException;
 
@@ -108,6 +108,13 @@ public class ParseMR extends CorpusTableMR {
     /**
      * {@inheritDoc}
      */
+    protected String jobName() {
+        return "ParseMR";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     protected void setupConfiguration(MRArgOptions options, 
                                       Configuration conf) {
         conf.set(PARSER, options.getStringOption('p'));
@@ -124,13 +131,7 @@ public class ParseMR extends CorpusTableMR {
      * This {@link TableMapper} does all of the work.
      */
     public static class ParseMapper 
-            extends TableMapper<ImmutableBytesWritable, Put> {
-
-        /**
-         * The {@link CorpusTable} that dictates the structure of the table
-         * containing a corpus.
-         */
-        private CorpusTable table;
+            extends CorpusTableMR.CorpusTableMapper<ImmutableBytesWritable, Put> {
 
         /**
          * The {@link Parser} responsible for dependency parsing sentences.
@@ -140,11 +141,7 @@ public class ParseMR extends CorpusTableMR {
         /**
          * {@inheritDoc}
          */
-        public void setup(Context context) {
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
-            context.setStatus("Setting up parser");
+        public void setup(Context context, Configuration conf) {
             parser = ReflectionUtil.getObjectInstance(conf.get(PARSER));
         }
 
@@ -163,6 +160,7 @@ public class ParseMR extends CorpusTableMR {
             // annotation.
             context.setStatus("Decoding Sentence");
             List<Sentence> sentences = table.sentences(row);
+            boolean updatedSentences = false;
 
             // Skip any documents without sentences.
             if (sentences == null)
@@ -176,7 +174,7 @@ public class ParseMR extends CorpusTableMR {
                 if (sentence.dependencyParseTree().length > 0)
                     continue;
 
-                LOG.info("Parseing sentence of length: " + 
+                LOG.info("Parsing sentence of length: " + 
                          sentence.numTokens());
                 // Get the dependency parse tree.
                 String parsedSentence = parser.parseText(
@@ -200,11 +198,16 @@ public class ParseMR extends CorpusTableMR {
                             token, Integer.parseInt(toks[6]));
                     AnnotationUtil.setDependencyRelation(token, toks[7]);
                 }
+                updatedSentences = true;
             }
 
-            // Add the list of Sentence annotations.
-            table.put(key, sentences);
-            context.getCounter("ParseMR", "Annotation").increment(1);
+            // Add the list of Sentence annotations if the data has been updated
+            // with the dependency parse tree.  Otherwise skip the put to reduce
+            // the amount of writing done to HBase.
+            if (updatedSentences) {
+                table.put(key, sentences);
+                context.getCounter("ParseMR", "Annotation").increment(1);
+            }
         }
 
         /**
