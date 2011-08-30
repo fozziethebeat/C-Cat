@@ -837,10 +837,10 @@ public class WordNetCorpusReader implements OntologyReader {
      * {@inheritDoc}
      */
     public Synset getSynset(String fullSynsetName) {
-        String[] parts = fullSynsetName.split("\\.");
-        String lemma = parts[0];
-        PartsOfSpeech pos = POS_MAP.get(parts[1]);
-        int senseNum = Integer.parseInt(parts[2]);
+        String[] parts = fullSynsetName.split("\\.", 3);
+        String lemma = parts[0].trim();
+        PartsOfSpeech pos = POS_MAP.get(parts[1].trim());
+        int senseNum = Integer.parseInt(parts[2].trim());
         return getSynset(lemma, pos, senseNum);
     }
 
