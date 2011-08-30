@@ -168,7 +168,7 @@ public class Sentence extends Annotation
         // nodes that records the relation to it's parent.  Parent nodes
         // will always be the head node in the relation.
         for (int i = 0; i < nodes.length; ++i) {
-            int parent = tokenAnnotations[i].get(
+            int parent = (int)tokenAnnotations[i].get(
                     CoNLLDepParentIndexAnnotation.class);
             String relation = tokenAnnotations[i].get(
                     CoNLLDepTypeAnnotation.class);
