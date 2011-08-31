@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>extendOntology</artifactId>
+    <groupId>gov.llnl.ontology</groupId>
+    <version>1.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>extendOntology-util</artifactId>
+  <name>C-Cat Util</name>
+  <description>C-Cat utility and text libraries</description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <!-- our modules -->
+    <dependency>
+      <artifactId>extendOntology-data</artifactId>
+      <groupId>${project.groupId}</groupId>
+    </dependency>
+
+    <!-- third party -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>${ant.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.ucla.sspace</groupId>
+      <artifactId>sspace</artifactId>
+      <version>${sspace.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>gov.llnl.text</groupId>
+      <artifactId>textCommons</artifactId>
+      <version>${text.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.stanford.nlp</groupId>
+      <artifactId>stanfordNlp</artifactId>
+      <version>${stanford.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>${logging.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.opennlp</groupId>
+      <artifactId>opennlp-tools</artifactId>
+    <version>${opennlp.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>${gson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.maltparser</groupId>
+      <artifactId>maltparser</artifactId>
+      <version>${malt.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>lib.linear</groupId>
+      <artifactId>liblinear</artifactId>
+      <version>${liblinear.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>lib.svm</groupId>
+      <artifactId>libsvm</artifactId>
+      <version>${libsvm.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>

@@ -1,0 +1,15 @@
+The C-Cat library provides libraries for large scale text processing using the
+hadoop framework.  It's ultimate goal is to provide tools and libraries for
+automatically customizing a wordnet ontology based on the contents of a
+particular corpus.  
+
+It is structured into three sub-modules:
+1) extendOntology-core: This provides a core set of text and collection like
+classes.  
+2) extendOntology-wordnet: This provides core wordnet libraries for reading,
+writing, and modifying the wordnet hierarchy along with several synset
+similarity metrics and several word sense disambiguation algorithms.
+3) extendOntology: This is the complete package that includes both the core and
+wordnet submodules.  On top of the two modules, it includes a text
+pre-processing framework for documents stored in HBase.  This is the most
+unstable module and is under heavy development.
