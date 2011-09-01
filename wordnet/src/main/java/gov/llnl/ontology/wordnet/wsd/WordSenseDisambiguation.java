@@ -51,4 +51,10 @@ public interface WordSenseDisambiguation {
      * labels for each noun found in {@code sentences}.  
      */
     Sentence disambiguate(Sentence sentences);
+
+    /**
+     * Disambiguates the {@link Annotation} at index {@code annotationIndex} in
+     * {@code sentence} and returns a new disambiguated {@link Annotation}.
+     */
+    Annotation disambiguate(Sentence sentence, int annotationIndex);
 }

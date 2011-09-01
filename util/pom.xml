@@ -38,6 +38,11 @@
       <version>${ant.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+    <dependency>
       <groupId>edu.ucla.sspace</groupId>
       <artifactId>sspace</artifactId>
       <version>${sspace.version}</version>

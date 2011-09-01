@@ -160,15 +160,17 @@ public abstract class GraphConnectivityDisambiguation
         // finding such a path, add all of those synsets to synsets.
         // Hopefully this won't cause a concurrent modification exception :(
         Deque<Synset> path = new LinkedList<Synset>();
+        Set<Synset> results = new HashSet<Synset>();
         for (Synset synset : synsets) 
             for (Synset related : synset.allRelations())
-                search(synset, related, synsets, path,
+                search(synset, related, synsets, results, path,
                        synsetBasis, adjacencyMatrix, 5);
+        results.addAll(synsets);
 
         // Now that we've carved out the interesting subgraph and recorded
         // the shortest path between the synsets, pass it off to the sub
         // class which will do the rest of the disambiguation.
-        processSentenceGraph(targetWords, synsets,
+        processSentenceGraph(targetWords, results,
                              synsetBasis, adjacencyMatrix);
 
         return disambiguated;
@@ -185,6 +187,7 @@ public abstract class GraphConnectivityDisambiguation
     private static void search(Synset start,
                                Synset current,
                                Set<Synset> goals,
+                               Set<Synset> results,
                                Deque<Synset> path, 
                                StringBasisMapping synsetBasis,
                                Matrix adjacencyMatrix,
@@ -203,7 +206,7 @@ public abstract class GraphConnectivityDisambiguation
                                        synsetBasis, adjacencyMatrix);
             }
 
-            goals.addAll(path);
+            results.addAll(path);
             return;
         }
 
@@ -215,7 +218,7 @@ public abstract class GraphConnectivityDisambiguation
         // searching all neighbors, backtrack.
         path.addFirst(current);
         for (Synset related : current.allRelations())
-            search(start, related, goals, path,
+            search(start, related, goals, results, path,
                    synsetBasis, adjacencyMatrix, maxLength);
         path.removeFirst();
     }
