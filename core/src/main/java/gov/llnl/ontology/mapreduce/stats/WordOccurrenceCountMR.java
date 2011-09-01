@@ -33,6 +33,7 @@ import gov.llnl.ontology.util.MRArgOptions;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import edu.stanford.nlp.pipeline.Annotation;
 
@@ -40,7 +41,7 @@ import edu.ucla.sspace.util.ReflectionUtil;
 import edu.ucla.sspace.util.CombinedIterator;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.util.ToolRunner;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -49,13 +50,19 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.util.ToolRunner;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Queue;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 
 /**
@@ -129,6 +136,11 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
                           "Set to true if parts of speech should be included " +
                           "in each co-occurrence feature",
                           false, null, "Optional");
+        options.addOption('l', "wordList",
+                           "Specifies a list of words that should be " +
+                           "represented by wordsi. The format should have " +
+                           "one word per line and the file should be on hdfs.",
+                           true, "FILE", "Required");
     }
 
     /**
@@ -149,6 +161,13 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
             conf.set(USE_ORDER, "T");
         if (options.hasOption('p'))
             conf.set(USE_POS, "T");
+        try {
+            DistributedCache.addCacheFile(
+                    new URI(options.getStringOption('l')), conf);
+        } catch (URISyntaxException use) {
+            use.printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
@@ -208,6 +227,12 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
         private boolean useOrdering;
 
         /**
+         * A list of words to use when reporting co-occurrences.  Only words in
+         * this list will have their co-occurrences reported.
+         */
+        private Set<String> wordList;
+
+        /**
          * {@inheritDoc}
          */
         public void setup(Context context, Configuration conf)
@@ -215,6 +240,17 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
             windowSize = Integer.parseInt(conf.get(WINDOW_SIZE));
             usePos = conf.get(USE_POS) != null;
             useOrdering = conf.get(USE_ORDER) != null;
+
+            wordList = Sets.newHashSet();
+            Path[] paths = DistributedCache.getLocalCacheFiles(conf);
+            if (paths.length == 0)
+                return;
+
+            BufferedReader br = new BufferedReader(
+                    new FileReader(paths[0].toString()));
+
+            for (String line = null; (line = br.readLine()) != null; )
+                wordList.add(line.trim().toLowerCase());
         }
 
         /**
@@ -250,29 +286,38 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
                 if (tokens.hasNext())
                     next.offer(tokens.next());
 
-                // Skipp empty focus words.
+                // Skip empty focus words.
                 String focusWord = AnnotationUtil.word(focus);
                 if (focusWord == null)
                     continue;
+                focusWord = focusWord.toLowerCase();
 
-                // Get the counter for the focus word.
-                StringCounter counts = wocCounts.get(focusWord);
-                if (counts == null) {
-                    counts = new StringCounter();
-                    wocCounts.put(focusWord, counts);
+                // Ignore focus words not in the word list when it's non empty.
+                if (wordList.isEmpty() || wordList.contains(focusWord)) {
+                    context.getCounter("WordOccurrenceCountMR", "Focus Word").increment(1);
+                    // Get the counter for the focus word.
+                    StringCounter counts = wocCounts.get(focusWord);
+                    if (counts == null) {
+                        counts = new StringCounter();
+                        wocCounts.put(focusWord, counts);
+                    }
+                    StringCounter occurrences = wocCounts.get(" ");
+                    if (occurrences == null) {
+                        occurrences = new StringCounter();
+                        wocCounts.put(" ", occurrences);
+                    }
+
+                    //  Count the co-occurrences in with the previous and next
+                    //  words.
+                    addContextTerms(counts, occurences, prev, -1 * prev.size());
+                    addContextTerms(counts, occurences, next, 1);
                 }
-
-                //  Count the co-occurrences in with the previous and next
-                //  words.
-                addContextTerms(counts, prev, -1 * prev.size());
-                addContextTerms(counts, next, 1);
 
                 // Shift the focus token to the prev queue and remove any old
                 // tokens if needed.
                 prev.offer(focus);
                 if (prev.size() > windowSize)
                     prev.remove();
-                context.getCounter("WordOccurrenceCountMR", "Focus Word").increment(1);
             }
 
             WordCountSumReducer.emitCounts(wocCounts, context);
@@ -285,7 +330,8 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
          * speech.  If {@code useOrdering} is true, the feature will be the word
          * plus the distance, positive or negative, from the focus word.
          */
-        protected void addContextTerms(StringCounter  counts,
+        protected void addContextTerms(StringCounter counts,
+                                       StringCounter occurences,
                                        Queue<Annotation> words,
                                        int distance)
                 throws IOException, InterruptedException {
@@ -302,12 +348,19 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
                 // Get the word and part of speech.  Skip any that are null.
                 String word = AnnotationUtil.word(term);
                 String pos = AnnotationUtil.pos(term);
-                if (word == null || pos == null)
+                if (word == null)
+                    continue;
+
+                // Ignore words not in the word list if it's non empty.
+                word = word.toLowerCase();
+                occurrence.count(word);
+                if (!wordList.isEmpty() && !wordList.contains(word))
                     continue;
 
                 // Modify the feature if needed and add the count.
                 if (usePos) 
-                    counts.count(word + "-" + pos);
+                    if (pos != null)
+                        counts.count(word + "-" + pos);
                 else if (useOrdering) 
                     counts.count(word + "-" + distance);
                 else

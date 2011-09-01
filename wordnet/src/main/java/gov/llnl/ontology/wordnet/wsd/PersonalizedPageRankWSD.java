@@ -189,7 +189,7 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
 
         // Ignore words without senses in word net.
         Synset[] synsets = wordnet.getSynsets(
-                token, AnnotationUtil.synsetPos(word));
+                token, PartsOfSpeech.fromPennTag(AnnotationUtil.pos(word)));
         if (synsets == null || synsets.length == 0)
             return 0;
 

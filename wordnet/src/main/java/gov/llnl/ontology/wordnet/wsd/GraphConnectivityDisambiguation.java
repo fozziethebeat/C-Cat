@@ -143,7 +143,8 @@ public abstract class GraphConnectivityDisambiguation
             AnnotationUtil.setSpan(result, AnnotationUtil.span(annot));
             disambiguated.addAnnotation(i++, result);
 
-            PartsOfSpeech pos = AnnotationUtil.synsetPos(annot);
+            PartsOfSpeech pos = PartsOfSpeech.fromPennTag(
+                    AnnotationUtil.pos(annot));
             if (pos == null)
                 continue;
 
