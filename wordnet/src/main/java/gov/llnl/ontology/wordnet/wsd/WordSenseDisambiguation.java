@@ -56,5 +56,5 @@ public interface WordSenseDisambiguation {
      * Disambiguates the {@link Annotation} at index {@code annotationIndex} in
      * {@code sentence} and returns a new disambiguated {@link Annotation}.
      */
-    Annotation disambiguate(Sentence sentence, int annotationIndex);
+//    Annotation disambiguate(Sentence sentence, int annotationIndex);
 }
