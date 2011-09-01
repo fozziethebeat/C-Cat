@@ -83,7 +83,7 @@ public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
         // Get the target synsets for the focus word.
         Synset[] focusSynsets = reader.getSynsets(
                 AnnotationUtil.word(focus),
-                AnnotationUtil.synsetPos(focus));
+                PartsOfSpeech.fromPennTag(AnnotationUtil.pos(focus)));
 
         // Skip any words that have no known synsets.
         if (focusSynsets == null || focusSynsets.length == 0)
