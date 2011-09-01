@@ -109,75 +109,69 @@ public abstract class GraphConnectivityDisambiguation
     /**
      * {@inheritDoc}
      */
-    public List<Sentence> disambiguate(List<Sentence> sentences) {
-        List<Sentence> resultSentences = Lists.newArrayList();
+    public Sentence disambiguate(Sentence sentence) {
+        // Create the new disambiguated sentence.
+        Sentence disambiguated = new Sentence(
+                sentence.start(), sentence.end(), sentence.numTokens());
 
-        for (Sentence sentence : sentences) {
-            // Create the new disambiguated sentence.
-            Sentence disambiguated = new Sentence(
-                    sentence.start(), sentence.end(), sentence.numTokens());
-            resultSentences.add(disambiguated);
+        // Create the data structures needed to represent the carved out
+        // WordNet graph for this sentence.
 
-            // Create the data structures needed to represent the carved out
-            // WordNet graph for this sentence.
+        // This set simply marks the set of all interests senses that we are
+        // tracking.
+        Set<Synset> synsets = new HashSet<Synset>();
 
-            // This set simply marks the set of all interests senses that we are
-            // tracking.
-            Set<Synset> synsets = new HashSet<Synset>();
+        // This basis mapping will be used to index each synset into the
+        // shortest path matrix.
+        StringBasisMapping synsetBasis = new StringBasisMapping();
 
-            // This basis mapping will be used to index each synset into the
-            // shortest path matrix.
-            StringBasisMapping synsetBasis = new StringBasisMapping();
+        // This matrix records the shortest path found so far between any
+        // two synsets.  It will be dense, but needs to expand dynamically,
+        // as we don't know the final number of synsets.
+        Matrix adjacencyMatrix = new GrowingSparseMatrix();
 
-            // This matrix records the shortest path found so far between any
-            // two synsets.  It will be dense, but needs to expand dynamically,
-            // as we don't know the final number of synsets.
-            Matrix adjacencyMatrix = new GrowingSparseMatrix();
+        // Carve out a connected graph for the words in this sentence.  Only
+        // select content words, i.e., Nouns, Verbs, Adverbs, or Ajdectives.
 
-            // Carve out a connected graph for the words in this sentence.  Only
-            // select content words, i.e., Nouns, Verbs, Adverbs, or Ajdectives.
+        List<AnnotationSynset> targetWords = Lists.newArrayList();
 
-            List<AnnotationSynset> targetWords = Lists.newArrayList();
+        // First select the senses for the content words already in the
+        // sentence.
+        int i = 0;
+        for (Annotation annot : sentence) {
+            Annotation result = new Annotation();
+            AnnotationUtil.setSpan(result, AnnotationUtil.span(annot));
+            disambiguated.addAnnotation(i++, result);
 
-            // First select the senses for the content words already in the
-            // sentence.
-            int i = 0;
-            for (Annotation annot : sentence) {
-                Annotation result = new Annotation();
-                AnnotationUtil.setSpan(result, AnnotationUtil.span(annot));
-                disambiguated.addAnnotation(i++, result);
+            PartsOfSpeech pos = AnnotationUtil.synsetPos(annot);
+            if (pos == null)
+                continue;
 
-                PartsOfSpeech pos = AnnotationUtil.synsetPos(annot);
-                if (pos == null)
-                    continue;
+            Synset[] annotSenses = reader.getSynsets(
+                    AnnotationUtil.word(annot), pos);
+            for (Synset sense : annotSenses)
+                synsets.add(sense);
 
-                Synset[] annotSenses = reader.getSynsets(
-                        AnnotationUtil.word(annot), pos);
-                for (Synset sense : annotSenses)
-                    synsets.add(sense);
-
-                targetWords.add(new AnnotationSynset(annotSenses, result));
-            }
-
-            // Now perform a depth first search starting from the known synsets
-            // to find any paths connecting synsets within this set.  Upon
-            // finding such a path, add all of those synsets to synsets.
-            // Hopefully this won't cause a concurrent modification exception :(
-            Deque<Synset> path = new LinkedList<Synset>();
-            for (Synset synset : synsets) 
-                for (Synset related : synset.allRelations())
-                    search(synset, related, synsets, path,
-                           synsetBasis, adjacencyMatrix, 5);
-
-            // Now that we've carved out the interesting subgraph and recorded
-            // the shortest path between the synsets, pass it off to the sub
-            // class which will do the rest of the disambiguation.
-            processSentenceGraph(targetWords, synsets,
-                                 synsetBasis, adjacencyMatrix);
-
+            targetWords.add(new AnnotationSynset(annotSenses, result));
         }
 
-        return resultSentences;
+        // Now perform a depth first search starting from the known synsets
+        // to find any paths connecting synsets within this set.  Upon
+        // finding such a path, add all of those synsets to synsets.
+        // Hopefully this won't cause a concurrent modification exception :(
+        Deque<Synset> path = new LinkedList<Synset>();
+        for (Synset synset : synsets) 
+            for (Synset related : synset.allRelations())
+                search(synset, related, synsets, path,
+                       synsetBasis, adjacencyMatrix, 5);
+
+        // Now that we've carved out the interesting subgraph and recorded
+        // the shortest path between the synsets, pass it off to the sub
+        // class which will do the rest of the disambiguation.
+        processSentenceGraph(targetWords, synsets,
+                             synsetBasis, adjacencyMatrix);
+
+        return disambiguated;
     }
 
     /**

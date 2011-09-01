@@ -31,6 +31,9 @@ import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.util.MRArgOptions;
 import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
+import gov.llnl.ontology.wordnet.wsd.WordSenseDisambiguation;
+
+import com.google.common.collect.Lists;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
@@ -69,7 +72,7 @@ public class DisambiguateMR extends CorpusTableMR{
     /**
      * The configuration key for setting the wordnet directory.
      */
-    public static String WORDNET_DIR = CONF_PREFIX + ".wordnetDir"
+    public static String WORDNET_DIR = CONF_PREFIX + ".wordnetDir";
 
     /**
      * Runs the {@link DisambiguateMR}.
@@ -154,19 +157,26 @@ public class DisambiguateMR extends CorpusTableMR{
         public void map(ImmutableBytesWritable key,
                         Result row, 
                         Context context) {
+            context.setStatus("Disambiguating");
             // Reject any rows that should not be processed.
             if (!table.shouldProcessRow(row))
                 return;
 
-            List<Sentence> table.sentences();
+            List<Sentence> sentences = table.sentences(row);
             // Skip any documents without sentences.
             if (sentences == null)
                 return;
 
             // Disambiguate every sentence in the document and store these word
             // senses in a hbase column based on the WSD algorithm's name.
-            List<Sentence> disambiguatedSentence = wsdAlg.disambiguate(sentences);
+            List<Sentence> disambiguatedSentence = Lists.newArrayList();
+            for (Sentence sentence : sentences) {
+                disambiguatedSentence.add(wsdAlg.disambiguate(sentence));
+                context.getCounter("DisambiguateMR", "Sentence").increment(1);
+            }
+
             table.putSenses(key, disambiguatedSentence, wsdAlg.toString());
+            context.getCounter("DisambiguateMR", "Documents").increment(1);
         }
 
         /**

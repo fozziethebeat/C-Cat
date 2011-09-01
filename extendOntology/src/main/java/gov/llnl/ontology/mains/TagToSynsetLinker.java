@@ -1,5 +1,6 @@
 package gov.llnl.ontology.mains;
 
+import gov.llnl.ontology.util.StringPair;
 import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
@@ -12,9 +13,11 @@ import com.google.common.collect.Maps;
 import edu.ucla.sspace.basis.StringBasisMapping;
 import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.Similarity;
+import edu.ucla.sspace.util.SerializableUtil;
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -33,24 +36,38 @@ public class TagToSynsetLinker {
                           "Specifies the file with tag,word co-occurrence " +
                           "counts",
                           true, "FILE", "Required");
+        options.addOption('b', "basisMapping",
+                          "Specifies an optional basis mapping.  If set, " +
+                          "the basis will be used in read only mode.",
+                          true, "FILE", "Optional");
         options.parseOptions(args);
 
         OntologyReader reader = WordNetCorpusReader.initialize(
                 options.getStringOption('w'));
 
-        StringBasisMapping basis = new StringBasisMapping();
+        StringBasisMapping basis = null;
+        if (options.hasOption('b')) {
+            basis = SerializableUtil.load(new File(options.getStringOption('b')));
+            basis.setReadOnly(true);
+        } else 
+            basis = new StringBasisMapping();
+
         Map<String, SparseDoubleVector> tagVectors = Maps.newHashMap();
         String tagFile = options.getStringOption('t');
         for (String line : FileUtils.iterateFileLines(tagFile)) {
-            String[] tagWordCount = line.split("\\s+");
-            SparseDoubleVector tagVector = tagVectors.get(tagWordCount[0]);
+            int lastSpaceindex = line.lastIndexOf(" ");
+            StringPair tagWord = StringPair.fromString(
+                    line.substring(0, lastSpaceindex));
+            int count = Integer.parseInt(line.substring(lastSpaceindex).trim());
+
+            SparseDoubleVector tagVector = tagVectors.get(tagWord.x);
             if (tagVector == null) {
                 tagVector = new CompactSparseVector();
-                tagVectors.put(tagWordCount[0], tagVector);
+                tagVectors.put(tagWord.x, tagVector);
             }
-            int wordIndex = basis.getDimension(tagWordCount[1]);
-            int count = Integer.parseInt(tagWordCount[2]);
-            tagVector.add(wordIndex, count);
+            int wordIndex = basis.getDimension(tagWord.y);
+            if (wordIndex >= 0)
+                tagVector.add(wordIndex, count);
         }
 
         basis.setReadOnly(true);

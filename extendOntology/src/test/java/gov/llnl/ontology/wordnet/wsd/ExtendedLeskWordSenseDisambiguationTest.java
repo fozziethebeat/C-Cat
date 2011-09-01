@@ -58,13 +58,11 @@ public class ExtendedLeskWordSenseDisambiguationTest
     @Test public void testDisambiguation() {
         WordSenseDisambiguation wsdAlg =
             new ExtendedLeskWordSenseDisambiguation();
-        List<Sentence> sentences = getSentences(TEST_SENTENCE, TEST_POS);
+        Sentence sentences = getSentences(TEST_SENTENCE, TEST_POS);
         wsdAlg.setup(new GenericMockReader(SYNSET_DATA));
-        List<Sentence> results = wsdAlg.disambiguate(sentences);
+        Sentence sent = wsdAlg.disambiguate(sentences);
 
-        assertEquals(sentences.size(), results.size());
-        Sentence sent = results.get(0);
-        Sentence expected = sentences.get(0);
+        Sentence expected = sentences;
         assertEquals(expected.numTokens(), sent.numTokens());
         assertEquals(expected.start(), sent.start());
         assertEquals(expected.end(), sent.end());

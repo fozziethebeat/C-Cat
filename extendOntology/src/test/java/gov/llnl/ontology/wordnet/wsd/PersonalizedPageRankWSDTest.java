@@ -67,17 +67,15 @@ public class PersonalizedPageRankWSDTest
 
     @Test public void testDisambiguation() {
         WordSenseDisambiguation wsdAlg = new PersonalizedPageRankWSD();
-        List<Sentence> sentences = getSentences(TEST_SENTENCE, TEST_POS);
+        Sentence sentences = getSentences(TEST_SENTENCE, TEST_POS);
         LinkedMockReader reader = new LinkedMockReader(SYNSET_DATA);
         for (String[] synsetLink : SYNSET_LINKS)
             reader.connectSynsets(synsetLink[0], synsetLink[1], "r");
 
         wsdAlg.setup(reader);
-        List<Sentence> results = wsdAlg.disambiguate(sentences);
+        Sentence sent = wsdAlg.disambiguate(sentences);
 
-        assertEquals(sentences.size(), results.size());
-        Sentence sent = results.get(0);
-        Sentence expected = sentences.get(0);
+        Sentence expected = sentences;
         assertEquals(expected.numTokens(), sent.numTokens());
         assertEquals(expected.start(), sent.start());
         assertEquals(expected.end(), sent.end());
@@ -86,4 +84,7 @@ public class PersonalizedPageRankWSDTest
         assertNotNull(word);
         assertEquals(SYNSET_DATA[2][0], AnnotationUtil.wordSense(word));
     }
+
+    // TODO: Add test with multiple sentences to handle some interesting use
+    // cases.
 }

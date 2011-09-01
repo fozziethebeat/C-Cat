@@ -23,6 +23,7 @@
 
 package gov.llnl.ontology.wordnet;
 
+import gov.llnl.ontology.util.StreamUtil;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 import gov.llnl.ontology.wordnet.Synset.Relation;
 
@@ -1284,7 +1285,7 @@ public class WordNetCorpusReader implements OntologyReader {
         Reader reader;
         if (readFromJar)
             reader = new InputStreamReader(
-                    WordNetCorpusReader.class.getResourceAsStream(filename));
+                    StreamUtil.fromJar(this.getClass(), filename));
         else
             reader = new FileReader(filename);
         return new BufferedReader(reader);

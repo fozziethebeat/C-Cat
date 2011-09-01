@@ -115,13 +115,11 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
         // synsets and a mapping from each synset to it's index in the list.
         synsetMap = Maps.newHashMap();
         synsetList = Lists.newArrayList();
-        int synsetIndex = 0;
         for (String lemma : wordnet.wordnetTerms()) {
-            Synset[] synsets = wordnet.getSynsets(lemma);
-            for (int s = 0; s < synsets.length; ++s,++synsetIndex)
-                if (!synsetMap.containsKey(synsets[s])) {
-                    synsetMap.put(synsets[s], synsetIndex);
-                    synsetList.add(synsets[s]);
+            for (Synset synset : wordnet.getSynsets(lemma))
+                if (!synsetMap.containsKey(synset)) {
+                    synsetMap.put(synset, synsetMap.size());
+                    synsetList.add(synset);
                 }
         }
         SynsetPagerank.setupTransitionAttributes(synsetList, synsetMap);
@@ -184,14 +182,15 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
      * possible word senses via a fake "related" link.  Returns 1 if the word
      * was added to {@code localMap} and 0 otherwise.
      */
-    private int addTermNode(List<Synset> synsetList,
+    private int addTermNode(List<Synset> localList,
                             Map<Synset, Integer> localMap, 
                             Annotation word) {
         String token = AnnotationUtil.word(word);
 
         // Ignore words without senses in word net.
-        Synset[] synsets = wordnet.getSynsets(token, PartsOfSpeech.NOUN);
-        if (synsets == null)
+        Synset[] synsets = wordnet.getSynsets(
+                token, AnnotationUtil.synsetPos(word));
+        if (synsets == null || synsets.length == 0)
             return 0;
 
         // Create a link for each artificial synset to the word's possible
@@ -201,7 +200,7 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
             termSynset.addRelation(LINK, possibleSense);
 
         // Add the word to the list of known synsets.
-        synsetList.add(termSynset);
+        localList.add(termSynset);
         localMap.put(termSynset, localMap.size());
         return 1;
     }

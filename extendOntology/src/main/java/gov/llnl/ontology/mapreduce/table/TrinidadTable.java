@@ -235,10 +235,10 @@ public class TrinidadTable implements CorpusTable {
             HBaseAdmin admin = new HBaseAdmin(config);
 
             // Do nothing if the table already exists.
-            if (admin.tableExists(TABLE_NAME)) 
+            if (admin.tableExists(tableName())) 
                 return;
 
-            HTableDescriptor docDesc = new HTableDescriptor(TABLE_NAME);
+            HTableDescriptor docDesc = new HTableDescriptor(tableName());
             SchemaUtil.addDefaultColumnFamily(docDesc, SOURCE_CF);
             SchemaUtil.addDefaultColumnFamily(docDesc, TEXT_CF);
             SchemaUtil.addDefaultColumnFamily(docDesc, ANNOTATION_CF);
@@ -299,7 +299,7 @@ public class TrinidadTable implements CorpusTable {
      */
     public HTable table() {
         try {
-            table = new HTable(HBaseConfiguration.create(), TABLE_NAME);
+            table = new HTable(HBaseConfiguration.create(), tableName());
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }

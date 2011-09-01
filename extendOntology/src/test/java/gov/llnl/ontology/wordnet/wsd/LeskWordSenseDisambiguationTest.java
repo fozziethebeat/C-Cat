@@ -61,7 +61,7 @@ public class LeskWordSenseDisambiguationTest {
         { "like.n.1", "fluffy machine pet that is not cute", "" },
     };
 
-    protected List<Sentence> getSentences(String sentence, String posSent) {
+    protected Sentence getSentences(String sentence, String posSent) {
         String[] tokens = sentence.split("\\s+");
         String[] pos = posSent.split("\\s+");
 
@@ -72,19 +72,17 @@ public class LeskWordSenseDisambiguationTest {
             sent.addAnnotation(i, annot);
         }
 
-        return Collections.singletonList(sent);
+        return sent;
     }
 
     @Test public void testDisambiguation() {
         WordSenseDisambiguation wsdAlg = new LeskWordSenseDisambiguation();
-        List<Sentence> sentences = getSentences(TEST_SENTENCE, TEST_POS);
+        Sentence sentences = getSentences(TEST_SENTENCE, TEST_POS);
         wsdAlg.setup(new GenericMockReader(SYNSET_DATA));
 
-        List<Sentence> results = wsdAlg.disambiguate(sentences);
+        Sentence sent = wsdAlg.disambiguate(sentences);
 
-        assertEquals(sentences.size(), results.size());
-        Sentence sent = results.get(0);
-        Sentence expected = sentences.get(0);
+        Sentence expected = sentences;
         assertEquals(expected.numTokens(), sent.numTokens());
         assertEquals(expected.start(), sent.start());
         assertEquals(expected.end(), sent.end());

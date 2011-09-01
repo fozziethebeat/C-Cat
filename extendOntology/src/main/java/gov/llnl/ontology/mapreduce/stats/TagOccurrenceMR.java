@@ -25,47 +25,38 @@ package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
-import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.text.TextUtil;
-import gov.llnl.ontology.util.Counter;
+import gov.llnl.ontology.text.Document;
 import gov.llnl.ontology.util.MRArgOptions;
-import gov.llnl.ontology.util.StringCounter;
-import gov.llnl.ontology.util.StringPair;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 
 import java.io.IOException;
-import java.util.Map;
 
 
 /**
- * A Map/Reduce job that counts the number of occurrences for each token in a
- * corpus.
+ * This MapReduce extracts the edges for a Tag-Tag network for documents within
+ * a specific corpus.
  *
  * @author Keith Stevens
  */
-public class TokenCountMR extends CorpusTableMR {
+public class TagOccurrenceMR extends CorpusTableMR {
 
-    /**
-     * The job description used in help text.
-     */
     public static final String ABOUT =
-        "Computes token counts from a particular corpus.  " +
+        "Computes co-occurrence links between tags in a particular corpus.  " +
         "If no corpus is specified, then all corpora will be used to compute " +
         "the frequencies.  The co-occurrence counts will be stored in reduce " +
         "parts on hdfs under the specified <outdir>.";
@@ -74,28 +65,28 @@ public class TokenCountMR extends CorpusTableMR {
      * Runs the {@link TokenCountMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(HBaseConfiguration.create(), new TokenCountMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(), new TagOccurrenceMR(), args);
     }
 
     /**
      * {@inheritDoc}
      */
     protected void validateOptions(MRArgOptions options) {
-        options.validate(ABOUT, "<outdir>", TokenCountMR.class, 1, 'C');
+        options.validate(ABOUT, "<outdir>", TagOccurrenceMR.class, 1, 'C');
     }
 
     /**
      * {@inheritDoc}
      */
     protected String jobName() {
-        return "Token Count";
+        return "Tag Occurrence";
     }
 
     /**
      * {@inheritDoc}
      */
     protected Class mapperClass() {
-        return TokenCountMapper.class;
+        return TagOccurrenceMapper.class;
     }
 
     /**
@@ -127,15 +118,12 @@ public class TokenCountMR extends CorpusTableMR {
     }
 
     /**
-     * The {@link TableMapper} responsible for most of the work.
+     * The {@link TableMapper} responsible for the real work.
      */
-    public static class TokenCountMapper
+    public static class TagOccurrenceMapper 
             extends CorpusTableMR.CorpusTableMapper<Text, IntWritable> {
 
-        /**
-         * Represents a single occurrence.
-         */
-        private static final IntWritable ONE = new IntWritable(1);
+        public static final IntWritable ONE = new IntWritable(1);
 
         /**
          * {@inheritDoc}
@@ -144,17 +132,10 @@ public class TokenCountMR extends CorpusTableMR {
                         Result row, 
                         Context context)
                 throws IOException, InterruptedException {
-            Counter<String> counter = new StringCounter();
-            for (Sentence sentence : table.sentences(row))
-                for (StringPair tokenPos : sentence.taggedTokens())
-                    if (tokenPos.x != null)
-                        counter.count(TextUtil.cleanTerm(tokenPos.x));
-
-            for (Map.Entry<String, Integer> entry : counter)
-                context.write(new Text(entry.getKey()),
-                              new IntWritable(entry.getValue()));
-
-            context.getCounter("TokenCountMR", "Document").increment(1);
+            context.setStatus("Processing Occurrences");
+            for (String category : table.getCategories(row))
+                context.write(new Text(category), ONE);
+            context.getCounter("TagOccurrenceMR", "Documents").increment(1);
         }
     }
 }

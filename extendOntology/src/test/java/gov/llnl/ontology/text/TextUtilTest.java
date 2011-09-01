@@ -6,7 +6,7 @@
  * This file is part of the C-Cat package and is covered under the terms and
  * conditions therein.
  *
- * The S-Space package is free software: you can redistribute it and/or modify
+ * The C-Cat package is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation and distributed hereunder to you.
  *
@@ -21,35 +21,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.llnl.ontology.wordnet.wsd;
+package gov.llnl.ontology.text;
 
-import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.wordnet.OntologyReader;
+import org.junit.Ignore;
+import org.junit.Test;
 
-import java.util.List;
+import static org.junit.Assert.*;
 
 
 /**
- * An interface for any Word Sense Disambiguation algorithm.  Implementations
- * will be given a list of {@link Sentence}s that need to be disambiguated.
- * Each disambiguated word should have it's {@link Annotation} updated with a
- * word sense tag corresponding to some {@link Synset} in WordNet.
- *
  * @author Keith Stevens
  */
-public interface WordSenseDisambiguation {
-
-    /**
-     * Initializes the {@link WordSenseDisambiguation} algorithm with the given
-     * {@link OntologyReader}.  Any other configuration values should be set via
-     * the global system properties object.
-     */
-    void setup(OntologyReader reader);
-
-    /**
-     * Returns a new {@link List} of {@Link Sentence}s which have word sense
-     * labels for each noun found in {@code sentences}.  
-     */
-    Sentence disambiguate(Sentence sentences);
+public class TextUtilTest {
+    @Test public void testNumClean() {
+        String[] numbers = {
+            "1900", ":123", "1-2", "1.2", "10000:", "125121", ".123", "123.",
+        };
+        for (String number : numbers)
+            assertEquals("<NUM>", TextUtil.cleanTerm(number));
+    }
 }
 

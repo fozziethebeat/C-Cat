@@ -36,6 +36,13 @@ public class TextUtil {
      * characters with the string.
      */
     public static String cleanTerm(String term) {
+        term = term.toLowerCase().trim();
+        if (term.matches("[0-9\\-\\.:]+"))
+            return "<NUM>";
+        if (term.startsWith("http:") ||
+            term.startsWith("ftp:"))
+            return "<URL>";
+
         while (term.length() > 0 && term.startsWith("-"))
                 term = term.substring(1, term.length());
         while (term.length() > 0 && term.endsWith("-"))

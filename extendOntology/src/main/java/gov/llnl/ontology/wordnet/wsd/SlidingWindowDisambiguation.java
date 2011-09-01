@@ -73,25 +73,13 @@ public abstract class SlidingWindowDisambiguation
     /**
      * {@inheritDoc}
      */
-    public List<Sentence> disambiguate(List<Sentence> sentences) {
-        List<Sentence> results = Lists.newArrayList();
-
-        // Get the sentence iterator.  If no sentences are available, just
-        // return.
-        Iterator<Sentence> sentIterator = sentences.iterator();
-        if (!sentIterator.hasNext())
-            return results;
-
-        // Setup the current sentence and the current result sentence that will
-        // hold the disambiguated annotations.
-        Sentence currSentence = sentIterator.next();
-        Sentence currResult = new Sentence(currSentence.start(), 
-                currSentence.end(), currSentence.numTokens());
-        results.add(currResult);
+    public Sentence disambiguate(Sentence sentence) {
+        Sentence resultSent = new Sentence(
+                sentence.start(), sentence.end(), sentence.numTokens());
 
         // Initalize the annotation iterator and the current annotation index.
         int index = 0;
-        Iterator<Annotation> annotIter = currSentence.iterator();
+        Iterator<Annotation> annotIter = sentence.iterator();
 
         // Create the annotation queues.  resultWords will contain the
         // annotations that need to be annotated.
@@ -100,37 +88,16 @@ public abstract class SlidingWindowDisambiguation
         Queue<Annotation> nextWords = new ArrayDeque<Annotation>();
 
         // Fill the next queue with the first 10 nouns found.
-        boolean endFound = false;
-        while (!endFound && nextWords.size() < 10) {
+        while (annotIter.hasNext() && nextWords.size() < 5) {
             // Get the next annotation from the iterator.  If we can, create a
             // new result annotation for it and store it in the same location on
             // the nextWords queue.
-            if (annotIter.hasNext()) {
-                Annotation word = annotIter.next();
-
-                Annotation result = new Annotation();
-                currResult.addAnnotation(index++, result);
-                AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
-
-                if (offer(word, nextWords))
-                    resultWords.offer(result);
-                else
-                    continue;
-            }
-            // If are out of annotations, try to get the next sentence iterator.
-            // Create the next result sentence and continue in the loop.
-            else if (sentIterator.hasNext()) {
-                currSentence = sentIterator.next();
-                index = 0;
-                currResult = new Sentence(currSentence.start(),
-                        currSentence.end(), currSentence.numTokens());
-                results.add(currResult);
-                annotIter = currSentence.iterator();
-                continue;
-            }
-            // Otherwise we are out of tokens altogether.
-            else
-                endFound = true;
+            Annotation word = annotIter.next();
+            Annotation result = new Annotation();
+            resultSent.addAnnotation(index++, result);
+            AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
+            if (offer(word, nextWords))
+                resultWords.offer(result);
         }
 
         // Iterate through each word in the sliding window.  For each focus
@@ -144,23 +111,13 @@ public abstract class SlidingWindowDisambiguation
                 Annotation word = annotIter.next();
 
                 Annotation result = new Annotation();
-                currResult.addAnnotation(index++, result);
+                resultSent.addAnnotation(index++, result);
                 AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
 
                 if (offer(word, nextWords))
                     resultWords.offer(result);
                 else
                     continue;
-            }
-            // If are out of annotations, try to get the next sentence iterator.
-            // Create the next result sentence and continue in the loop.
-            else if (sentIterator.hasNext()) {
-                currSentence = sentIterator.next();
-                currResult = new Sentence(currSentence.start(),
-                        currSentence.end(), currSentence.numTokens());
-                results.add(currResult);
-                annotIter = currSentence.iterator();
-                continue;
             }
             // If we are out of tokens altogether, that is ok, we will just
             // continue in the loop until nextWords is empty.
@@ -179,7 +136,7 @@ public abstract class SlidingWindowDisambiguation
                 prevWords.remove();
         }
 
-        return results;
+        return resultSent;
     }
 
     /**

@@ -12,15 +12,10 @@
     <junit.version>4.7</junit.version>
     <malt.version>1.5.3</malt.version>
     <hadoop.version>0.20.2</hadoop.version>
-    <!--<hadoop.version>0.20.2-maprfs</hadoop.version>-->
-    <maprfs.version>0.1</maprfs.version>
     <hbase.version>0.90.1</hbase.version>
-    <!--<hbase.version>0.90.2</hbase.version>-->
     <mahout.version>0.5</mahout.version>
     <cobertura.version>2.4</cobertura.version> 
     <sspace.version>2.0</sspace.version>
-    <sspace-graph.version>1.0</sspace-graph.version>
-    <berkeley.version>1.0.1</berkeley.version>
     <stanford.version>2010-11-12</stanford.version>
     <text.version>1.5.2</text.version>
     <logging.version>1.1.1</logging.version>
@@ -42,11 +37,6 @@
       <groupId>edu.ucla.sspace</groupId>
       <artifactId>sspace</artifactId>
       <version>${sspace.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>graph.edu.ucla.sspace</groupId>
-      <artifactId>sspace-graph</artifactId>
-      <version>${sspace-graph.version}</version>
     </dependency>
     <dependency>
       <groupId>gov.llnl.text</groupId>
@@ -83,11 +73,6 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
       <version>${hadoop.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.maprfs</groupId>
-      <artifactId>maprfs</artifactId>
-      <version>${maprfs.version}</version>
     </dependency>
     -->
     <dependency>

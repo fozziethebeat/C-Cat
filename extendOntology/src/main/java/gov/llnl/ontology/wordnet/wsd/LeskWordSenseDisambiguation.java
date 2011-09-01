@@ -82,7 +82,12 @@ public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
                                   Queue<Annotation> nextWords) {
         // Get the target synsets for the focus word.
         Synset[] focusSynsets = reader.getSynsets(
-                AnnotationUtil.word(focus), PartsOfSpeech.NOUN);
+                AnnotationUtil.word(focus),
+                AnnotationUtil.synsetPos(focus));
+
+        // Skip any words that have no known synsets.
+        if (focusSynsets == null || focusSynsets.length == 0)
+            return;
         double[] synsetScores = new double[focusSynsets.length];
 
         // Compute the total similarity between each focus synset and the words
