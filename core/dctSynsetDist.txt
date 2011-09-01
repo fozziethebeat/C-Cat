@@ -1,6 +1,0 @@
-cat.n.1 cat.n.7 5
-cat.n.2 cat.n.7 2
-cat.n.3 cat.n.7 3
-cat.n.4 cat.n.7 4 
-cat.n.5 cat.n.7 1
-cat.n.6 cat.n.7 1

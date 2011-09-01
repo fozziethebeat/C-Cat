@@ -13,3 +13,19 @@ similarity metrics and several word sense disambiguation algorithms.
 wordnet submodules.  On top of the two modules, it includes a text
 pre-processing framework for documents stored in HBase.  This is the most
 unstable module and is under heavy development.
+
+This project utilized maven as it's build system.  Most of the library
+dependencies are handled via maven, but a few jars are from libraries that have
+not been mavenized yet.  
+
+To install these jars into maven, run 
+
+./add_non_maven_jars.sh
+
+Then, build the entire project with
+
+mvn package
+
+This will create two jars in target: extendOntology-1.0.jar and
+extendOntology-1.0-jar-with-dependencies.jar.  To run any of the mains provided
+without maven, include both of these jars in the classpath.

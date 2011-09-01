@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cp="target/extendOntology-1.0-jar-with-dependencies.jar"
+cp="target/extendOntology-core-1.0-jar-with-dependencies.jar"
 java -cp $cp $@
