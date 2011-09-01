@@ -61,7 +61,7 @@ public class LeskWordSenseDisambiguationTest {
         { "like.n.1", "fluffy machine pet that is not cute", "" },
     };
 
-    protected List<Sentence> getSentences(String sentence, String posSent) {
+    protected Sentence getSentences(String sentence, String posSent) {
         String[] tokens = sentence.split("\\s+");
         String[] pos = posSent.split("\\s+");
 
@@ -72,24 +72,24 @@ public class LeskWordSenseDisambiguationTest {
             sent.addAnnotation(i, annot);
         }
 
-        return Collections.singletonList(sent);
+        return sent;
     }
 
     @Test public void testDisambiguation() {
         WordSenseDisambiguation wsdAlg = new LeskWordSenseDisambiguation();
-        List<Sentence> sentences = getSentences(TEST_SENTENCE, TEST_POS);
+        Sentence sentences = getSentences(TEST_SENTENCE, TEST_POS);
         wsdAlg.setup(new GenericMockReader(SYNSET_DATA));
-        wsdAlg.disambiguate(sentences);
 
-        assertEquals(1, sentences.size());
-        boolean foundCat = false;
-        for (Annotation annot : sentences.get(0)) {
-            if (AnnotationUtil.word(annot).equals("cat")) {
-                foundCat = true;
-                assertEquals(SYNSET_DATA[0][0],
-                             AnnotationUtil.wordSense(annot));
-            }
-        }
-        assertTrue(foundCat);
+        Sentence sent = wsdAlg.disambiguate(sentences);
+
+        Sentence expected = sentences;
+        assertEquals(expected.numTokens(), sent.numTokens());
+        assertEquals(expected.start(), sent.start());
+        assertEquals(expected.end(), sent.end());
+
+        Annotation word = sent.getAnnotation(1);
+        assertNotNull(word);
+        assertEquals(SYNSET_DATA[0][0], AnnotationUtil.wordSense(word));
+        wsdAlg.disambiguate(sentences);
     }
 }

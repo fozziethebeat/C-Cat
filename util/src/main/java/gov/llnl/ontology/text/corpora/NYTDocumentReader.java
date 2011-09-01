@@ -40,6 +40,7 @@
 package gov.llnl.ontology.text.corpora;
 
 import gov.llnl.ontology.text.DocumentReader;
+import gov.llnl.ontology.text.SimpleDocument;
 
 import gov.llnl.text.util.FileUtils;
 
@@ -302,6 +303,17 @@ public class NYTDocumentReader implements DocumentReader {
      */
     public gov.llnl.ontology.text.Document readDocument(String doc) {
         return parseNYTCorpusDocumentFromString(doc, false);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public gov.llnl.ontology.text.Document readDocument(String doc,
+                                                        String corpusName) {
+        NYTCorpusDocument d = parseNYTCorpusDocumentFromString(doc, false);
+        return new SimpleDocument(corpusName, d.rawText(),
+                                  d.originalText(), d.key(), d.id(),
+                                  d.title(), d.categories());
     }
 
     /**

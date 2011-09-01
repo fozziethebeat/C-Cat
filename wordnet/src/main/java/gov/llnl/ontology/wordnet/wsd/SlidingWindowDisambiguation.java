@@ -26,6 +26,8 @@ package gov.llnl.ontology.wordnet.wsd;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.AnnotationUtil;
 
+import com.google.common.collect.Lists;
+
 import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.CombinedIterator;
@@ -64,54 +66,95 @@ public abstract class SlidingWindowDisambiguation
      * @param nextWords The N {@link Annotation} words after {@code focus}.
      */
     protected abstract void processContext(Annotation focus,
+                                           Annotation result,
                                            Queue<Annotation> prevWords,
                                            Queue<Annotation> nextWords);
 
     /**
      * {@inheritDoc}
      */
-    public void disambiguate(List<Sentence> sentences) {
-        List<Iterator<Annotation>> annotationIterators =
-            new ArrayList<Iterator<Annotation>>();
-        for (Sentence sent : sentences)
-            annotationIterators.add(sent.iterator());
+    public Sentence disambiguate(Sentence sentence) {
+        Sentence resultSent = new Sentence(
+                sentence.start(), sentence.end(), sentence.numTokens());
 
-        Iterator<Annotation> annotIter = new CombinedIterator<Annotation>(
-                annotationIterators);
+        // Initalize the annotation iterator and the current annotation index.
+        int index = 0;
+        Iterator<Annotation> annotIter = sentence.iterator();
 
+        // Create the annotation queues.  resultWords will contain the
+        // annotations that need to be annotated.
         Queue<Annotation> prevWords = new ArrayDeque<Annotation>();
+        Queue<Annotation> resultWords = new ArrayDeque<Annotation>();
         Queue<Annotation> nextWords = new ArrayDeque<Annotation>();
 
-        while (annotIter.hasNext() && nextWords.size() < 10)
-            offer(annotIter.next(), nextWords);
+        // Fill the next queue with the first 10 nouns found.
+        while (annotIter.hasNext() && nextWords.size() < 5) {
+            // Get the next annotation from the iterator.  If we can, create a
+            // new result annotation for it and store it in the same location on
+            // the nextWords queue.
+            Annotation word = annotIter.next();
+            Annotation result = new Annotation();
+            resultSent.addAnnotation(index++, result);
+            AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
+            if (offer(word, nextWords))
+                resultWords.offer(result);
+        }
 
+        // Iterate through each word in the sliding window.  For each focus
+        // word, have the subclass disambiguate the focus word using the
+        // previous and next contexts.
         while (!nextWords.isEmpty()) {
-            Annotation focus = nextWords.remove();
+            // Get the next annotation from the iterator to advance the next
+            // window.  If we can, create a new result annotation for it and
+            // store it in the same location on the nextWords queue.
+            if (annotIter.hasNext()) {
+                Annotation word = annotIter.next();
 
-            if (annotIter.hasNext())
-                offer(annotIter.next(), nextWords);
+                Annotation result = new Annotation();
+                resultSent.addAnnotation(index++, result);
+                AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
+
+                if (offer(word, nextWords))
+                    resultWords.offer(result);
+                else
+                    continue;
+            }
+            // If we are out of tokens altogether, that is ok, we will just
+            // continue in the loop until nextWords is empty.
             
-            processContext(focus, prevWords, nextWords);
+            // Get the focus word and the corresponding result annotation that
+            // will be updated with the sense name.
+            Annotation focus = nextWords.remove();
+            Annotation result = resultWords.remove();
 
+            // Disambiguate the focus word.
+            processContext(focus, result, prevWords, nextWords);
+
+            // Advange the previous window.
             prevWords.offer(focus);
             if (prevWords.size() > 10)
                 prevWords.remove();
         }
+
+        return resultSent;
     }
 
     /**
      * Adds the given {@link Annotation} to the end of {@code words} if it's for
-     * a noun.
+     * a any part of speech represented in wordnet
      */
-    private static void offer(Annotation annot, Queue<Annotation> words) {
+    private static boolean offer(Annotation annot, Queue<Annotation> words) {
         String pos = AnnotationUtil.pos(annot);
         if (pos == null)
-            return;
+            return false;
 
         if (pos.startsWith("N") ||
             pos.startsWith("V") ||
             pos.startsWith("J") ||
-            pos.startsWith("R"))
+            pos.startsWith("R")) {
             words.offer(annot);
+            return true;
+        }
+        return false;
     }
 }

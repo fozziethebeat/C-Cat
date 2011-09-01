@@ -23,22 +23,37 @@
 
 package gov.llnl.ontology.util;
 
-import edu.ucla.sspace.util.Pair;
+import org.apache.hadoop.io.WritableComparable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 
 /**
- * A subclass of {@link Pair} for {@link String}s that allows for arrays of
- * these pairs.
+ * A pair of Strings that can be used as a key in map reduce jobs.
  *
  * @author Keith Stevens
  */
-public class StringPair extends Pair<String> implements Comparable {
+public class StringPair implements Comparable, WritableComparable {
+
+    public String x;
+
+    public String y;
+
+    /**
+     * Constructs an empty {@link StringPair} for use with the {@link
+     * WritableComparable} interface.
+     */
+    public StringPair() {
+    }
 
     /**
      * Constructs a new {@link StringPair}.
      */
     public StringPair(String x, String y) {
-        super(x, y);
+        this.x = x;
+        this.y = y;
     }
 
     /**
@@ -47,8 +62,69 @@ public class StringPair extends Pair<String> implements Comparable {
      * a tie.
      */
     public int compareTo(Object o) {
-        StringPair other = (StringPair) o;
-        int diff = this.x.compareTo(other.x);
-        return (diff == 0) ? this.y.compareTo(other.y) : diff;
+        return compareTo((StringPair) o);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void write(DataOutput out) throws IOException {
+        out.writeUTF(x);
+        out.writeUTF(y);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void readFields(DataInput in) throws IOException {
+        x = in.readUTF();
+        y = in.readUTF();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int compareTo(StringPair w) {
+        int diff = x.compareTo(w.x);
+        return (diff == 0) ? y.compareTo(w.y) : diff;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean equals(Object o) {
+        if (o == null || !(o instanceof StringPair))
+            return false;
+        StringPair p = (StringPair)o;
+        return (x == p.x || (x != null && x.equals(p.x))) &&
+               (y == p.y || (y != null && y.equals(p.y)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int hashCode() {
+        return ((x == null) ? 0 : x.hashCode()) ^
+               ((y == null) ? 0 : y.hashCode());
+    }
+
+    /**
+     * Returns a new {@link StringPair} from the contents of a string that has
+     * been printed via {@link #toString}.
+     */
+    public static StringPair fromString(String text) {
+        text = text.trim();
+        text = text.substring(1, text.length() - 1);
+        String[] parts = text.split(", ", 2);
+        return new StringPair(parts[0].replaceAll("&comma;", ","),
+                              parts[1].replaceAll("&comma;", ","));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String toString() {
+        return "{" + x.replaceAll(",", "&comma;") + 
+               ", " + y.replaceAll(",", "&comma;") + "}";
     }
 }

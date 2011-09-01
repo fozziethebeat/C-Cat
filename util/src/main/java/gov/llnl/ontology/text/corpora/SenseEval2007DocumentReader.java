@@ -45,7 +45,7 @@ import java.util.HashSet;
  */
 public class SenseEval2007DocumentReader implements DocumentReader {
 
-    public static final String CORPUS_NAME = "senseeval2007";
+    public static final String CORPUS_NAME = "senseEval2007";
 
     /**
      * Returns {@link #CORPUS_NAME}
@@ -58,19 +58,34 @@ public class SenseEval2007DocumentReader implements DocumentReader {
      * {@inheritDoc}
      */
     public Document readDocument(String doc) {
+        return readDocument(doc, corpusName());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Document readDocument(String doc, String corpusName) {
         // Determine the indices for the instance id.
         int idStart = doc.indexOf("id=\"")+4;
         int idEnd = doc.indexOf("\" corpus");
         int docEnd = doc.lastIndexOf("</instance>");
 
         // Extract the instance id and the keyword.
+        if (idStart < 0 || idEnd < 0)
+            return null;
+
         String key = doc.substring(idStart, idEnd);
         String keyWord = key.split("\\.")[0];
         int headStart = doc.indexOf("<head>");
         int headEnd = doc.indexOf("</head>") + 7;
+        if (headStart < 0 || headEnd < 0)
+            return null;
 
         // Extract the raw text.
         int titleEnd = doc.indexOf(">");
+        if (titleEnd < 0)
+            return null;
+
         String docTextPre = doc.substring(titleEnd+1, headStart).trim();
         String docTextPost = doc.substring(headEnd, docEnd).trim();
         String text = docTextPre + " " + keyWord + " " + docTextPost;
@@ -79,7 +94,7 @@ public class SenseEval2007DocumentReader implements DocumentReader {
         // the first block of text, so determine the number of tokens in that
         // and use it as the id.
         long id = docTextPre.split("\\s+").length;
-        return new SimpleDocument(corpusName(), text, doc, 
+        return new SimpleDocument(corpusName, text, doc, 
                                   key, id, keyWord, new HashSet<String>());
     }
 }

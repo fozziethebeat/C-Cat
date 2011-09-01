@@ -54,27 +54,50 @@ import java.util.Queue;
  */
 public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
 
+    /**
+     * The {@link OntologyReader} used to extract {@link Synset}s.
+     */
     protected OntologyReader reader;
 
+    /**
+     * The {@link SynsetSimilarity} function used to compare two {@link
+     * Synset}s.
+     */
     protected SynsetSimilarity sim;
 
+    /**
+     * {@inheritDoc}
+     */
     public void setup(OntologyReader reader) {
         this.reader = reader;
         this.sim = new LeskSimilarity();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected void processContext(Annotation focus,
+                                  Annotation result,
                                   Queue<Annotation> prevWords,
                                   Queue<Annotation> nextWords) {
+        // Get the target synsets for the focus word.
         Synset[] focusSynsets = reader.getSynsets(
-                AnnotationUtil.word(focus), PartsOfSpeech.NOUN);
+                AnnotationUtil.word(focus),
+                AnnotationUtil.synsetPos(focus));
+
+        // Skip any words that have no known synsets.
+        if (focusSynsets == null || focusSynsets.length == 0)
+            return;
         double[] synsetScores = new double[focusSynsets.length];
 
+        // Compute the total similarity between each focus synset and the words
+        // in the previous and next context.
         for (Annotation prev : prevWords)
             computeScore(synsetScores, focusSynsets, prev);
         for (Annotation next : nextWords)
             computeScore(synsetScores, focusSynsets, next);
 
+        // Select the target sense with the highest similarity.
         double maxScore = 0;
         int maxId = 0;
         for (int i = 0; i < synsetScores.length; ++i) 
@@ -83,16 +106,28 @@ public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
                 maxId = i;
             }
 
-        AnnotationUtil.setWordSense(focus, focusSynsets[maxId].getName());
+        AnnotationUtil.setWordSense(result, focusSynsets[maxId].getName());
     }
 
+    /**
+     * Computes the total similarity each focus synset has with the possible
+     * senses of given word.
+     */
     private void computeScore(double[] synsetScores,
                               Synset[] focusSynsets,
-                              Annotation prev) {
+                              Annotation word) {
         Synset[] others = reader.getSynsets(
-                AnnotationUtil.word(prev), PartsOfSpeech.NOUN);
+                AnnotationUtil.word(word), PartsOfSpeech.NOUN);
         for (int i = 0; i < focusSynsets.length; ++i)
             for (Synset other : others)
                 synsetScores[i] += sim.similarity(focusSynsets[i], other);
+    }
+
+    /**
+     * Returns "ld", the acronyms for this {@link WordSenseDisambiguation}
+     * algorithm.
+     */
+    public String toString() {
+        return "ld";
     }
 }

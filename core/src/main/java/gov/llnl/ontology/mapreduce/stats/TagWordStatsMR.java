@@ -26,7 +26,7 @@ package gov.llnl.ontology.mapreduce.stats;
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.Counter;
+import gov.llnl.ontology.util.StringCounter;
 import gov.llnl.ontology.util.MRArgOptions;
 import gov.llnl.ontology.util.StringPair;
 
@@ -41,8 +41,9 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
@@ -100,14 +101,14 @@ public class TagWordStatsMR extends CorpusTableMR {
      * {@inheritDoc}
      */
     public Class mapperKeyClass() {
-        return Text.class;
+        return StringPair.class;
     }
 
     /**
      * {@inheritDoc}
      */
     public Class mapperValueClass() {
-        return Text.class;
+        return IntWritable.class;
     }
 
     /**
@@ -128,24 +129,7 @@ public class TagWordStatsMR extends CorpusTableMR {
      * The {@link TableMapper} responsible for the real work.
      */
     public static class TagWordStatsMapper
-            extends TableMapper<Text, Text> {
-
-        /**
-         * The {@link CorpusTable} responsible for reading row data.
-         */
-        private CorpusTable table;
-
-        /**
-         * {@inheritDoc}
-         */
-        public void setup(Context context)
-                throws IOException, InterruptedException {
-            context.setStatus("Setup");
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
-            context.setStatus("CorpusTable created");
-        }
+            extends CorpusTableMR.CorpusTableMapper<StringPair, IntWritable> {
 
         /**
          * {@inheritDoc}
@@ -155,16 +139,15 @@ public class TagWordStatsMR extends CorpusTableMR {
                         Context context)
                 throws IOException, InterruptedException {
             context.setStatus("Processing Documents");
-            Set<String> categories = table.getCategories(row);
 
-            Map<String, Counter<String>> tagWordCounters = Maps.newHashMap();
-            for (String category : categories)
-                tagWordCounters.put(category, new Counter<String>());
-
+            StringCounter counter = new StringCounter();
             for (Sentence sentence : table.sentences(row))
                 for (StringPair word : sentence.taggedTokens())
-                    for (String category : categories)
-                        tagWordCounters.get(category).count(word.x);
+                    counter.count(word.x);
+
+            Map<String, StringCounter> tagWordCounters = Maps.newHashMap();
+            for (String category : table.getCategories(row))
+                tagWordCounters.put(category, counter);
 
             WordCountSumReducer.emitCounts(tagWordCounters, context);
             context.getCounter("TagWordStatsMR", "Documents").increment(1);

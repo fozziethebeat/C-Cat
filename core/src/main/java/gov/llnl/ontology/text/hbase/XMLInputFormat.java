@@ -29,8 +29,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import org.apache.hadoop.conf.Configuration;
 
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.FileStatus;
 
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
@@ -81,5 +81,17 @@ public class XMLInputFormat
                                            TaskAttemptContext context)
             throws IOException, InterruptedException {
         return new XMLRecordReader();
+    }
+
+
+    /** 
+     * Generate the list of files and make them into FileSplits.
+     */
+    public List<InputSplit> getSplits(JobContext job) throws IOException {
+        // generate splits
+        List<InputSplit> splits = new ArrayList<InputSplit>();
+        for (FileStatus file : listStatus(job))
+            splits.add(new FileSplit(file.getPath(), 0, file.getLen(), null));
+        return splits;
     }
 }

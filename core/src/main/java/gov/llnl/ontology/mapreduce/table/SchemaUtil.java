@@ -118,6 +118,32 @@ public class SchemaUtil {
         return Bytes.toDouble(bytes);
     }
 
+
+    /**
+     * Returns the {@link Object} stored in this row at the given column family
+     * and column qualifier.  If no data exists, this returns {@code null}.
+     */
+    public static <T> T getObjectColumn(Result row, String fieldName,
+                                        Class<T> classOfT) {
+        String[] familyAndQualifier = fieldName.split(":");
+        if (familyAndQualifier.length != 2)
+            return null;
+        return getObjectColumn(row, familyAndQualifier[0], familyAndQualifier[1], 
+                               classOfT);
+    }
+
+    /**
+     * Returns the {@link Object} stored in this row at the given column family
+     * and column qualifier.  If no data exists, this returns {@code null}.
+     */
+    public static <T> T getObjectColumn(Result row, String fieldName, Type typeOfT) {
+        String[] familyAndQualifier = fieldName.split(":");
+        if (familyAndQualifier.length != 2)
+            return null;
+        return (T) getObjectColumn(row, familyAndQualifier[0], familyAndQualifier[1], 
+                               typeOfT);
+    }
+
     /**
      * Returns the {@link Object} stored in this row at the given column family
      * and column qualifier.  If no data exists, this returns {@code null}.
@@ -161,9 +187,10 @@ public class SchemaUtil {
 
     /**
      * Adds data to a {@link Put} under a specified column and qualifier.
+     * Returns {@code false} if the {@code data} is {@code null}.
      */
     public static boolean add(Put put, String col, String qual, String data) {
-        if (data == null || data.trim().equals(""))
+        if (data == null)
             return false;
         put.add(col.getBytes(), qual.getBytes(), data.getBytes());
         return true;

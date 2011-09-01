@@ -50,7 +50,7 @@ public class SenseEval2007DocumentReaderTest {
         assertEquals("explain", doc.title());
         assertEquals(3, doc.id());
         assertEquals(TEST_SENT, doc.originalText());
-        assertEquals("senseeval2007", doc.sourceCorpus());
+        assertEquals("senseEval2007", doc.sourceCorpus());
         assertTrue(doc.rawText().contains("explain "));
         assertFalse(doc.rawText().contains("head"));
     }

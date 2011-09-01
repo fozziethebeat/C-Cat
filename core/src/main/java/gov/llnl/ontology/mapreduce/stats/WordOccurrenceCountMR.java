@@ -27,7 +27,8 @@ import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.AnnotationUtil;
-import gov.llnl.ontology.util.Counter;
+import gov.llnl.ontology.util.StringCounter;
+import gov.llnl.ontology.util.StringPair;
 import gov.llnl.ontology.util.MRArgOptions;
 
 import com.google.common.collect.Lists;
@@ -43,11 +44,10 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
@@ -162,14 +162,14 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
      * Returns the {@link Class} object for the Mapper Value of this task.
      */
     protected Class mapperKeyClass() {
-        return Text.class;
+        return StringPair.class;
     }
 
     /**
      * Returns the {@link Class} object for the Mapper Value of this task.
      */
     protected Class mapperValueClass() {
-        return Text.class;
+        return IntWritable.class;
     }
 
     /**
@@ -190,12 +190,7 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
      * The {@link TableMapper} responsible for most of the work.
      */
     public static class WordOccurrenceCountMapper 
-            extends TableMapper<Text, Text> {
-
-        /**
-         * The {@link CorpusTable} responsible for reading a row's data.
-         */
-        private CorpusTable table;
+            extends CorpusTableMR.CorpusTableMapper<StringPair, IntWritable> {
 
         /**
          * The sliding window size.
@@ -215,11 +210,8 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
         /**
          * {@inheritDoc}
          */
-        public void setup(Context context)
+        public void setup(Context context, Configuration conf)
                 throws IOException, InterruptedException {
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
             windowSize = Integer.parseInt(conf.get(WINDOW_SIZE));
             usePos = conf.get(USE_POS) != null;
             useOrdering = conf.get(USE_ORDER) != null;
@@ -240,7 +232,7 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
                     tokenIters);
 
             // Initialize the local counts.
-            Map<String, Counter<String>> wocCounts = Maps.newHashMap();
+            Map<String, StringCounter> wocCounts = Maps.newHashMap();
 
             // Create the previous and next windows.
             Queue<Annotation> prev = new ArrayDeque<Annotation>();
@@ -264,9 +256,9 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
                     continue;
 
                 // Get the counter for the focus word.
-                Counter<String> counts = wocCounts.get(focusWord);
+                StringCounter counts = wocCounts.get(focusWord);
                 if (counts == null) {
-                    counts = new Counter<String>();
+                    counts = new StringCounter();
                     wocCounts.put(focusWord, counts);
                 }
 
@@ -280,9 +272,11 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
                 prev.offer(focus);
                 if (prev.size() > windowSize)
                     prev.remove();
+                context.getCounter("WordOccurrenceCountMR", "Focus Word").increment(1);
             }
 
             WordCountSumReducer.emitCounts(wocCounts, context);
+            context.getCounter("WordOccurrenceCountMR", "Documents").increment(1);
         }
 
         /**
@@ -291,19 +285,25 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
          * speech.  If {@code useOrdering} is true, the feature will be the word
          * plus the distance, positive or negative, from the focus word.
          */
-        protected void addContextTerms(Counter<String> counts,
+        protected void addContextTerms(StringCounter  counts,
                                        Queue<Annotation> words,
                                        int distance)
                 throws IOException, InterruptedException {
+            // Decrement the distance once so that we can always add to it at
+            // the start of the loop and ensure it's update correctly regardless of
+            // the code path.
+            --distance;
+
             // Iterate through each of the context words.
             for (Annotation term : words) {
+                // Modify the distance.
+                ++distance;
+
                 // Get the word and part of speech.  Skip any that are null.
                 String word = AnnotationUtil.word(term);
                 String pos = AnnotationUtil.pos(term);
-                if (word == null || pos == null) {
-                    ++distance;
+                if (word == null || pos == null)
                     continue;
-                }
 
                 // Modify the feature if needed and add the count.
                 if (usePos) 
@@ -312,9 +312,6 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
                     counts.count(word + "-" + distance);
                 else
                     counts.count(word);
-
-                // Modify the distance.
-                ++distance;
             }
         }
     }

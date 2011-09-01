@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
@@ -110,31 +111,14 @@ public class TagNetworkMR extends CorpusTableMR {
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(
                 job, new Path(options.getPositionalArg(0)));
-        job.setNumReduceTasks(24);
+        job.setNumReduceTasks(2);
     }
 
     /**
      * The {@link TableMapper} responsible for the real work.
      */
     public static class TagNetworkMapper 
-            extends TableMapper<Text, Text> {
-
-        /**
-         * The {@link CorpusTable} responsible for accessing row data.
-         */
-        private CorpusTable table;
-
-        /**
-         * {@inheritDoc}
-         */
-        public void setup(Context context)
-                throws IOException, InterruptedException {
-            context.setStatus("Setup");
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
-            context.setStatus("CorpusTable created");
-        }
+            extends CorpusTableMR.CorpusTableMapper<Text, Text> {
 
         /**
          * {@inheritDoc}

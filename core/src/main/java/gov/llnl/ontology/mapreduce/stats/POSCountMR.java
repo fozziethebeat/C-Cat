@@ -42,6 +42,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
@@ -126,27 +127,12 @@ public class POSCountMR extends CorpusTableMR {
      * The main {@link TableMapper} that does the work.
      */
     public static class POSCountMapper
-            extends TableMapper<Text, IntWritable> {
+            extends CorpusTableMR.CorpusTableMapper<Text, IntWritable> {
 
         /**
          * A permanent {@link IntWritable} that represents one occurrence.
          */
         private static final IntWritable ONE = new IntWritable(1);
-
-        /**
-         * The {@link CorpusTable} responsible for interpreting rows.
-         */
-        private CorpusTable table;
-
-        /**
-         * {@inheritDoc}
-         */
-        public void setup(Context context)
-                throws IOException, InterruptedException {
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
-        }
 
         /**
          * {@inheritDoc}

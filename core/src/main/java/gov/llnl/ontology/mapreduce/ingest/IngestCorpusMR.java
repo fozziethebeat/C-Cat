@@ -48,7 +48,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import java.io.IOException;
 
@@ -96,6 +96,15 @@ public class IngestCorpusMR extends CorpusTableMR {
     public static String TOKENIZER =
         CONF_PREFIX + ".tokenizer";
 
+    public static final String DEFAULT_SPLITTER =
+        "gov.llnl.ontology.text.sentsplit.OpenNlpMESentenceSplitter";
+
+    public static final String DEFAULT_TOKENIZER =
+        "gov.llnl.ontology.text.tokenize.OpenNlpMETokenizer";
+
+    public static final String DEFAULT_TAGGER =
+        "gov.llnl.ontology.text.tag.OpenNlpMEPOSTagger";
+
     /**
      * Runs the {@link IngestCorpusMR}.
      */
@@ -125,8 +134,14 @@ public class IngestCorpusMR extends CorpusTableMR {
      * {@inheritDoc}
      */
     protected void validateOptions(MRArgOptions options) {
-        options.validate("", "", IngestCorpusMR.class,
-                         0, 's', 't', 'p');
+        options.validate("", "", IngestCorpusMR.class, 0, 'C');
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected String jobName() {
+        return "IngestCorpusMR";
     }
 
     /**
@@ -134,9 +149,10 @@ public class IngestCorpusMR extends CorpusTableMR {
      */
     protected void setupConfiguration(MRArgOptions options, 
                                       Configuration conf) {
-        conf.set(TOKENIZER, options.getStringOption('t'));
-        conf.set(TAGGER, options.getStringOption('p'));
-        conf.set(SENTENCE_DETECTOR, options.getStringOption('s'));
+        conf.set(TOKENIZER, options.getStringOption('t', DEFAULT_TOKENIZER));
+        conf.set(TAGGER, options.getStringOption('p', DEFAULT_TAGGER));
+        conf.set(SENTENCE_DETECTOR,
+                 options.getStringOption('s', DEFAULT_SPLITTER));
     }
 
     /**
@@ -152,13 +168,7 @@ public class IngestCorpusMR extends CorpusTableMR {
      * element in the raw text document.
      */
     public static class IngestCorpusMapper
-            extends TableMapper<ImmutableBytesWritable, Put> {
-
-        /**
-         * The {@link CorpusTable} that dictates the structure of the table
-         * containing a corpus.
-         */
-        private CorpusTable table;
+            extends CorpusTableMR.CorpusTableMapper<ImmutableBytesWritable, Put> {
 
         /**
          * The {@link SentenceDetector} responsible for splitting sentences in a
@@ -180,10 +190,7 @@ public class IngestCorpusMR extends CorpusTableMR {
         /**
          * {@inheritDoc}
          */
-        public void setup(Context context) {
-            Configuration conf = context.getConfiguration();
-            table = ReflectionUtil.getObjectInstance(conf.get(TABLE));
-            table.table();
+        public void setup(Context context, Configuration conf) {
             sentenceDetector = ReflectionUtil.getObjectInstance(
                     conf.get(SENTENCE_DETECTOR));;
             tokenizer = ReflectionUtil.getObjectInstance(conf.get(TOKENIZER));

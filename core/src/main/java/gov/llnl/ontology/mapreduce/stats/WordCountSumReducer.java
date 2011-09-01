@@ -1,12 +1,13 @@
 package gov.llnl.ontology.mapreduce.stats;
 
-import gov.llnl.ontology.util.Counter;
+import gov.llnl.ontology.util.StringCounter;
+import gov.llnl.ontology.util.StringPair;
 
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
 
 import java.io.IOException;
 import java.util.Map;
@@ -15,42 +16,41 @@ import java.util.Map;
 /**
  * @author Keith Stevens
  */
-public class WordCountSumReducer extends Reducer<Text, Text, Text, Text> {
+public class WordCountSumReducer
+        extends Reducer<StringPair, IntWritable, StringPair, IntWritable> {
 
     /**
      * Writes the co-occurrence counts as stored in a map of {@link Counter}s to
      * {@code context}.  This is simply a helper function that formats each
      * written co-occurrence in the format used by this {@link Reducer}.
      */
-    public static void emitCounts(Map<String, Counter<String>> wocCounts,
+    public static void emitCounts(Map<String, StringCounter> wocCounts,
                                   Mapper.Context context) 
             throws IOException, InterruptedException {
-        for (Map.Entry<String, Counter<String>> e : wocCounts.entrySet()) {
-            Text focusWord = new Text(e.getKey());
-            for (Map.Entry<String, Integer> f : e.getValue()) {
-                String otherWord = f.getKey();
-                int count = f.getValue();
-                Text out = new Text(otherWord + "|" + count);
-                context.write(focusWord, out);
-            }
+        for (Map.Entry<String, StringCounter> e : wocCounts.entrySet()) {
+            String focusWord = e.getKey();
+            for (Map.Entry<String, Integer> f : e.getValue())
+                context.write(new StringPair(focusWord, f.getKey()),
+                              new IntWritable(f.getValue()));
         }
     }
 
     /**
      * {@inheritDoc}
      */
-    public void reduce(Text key, Iterable<Text> values, Context context)
+    public void reduce(StringPair key, Iterable<IntWritable> values, Context context)
             throws IOException, InterruptedException {
-        Counter<String> occurrences = new Counter<String>();
-        for (Text item : values) {
-            String[] parts = item.toString().split("\\|");
-            String term = parts[0];
-            int count = Integer.parseInt(parts[1]);
-            occurrences.count(term, count);
+        int totalCount = 0;
+        for (IntWritable value : values)
+            totalCount += value.get();
+        /*
+        StringCounter occurrences = new StringCounter();
+        for (StringCounter counter : values) {
+            for (Map.Entry<String, Integer> e : counter)
+                occurrences.count(e.getKey(), e.getValue());
         }
+        */
 
-        for (Map.Entry<String, Integer> e : occurrences)
-            context.write(new Text(key.toString()),
-                          new Text(e.getKey() + " " + e.getValue()));
+        context.write(key, new IntWritable(totalCount));
     }
 }
