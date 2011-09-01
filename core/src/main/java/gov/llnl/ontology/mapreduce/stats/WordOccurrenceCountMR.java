@@ -309,8 +309,8 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
 
                     //  Count the co-occurrences in with the previous and next
                     //  words.
-                    addContextTerms(counts, occurences, prev, -1 * prev.size());
-                    addContextTerms(counts, occurences, next, 1);
+                    addContextTerms(counts, occurrences, prev, -1 * prev.size());
+                    addContextTerms(counts, occurrences, next, 1);
                 }
 
                 // Shift the focus token to the prev queue and remove any old
@@ -331,7 +331,7 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
          * plus the distance, positive or negative, from the focus word.
          */
         protected void addContextTerms(StringCounter counts,
-                                       StringCounter occurences,
+                                       StringCounter occurrences,
                                        Queue<Annotation> words,
                                        int distance)
                 throws IOException, InterruptedException {
@@ -353,7 +353,7 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
 
                 // Ignore words not in the word list if it's non empty.
                 word = word.toLowerCase();
-                occurrence.count(word);
+                occurrences.count(word);
                 if (!wordList.isEmpty() && !wordList.contains(word))
                     continue;
 
