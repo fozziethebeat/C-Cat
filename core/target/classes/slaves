@@ -1,0 +1,9 @@
+################################# IMPORTANT #############################################
+############################### /\/\/\/\/\/\/\ ##########################################
+# Use of slaves and masters file to start/stop jobtracker/tasktracker is not supported.
+# Please use maprcli:
+# /opt/mapr/bin/maprcli node services -nodes <list of ip addrs> -jobtracker start
+# /opt/mapr/bin/maprcli node services -nodes <list of ip addrs> -tasktracker start
+# /opt/mapr/bin/maprcli node services -nodes <list of ip addrs> -jobtracker stop
+# /opt/mapr/bin/maprcli node services -nodes <list of ip addrs> -tasktracker stop
+#########################################################################################

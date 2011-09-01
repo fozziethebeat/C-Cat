@@ -30,4 +30,3 @@ public interface WordSenseDisambiguation {
      */
     void disambiguate(List<Sentence> sentences);
 }
-

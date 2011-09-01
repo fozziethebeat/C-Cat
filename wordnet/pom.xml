@@ -23,6 +23,12 @@
     <dependency>
       <artifactId>extendOntology-util</artifactId>
       <groupId>${project.groupId}</groupId>
+      <exclusions>
+        <exclusion>
+          <artifactId>extendOntology-data</artifactId>
+          <groupId>${project.groupId}</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- third party -->

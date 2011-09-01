@@ -1,0 +1,566 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+<!-- Replace localhost by one or more ip addresses for jobtracker. -->
+<property>  
+  <name>mapred.job.tracker</name>  
+  <value>maprfs:///</value>    
+  <description> JobTracker address ip:port or use uri maprfs:/// for      
+  default cluster or maprfs:///mapr/san_jose_cluster1 to connect 
+  'san_jose_cluster1' cluster.
+  </description>        
+</property>
+
+<property>
+  <name>mapred.local.dir</name>
+  <value>/tmp/mapr-hadoop/mapred/local</value>
+  <description>The local directory where MapReduce stores job jar, xml files and
+  creates work dirs for tasks. MapR hadoop uses a local volume map outputs.
+  </description>
+</property>
+<!-- JOBTRACKER CONFIGS : Should be changed by admin -->
+
+<!-- JobTracker's Web Interface Configuration -->
+<property>
+  <name>webinterface.private.actions</name>
+  <value>true</value>
+  <description> If set to true, jobs can be killed from JT's web interface.
+  Enable this option if the interfaces are only reachable by 
+  those who have the right authorization.
+  </description>
+</property>
+
+<property>
+  <name>mapred.jobtracker.port</name>
+  <value>9001</value>
+  <description>Port on which JobTracker listens. 
+  Read by JobTracker to start RPC Server.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.outofband.heartbeat</name>
+  <value>false</value>
+  <description>Expert: Set this to true to let the tasktracker send an
+  out-of-band heartbeat on task-completion for better latency.
+  </description>
+</property>
+ 
+<!-- Jobtracker directories. Volume path = mapred.system.dir/../ -->
+<property>
+  <name>mapred.system.dir</name>
+  <value>/var/mapr/cluster/mapred/jobTracker/system</value>
+  <description>The shared directory where MapReduce stores control files.</description>
+</property>
+
+<property>
+  <name>mapred.job.tracker.persist.jobstatus.dir</name>
+  <value>/var/mapr/cluster/mapred/jobTracker/jobsInfo</value>
+  <description>The directory where the job status information is persisted
+  in a file system to be available after it drops of the memory queue and
+  between jobtracker restarts.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.jobtracker.staging.root.dir</name>
+  <value>/var/mapr/cluster/mapred/jobTracker/staging</value>
+  <description>The root of the staging area for users' job files
+  In practice, this should be the directory where users' home
+  directories are located (usually /user)
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.job.split.metainfo.maxsize</name>
+  <value>10000000</value>
+  <description>The maximum permissible size of the split metainfo file.
+  The JobTracker won't attempt to read split metainfo files bigger than
+  the configured value.
+  No limits if set to -1.
+  </description>
+</property>
+
+<property>
+  <name>mapred.jobtracker.retiredjobs.cache.size</name>
+  <value>1000</value>
+  <description>The number of retired job status to keep in the cache.
+  </description>
+</property>
+
+<property>
+  <name>mapred.job.tracker.history.completed.location</name>
+  <value>/var/mapr/cluster/mapred/jobTracker/history/done</value>
+  <description> The completed job history files are stored at this single well
+  known location. If nothing is specified, the files are stored at
+  ${hadoop.job.history.location}/done in local filesystem.
+  </description>
+</property>
+
+<property>
+  <name>hadoop.job.history.location</name>
+  <value></value>
+  <description> If job tracker is static the history files are stored
+  in this single well known place on local filesystem.
+  If No value is set here, by default,
+  it is in the local file system at ${hadoop.log.dir}/history.
+  History files are moved to mapred.jobtracker.history.completed.location which is
+  on MapRFs JobTracker volume.
+  </description>
+</property>
+
+<property>
+  <name>mapred.jobtracker.jobhistory.lru.cache.size</name>
+  <value>5</value>
+  <description>The number of job history files loaded in memory. The jobs are
+  loaded when they are first accessed. The cache is cleared based on LRU.
+  </description>
+</property>
+
+<!-- JobTracker recovery -->
+<property>
+  <name>mapreduce.jobtracker.recovery.dir</name>
+  <value>/var/mapr/cluster/mapred/jobTracker/recovery</value>
+  <description>Recovery Directory. Stores list of known TaskTrackers.</description>
+</property>
+
+<property>
+  <name>mapreduce.jobtracker.recovery.maxtime</name>
+  <value>480</value>
+  <description>Maximum time in seconds JobTracker should stay in recovery mode.
+  JobTracker recovers job after talking to all running tasktrackers.
+  On large cluster if many jobs are to be recovered,     
+  mapreduce.jobtracker.recovery.maxtime should be increased.
+  </description>
+</property>
+
+<property>
+  <name>mapred.jobtracker.restart.recover</name>
+  <value>true</value>
+  <description>"true" to enable (job) recovery upon restart,
+               "false" to start afresh
+  </description>
+</property>
+ 
+<!-- Enable fair scheduler -->  
+<property>
+  <name>mapred.fairscheduler.allocation.file</name>
+  <value>conf/pools.xml</value>
+</property>
+
+<property>
+  <name>mapred.jobtracker.taskScheduler</name>
+  <value>org.apache.hadoop.mapred.FairScheduler</value>
+</property>
+
+<property>
+  <name>mapred.fairscheduler.assignmultiple</name>
+  <value>true</value>
+</property>
+
+<property>
+  <name>mapred.fairscheduler.eventlog.enabled</name>
+  <value>false</value>
+  <description>Enable scheduler logging in ${HADOOP_LOG_DIR}/fairscheduler/</description>
+</property>
+
+<property>
+  <name>mapred.fairscheduler.smalljob.schedule.enable</name>
+  <value>true</value>
+  <description>Enable small job fast scheduling inside fair scheduler. 
+  TaskTrackers should reserve a slot called ephemeral slot which 
+  is used for smalljob if cluster is busy. 
+  </description>
+</property>
+
+<!-- Small job definition. If a job does not satisfy any of following limits
+ it is not considered as a small job and will be moved out of small job pool.
+-->
+<property>
+  <name>mapred.fairscheduler.smalljob.max.maps</name>
+  <value>10</value>
+  <description>Small job definition. Max number of maps allowed in small job. </description>
+</property>
+
+<property>
+  <name>mapred.fairscheduler.smalljob.max.reducers</name>
+  <value>10</value>
+  <description>Small job definition. Max number of reducers allowed in small job. </description>
+</property>
+
+<property>
+  <name>mapred.fairscheduler.smalljob.max.inputsize</name>
+  <value>10737418240</value>
+  <description>Small job definition. Max input size in bytes allowed for a small job. 
+  Default is 10GB.
+  </description>
+</property>
+
+<property>
+  <name>mapred.fairscheduler.smalljob.max.reducer.inputsize</name>
+  <value>1073741824</value>
+  <description>Small job definition. 
+  Max estimated input size for a reducer allowed in small job. 
+  Default is 1GB per reducer.
+  </description>
+</property>
+
+<property>
+  <name>mapred.cluster.ephemeral.tasks.memory.limit.mb</name>
+  <value>200</value>
+  <description>Small job definition. Max memory in mbytes reserved for an ephermal slot.
+  Default is 200mb. This value must be same on JobTracker and TaskTracker nodes.
+  </description>
+</property>
+
+<!-- TASKTRACKER CONFIGS : Should be changed by admin-->
+
+<property>
+  <name>mapred.tasktracker.map.tasks.maximum</name>
+  <value>(CPUS > 2) ? (CPUS * 0.75) : 1</value>
+  <description>The maximum number of map tasks that will be run
+  simultaneously by a task tracker.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.prefetch.maptasks</name>
+  <value>0.5</value>
+  <description>How many map tasks should be scheduled in-advance on a 
+  tasktracker. To be given in % of map slots. Default is 1.0 which means
+  number of tasks overscheduled = total map slots on tasktracker.
+  </description>
+</property>
+
+<property>
+  <name>mapred.tasktracker.reduce.tasks.maximum</name>
+  <value>(CPUS > 2) ? (CPUS * 0.50): 1</value>
+  <description>The maximum number of reduce tasks that will be run
+  simultaneously by a task tracker.
+  </description>
+</property>
+
+<property>
+  <name>mapred.tasktracker.ephemeral.tasks.maximum</name>
+  <value>1</value>
+  <description>Reserved slot for small job scheduling</description>
+</property>
+
+<property>
+  <name>mapred.tasktracker.ephemeral.tasks.timeout</name>
+  <value>10000</value>
+  <description>Maximum time in ms a task is allowed to occupy ephemeral slot</description>
+</property>
+
+<property>
+  <name>mapred.tasktracker.ephemeral.tasks.ulimit</name>
+  <value>4294967296></value>
+  <description>Ulimit (bytes) on all tasks scheduled on an ephemeral slot</description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.reserved.physicalmemory.mb</name>
+  <value></value>
+  <description> Maximum phyiscal memory tasktracker should reserve for mapreduce tasks.
+  If tasks use more than the limit, task using maximum memory will be killed.
+  Expert only: Set this value iff tasktracker should use a certain amount of memory
+  for mapreduce tasks. In MapR Distro warden figures this number based
+  on services configured on a node.
+  Setting mapreduce.tasktracker.reserved.physicalmemory.mb to -1 will disable
+  physical memory accounting and task management.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.heapbased.memory.management</name>
+  <value>false</value>
+  <description>Expert only: If admin wants to prevent swapping by not launching too many tasks
+  use this option. Task's memory usage is based on max java heap size (-Xmx).
+  By default -Xmx will be computed by tasktracker based on slots and memory reserved for mapreduce tasks.
+  See mapred.map.child.java.opts/mapred.reduce.child.java.opts.
+  </description>
+</property>
+
+<property>
+  <name>mapred.tasktracker.taskmemorymanager.killtask.maxRSS</name>
+  <value>false</value>
+  <description> When all mapreduce tasks exceed max allowed limit on TaskTracker
+  (mapreduce.tasktracker.reserved.physicalmemory.mb)
+  kill tasks which are using maximum memory. By default recently launched tasks will
+  be chosen.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.reserved.physicalmemory.mb.low</name>
+  <value>0.80</value>
+  <description> When TaskTracker kills tasks to bring total memory usage
+  down, mapreduce.tasktracker.reserved.physicalmemory.mb.low decides how much 
+  TaskTracker will bring it down to.
+  By default mapreduce.tasktracker.reserved.physicalmemory.mb.low =
+  (80% of mapreduce.tasktracker.reserved.physicalmemory.mb)
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.jvm.idle.time</name>
+  <value>10000</value>
+  <description>If jvm is idle for more than mapreduce.tasktracker.jvm.idle.time (milliseconds) 
+  tasktracker will kill it. 
+  </description>
+</property>
+
+<property>
+  <name>mapred.task.tracker.task-controller</name>
+  <value>org.apache.hadoop.mapred.LinuxTaskController</value>
+  <description>TaskController which is used to launch and manage task execution
+  </description>
+</property>
+
+<property>
+  <name>mapred.tasktracker.task-controller.config.overwrite</name>
+  <value>true</value>
+  <description>LinuxTaskController needs a config file set at HADOOP_HOME/conf/taskcontroller.cfg
+  It has following parameters -
+  mapred.local.dir = Local dir used by tasktracker, taken from mapred-site.xml.
+  hadoop.log.dir = hadoop log dir, taken from system properties of the tasktracker process
+  mapreduce.tasktracker.group = groups allowed to run tasktracker see 'mapreduce.tasktracker.group'
+  min.user.id = Don't allow any user below this uid to launch a task.
+  banned.users = users who are not allowed to launch any tasks.
+  If set to true, TaskTracker will always overwrite config file with default values as
+  min.user.id = -1(check disabled), banned.users = bin, mapreduce.tasktracker.group = root
+  Set to false while using customized config and restart TaskTracker.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.group</name>
+  <value>root</value>
+  <description>Expert: Group to which TaskTracker belongs. If
+  LinuxTaskController is configured via mapreduce.tasktracker.taskcontroller,
+  the group owner of the task-controller binary '$HADOOP_HOME/bin/platform/bin/task-controller'
+  should be same as this group.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.cluster.map.userlog.retain-size</name>
+  <value>-1</value>
+  <description>Bytes to retain from each map-task log. Disabled by default.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.cluster.reduce.userlog.retain-size</name>
+  <value>-1</value>
+  <description>Bytes to retain from each reduce-task log. Disabled by default.
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.task.slowlaunch</name>
+  <value>false</value>
+  <description>Wait after each task launch. It gives more control
+  to TaskTracker in tracking memory used by all tasks. Should be
+  set on nodes running critical services like CLDB, JobTracker, ZooKeeper.
+  </description>
+</property>
+
+<!-- JOB CONFIGS : Users should set these values before submitting job -->
+<property>
+  <name>keep.failed.task.files</name>
+  <value>false</value>
+  <description>Should the files for failed tasks be kept. This should only be
+  used on jobs that are failing, because the storage is never
+  reclaimed. It also prevents the map outputs from being erased
+  from the reduce directory as they are consumed.
+  </description>
+</property>
+
+<property>
+  <name>mapred.job.reuse.jvm.num.tasks</name>
+  <value>-1</value>
+  <description>How many tasks to run per jvm. If set to -1, there is
+  no limit.
+  </description>
+</property>
+
+<property>
+  <name>mapred.map.tasks.speculative.execution</name>
+  <value>true</value>
+  <description>If true, then multiple instances of some map tasks
+  may be executed in parallel.
+  </description>
+</property>
+
+<property>
+  <name>mapred.reduce.tasks.speculative.execution</name>
+  <value>true</value>
+  <description>If true, then multiple instances of some reduce tasks
+               may be executed in parallel.</description>
+</property>
+
+<property>
+  <name>mapred.job.map.memory.physical.mb</name>
+  <value></value>
+  <description> Maximum physical memory limit for map task of this job.
+  If limit is exceeded task attempt will be FAILED.
+  </description>
+</property>
+
+<property>
+  <name>mapred.job.reduce.memory.physical.mb</name>
+  <value></value>
+  <description> Maximum physical memory limit for reduce task of this job.
+  If limit is exceeded task attempt will be FAILED..
+  </description>
+</property>
+
+<property>
+  <name>mapreduce.task.classpath.user.precedence</name>
+  <value>false</value>
+  <description> Set to true if user wants to set different classpath. </description>
+</property>
+
+<!-- mapred.child.java.opts is deprecated -->
+<property>
+  <name>mapred.map.child.java.opts</name>
+  <value>-XX:ErrorFile=/opt/cores/mapreduce_java_error%p.log</value>
+  <description>Java opts for the map tasks.
+  The following symbol, if present, will be interpolated: @taskid@ is replaced
+  by current TaskID. Any other occurrences of '@' will go unchanged.
+  For example, to enable verbose gc logging to a file named for the taskid in
+  /tmp and to set the heap maximum to be a gigabyte, pass a 'value' of:
+  -Xmx1024m -verbose:gc -Xloggc:/tmp/@taskid@.gc
+  
+  The configuration variable mapred.{map/reduce}.child.ulimit can be used to control the
+  maximum virtual memory of the child processes.
+
+  MapR:
+  Default heapsize(-Xmx) is determined by memory reserved for mapreduce at tasktracker.
+  Reduce task is given more memory than a map task.
+  Default memory for a map task =
+    (Total Memory reserved for mapreduce) * (#mapslots/ (#mapslots + 1.3*#reduceslots))
+  </description>
+</property>
+
+<property>
+  <name>mapred.reduce.child.java.opts</name>
+  <value>-XX:ErrorFile=/opt/cores/mapreduce_java_error%p.log</value>
+  <description>Java opts for the reduce tasks.
+
+  MapR:
+  Default heapsize(-Xmx) is determined by memory reserved for mapreduce at tasktracker.
+  Reduce task is given more memory than map task.
+  Default memory for a reduce task =
+    (Total Memory reserved for mapreduce) * (1.3*#reduceslots / (#mapslots + 1.3*#reduceslots))
+  </description>
+</property>
+
+<!-- mapred.child.env is deprecated -->
+<property>
+  <name>mapred.map.child.env</name>
+  <value></value>
+  <description>User added environment variables for the task tracker child
+  processes. Example :
+  1) A=foo  This will set the env variable A to foo
+  2) B=$B:c This is inherit tasktracker's B env variable.
+  </description>
+</property>
+ 
+<property>
+  <name>mapred.reduce.child.env</name>
+  <value></value>
+</property>
+ 
+<!-- mapred.child.ulimit is deprecated -->
+<property>
+  <name>mapred.map.child.ulimit</name>
+  <value></value>
+  <description>The maximum virtual memory, in KB, of a process launched by the
+  Map-Reduce framework. This can be used to control both the Mapper/Reducer
+  tasks and applications using Hadoop Pipes, Hadoop Streaming etc.
+  By default it is left unspecified to let cluster admins control it via
+  limits.conf and other such relevant mechanisms.
+  
+  Note: mapred.{map/reduce}.child.ulimit must be greater than or equal to the -Xmx passed to
+  JavaVM, else the VM might not start.
+  </description>
+</property>
+
+<property>
+  <name>mapred.reduce.child.ulimit</name>
+  <value></value>
+</property>
+
+<property>
+  <name>io.sort.mb</name>
+  <value>100</value>
+  <description>Buffer used to hold map outputs in memory before writing final map outputs.
+  Setting this value very low may cause spills. 
+  If a average input to map is "MapIn" bytes then typically value of io.sort.mb should be '1.25 times MapIn' bytes.
+  </description>
+</property>
+
+<property>
+  <name>io.sort.factor</name>
+  <value>256</value>
+  <description>The number of streams to merge at once while sorting
+  files.  This determines the number of open file handles.</description>
+</property>
+
+<property>
+  <name>io.sort.record.percent</name>
+  <value>0.17</value>
+  <description>The percentage of io.sort.mb dedicated to tracking record
+  boundaries. Let this value be r, io.sort.mb be x. The maximum number
+  of records collected before the collection thread must block is equal
+  to (r * x) / 4</description>
+</property>
+
+<property>
+  <name>mapred.reduce.slowstart.completed.maps</name>
+  <value>0.95</value>
+  <description>Fraction of the number of maps in the job which should be
+  complete before reduces are scheduled for the job.
+  </description>
+</property>
+
+<property>
+ <name>mapreduce.reduce.input.limit</name>
+ <value>-1</value>
+ <description>The limit on the input size of the reduce. If the estimated   
+ input size of the reduce is greater than this value, job is failed. A   
+ value of -1 means that there is no limit set. </description>
+</property>
+
+<property>  
+  <name>mapred.reduce.parallel.copies</name>    
+  <value>12</value>
+  <description>The default number of parallel transfers run by reduce        
+  during the copy(shuffle) phase. 
+  </description>  
+</property>
+
+<!-- Begin Oozie config -->
+<property>
+  <name>hadoop.proxyuser.root.hosts</name>
+  <value>*</value> <!-- comma separated ips/hostnames running Oozie server -->
+</property>
+
+<!--
+  root is the user running oozie server, to add another user ex: mapr add
+  all the groups the user mapr belongs to:
+  <name>hadoop.proxyuser.mapr.groups</name>
+  <value>mapr,staff</value>
+  -->
+<property>
+  <name>hadoop.proxyuser.root.groups</name>
+  <value>root</value>
+</property>
+<!-- End Oozie config -->
+
+</configuration>
