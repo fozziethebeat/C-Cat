@@ -6,7 +6,7 @@ import gov.llnl.ontology.util.AnnotationUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.StemAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.ValueAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 
@@ -104,7 +104,7 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
             currentAnnotation.set(ValueAnnotation.class, atts.getValue("id"));
             String sats = atts.getValue("sats");
             if (sats != null)
-                currentAnnotation.set(TextAnnotation.class, sats);
+                currentAnnotation.set(StemAnnotation.class, sats);
         } else if ("sat".equals(name)) {
             inSat = true;
             String satId = atts.getValue("id");
@@ -126,7 +126,7 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
             int i = 0;
             for (Annotation word : currentSentence) {
                 sentence.addAnnotation(i, word);
-                String satIds = word.get(TextAnnotation.class);
+                String satIds = word.get(StemAnnotation.class);
                 if (satIds == null)
                     continue;
                 String id = word.get(ValueAnnotation.class);
