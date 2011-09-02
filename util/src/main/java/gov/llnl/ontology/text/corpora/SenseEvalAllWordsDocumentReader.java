@@ -42,6 +42,8 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
 
     private Map<String, Annotation> satMap = Maps.newHashMap();
 
+    private String currentTextId;
+
     private boolean inText;
 
     private boolean inHead;
@@ -98,18 +100,18 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
             throws SAXException {
         if ("text".equals(name)) {
             inText = true;
+            currentTextId = atts.getValue("id");
             currentAnnotation = new Annotation();
         } else if ("head".equals(name)) {
             inHead = true;
-            currentAnnotation.set(ValueAnnotation.class, atts.getValue("id"));
+            String id = currentTextId + " " + atts.getValue("id");
+            currentAnnotation.set(ValueAnnotation.class, id);
             String sats = atts.getValue("sats");
             if (sats != null)
                 currentAnnotation.set(StemAnnotation.class, sats);
         } else if ("sat".equals(name)) {
             inSat = true;
-            String satId = atts.getValue("id");
-            currentAnnotation.set(ValueAnnotation.class, satId);
-            satMap.put(satId, currentAnnotation);
+            satMap.put(atts.getValue("id"), currentAnnotation);
         }
     }
 
@@ -122,54 +124,97 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
             inHead = false;
         } else if ("text".equals(name)) {
             inText = false;
-            Sentence sentence = new Sentence(0, 0, currentSentence.size());
-            int i = 0;
-            for (Annotation word : currentSentence) {
-                sentence.addAnnotation(i, word);
-                String satIds = word.get(StemAnnotation.class);
-                if (satIds == null)
-                    continue;
-                String id = word.get(ValueAnnotation.class);
-                String lemma = AnnotationUtil.word(word);
-                for (String satId : satIds.split("\\s+")) {
-                    System.out.println("SATID: " + satId);
-                    String satWord = AnnotationUtil.word(satMap.get(satId));
-                    if (satId.compareTo(id) < 0)
-                        lemma = satWord + " " + lemma;
-                    else 
-                        lemma = lemma + " " + satWord;
-                }
-                AnnotationUtil.setWord(word, lemma);
-            }
-            sentences.add(sentence);
-
-            currentSentence.clear();
+            endSentence();
         }
+    }
+
+    private void endSentence() {
+        Sentence sentence = new Sentence(0, 0, currentSentence.size());
+        int i = 0;
+        for (Annotation word : currentSentence) {
+            sentence.addAnnotation(i++, word);
+            String satIds = word.get(StemAnnotation.class);
+            if (satIds == null)
+                continue;
+            String id = word.get(ValueAnnotation.class);
+            String idPart = id.split("\\s")[1];
+            String lemma = AnnotationUtil.word(word);
+            StringBuilder sb = new StringBuilder();
+            boolean addedLemma = false;
+            for (String satId : satIds.split("\\s+")) {
+                if (idPart.equals(satId)) {
+                    sb.append(lemma).append(" ");
+                    addedLemma =true;
+                    continue;
+                }
+
+                if (!addedLemma && 
+                    (satId.length() > idPart.length() ||
+                     (satId.length() == idPart.length() &&
+                      satId.compareTo(idPart) > 0))) {
+                    sb.append(lemma).append(" ");
+                    addedLemma = true;
+                }
+                sb.append(AnnotationUtil.word(satMap.get(satId))).append(" ");
+            }
+            AnnotationUtil.setWord(word, sb.toString().trim().toLowerCase());
+        }
+        sentences.add(sentence);
+        currentSentence.clear();
     }
 
     @Override
     public void characters(char[] ch, int start, int length)
             throws SAXException {
-        if (!inHead && !inSat)
+        if (!inText && !inHead && !inSat)
             return;
 
-        String s = new String(ch, start, length);
-        String[] parts = s.split("[-/]");
+        String s = (new String(ch, start, length)).trim();
+        String[] parts = (inHead || inSat)
+            ? s.split("[-/]")
+            : s.split("\\s+");
+        if (parts.length == 0 || (parts.length == 1 && parts[0].equals("")))
+            return;
+
+        for (int i = 0; i < parts.length; ++i) {
+            if (parts[i].equals("'s"))
+                parts[i] = "is";
+            parts[i] = parts[i].toLowerCase();
+        }
+
         AnnotationUtil.setWord(currentAnnotation, parts[0]);
         currentSentence.add(currentAnnotation);
+        if (parts[0].equals("."))
+            endSentence();
 
-        System.out.printf("Handling: %s\n", s);
         for (int i = 1; i < parts.length; ++i) {
+            if ("".equals(parts[i]))
+                continue;
             currentAnnotation = new Annotation(currentAnnotation);
             AnnotationUtil.setWord(currentAnnotation, parts[i]);
             currentSentence.add(currentAnnotation);
+            if (parts[i].equals("."))
+                endSentence();
         }
 
         currentAnnotation = new Annotation();
+
+    }
+
+    public List<Sentence> sentences() {
+        return sentences;
     }
 
     public static void main(String[] args) {
-        SenseEvalAllWordsDocumentReader reader = new SenseEvalAllWordsDocumentReader();
+        SenseEvalAllWordsDocumentReader reader =
+            new SenseEvalAllWordsDocumentReader();
         reader.parse(args[0]);
+        for (Sentence sentence : reader.sentences())
+            for (Annotation annot : sentence) {
+                String id = annot.get(ValueAnnotation.class);
+                if (id != null)
+                    System.out.printf("%s %s\n", 
+                                      id, AnnotationUtil.word(annot));
+            }
     }
 }

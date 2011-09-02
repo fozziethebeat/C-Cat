@@ -105,6 +105,11 @@ public class BaseSynset implements Synset {
     private List<Lemma> lemmas;
 
     /**
+     * The list of possible sense keys.
+     */
+    private List<String> senseKeys;
+
+    /**
      * A mapping from related {@link Synset}s to the lemma to which they are
      * related.
      */
@@ -135,6 +140,7 @@ public class BaseSynset implements Synset {
      */
     public BaseSynset(String synsetName) {
         String[] namePosId = synsetName.split("\\.");
+        senseKeys = new ArrayList<String>();
         lemmas = new ArrayList<Lemma>();
         lemmas.add(new BaseLemma(this, namePosId[0], "", 0, 0, ""));
         pos = WordNetCorpusReader.POS_MAP.get(namePosId[1]);
@@ -168,6 +174,7 @@ public class BaseSynset implements Synset {
         relatedForms = new HashMap<Synset, RelatedForm>();
         examples = new ArrayList<String>();
         lemmas = new ArrayList<Lemma>();
+        senseKeys = new ArrayList<String>();
         frameIds = new int[0];
         lemmaIds = new int[0];
 
@@ -212,15 +219,18 @@ public class BaseSynset implements Synset {
     /**
      * {@inheritDoc}
      */
-    public String getSenseKey() {
-        return senseKey;
+    public String getSenseKey(String base) {
+        for (String senseKey : senseKeys)
+            if (senseKey.startsWith(base))
+                return senseKey;
+        return "";
     }
 
     /**
      * {@inheritDoc}
      */
-    public void setSenseKey(String senseKey) {
-        this.senseKey = senseKey;
+    public void addSenseKey(String senseKey) {
+        senseKeys.add(senseKey);
     }
 
     /**

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 
 
 /**
@@ -74,6 +75,13 @@ public abstract class SlidingWindowDisambiguation
      * {@inheritDoc}
      */
     public Sentence disambiguate(Sentence sentence) {
+        return disambiguate(sentence, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Sentence disambiguate(Sentence sentence, Set<Integer> focusIndices) {
         Sentence resultSent = new Sentence(
                 sentence.start(), sentence.end(), sentence.numTokens());
 
@@ -103,6 +111,7 @@ public abstract class SlidingWindowDisambiguation
         // Iterate through each word in the sliding window.  For each focus
         // word, have the subclass disambiguate the focus word using the
         // previous and next contexts.
+        int focusIndex = 0;
         while (!nextWords.isEmpty()) {
             // Get the next annotation from the iterator to advance the next
             // window.  If we can, create a new result annotation for it and
@@ -127,8 +136,11 @@ public abstract class SlidingWindowDisambiguation
             Annotation focus = nextWords.remove();
             Annotation result = resultWords.remove();
 
-            // Disambiguate the focus word.
-            processContext(focus, result, prevWords, nextWords);
+            // Disambiguate the focus word if it's in the selected list.
+            if (focusIndices == null ||
+                focusIndices.isEmpty() ||
+                focusIndices.contains(focusIndex++))
+                processContext(focus, result, prevWords, nextWords);
 
             // Advange the previous window.
             prevWords.offer(focus);
@@ -145,10 +157,8 @@ public abstract class SlidingWindowDisambiguation
      */
     private static boolean offer(Annotation annot, Queue<Annotation> words) {
         String pos = AnnotationUtil.pos(annot);
-        if (pos == null)
-            return false;
-
-        if (pos.startsWith("N") ||
+        if (pos == null ||
+            pos.startsWith("N") ||
             pos.startsWith("V") ||
             pos.startsWith("J") ||
             pos.startsWith("R")) {

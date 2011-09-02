@@ -816,6 +816,9 @@ public class WordNetCorpusReader implements OntologyReader {
      * {@inheritDoc}
      */
     public Synset[] getSynsets(String lemma, PartsOfSpeech pos) {
+        if (pos == null)
+            return getSynsets(lemma);
+
         // Get the synsets for the original form.
         Synset[][] lemmaSynsets = lemmaPosOffsetMap.get(lemma);
         if (lemmaSynsets != null && lemmaSynsets[pos.ordinal()].length > 0)
@@ -1258,7 +1261,7 @@ public class WordNetCorpusReader implements OntologyReader {
 
             int offset = Integer.parseInt(tokens[1]);
             Synset synset = offsetToSynsetMap.get(offset); 
-            synset.setSenseKey(tokens[0]);
+            synset.addSenseKey(tokens[0]);
 
             synset.setSenseNumber(Integer.parseInt(tokens[2]));
 

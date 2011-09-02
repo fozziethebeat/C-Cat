@@ -184,12 +184,13 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
      */
     private int addTermNode(List<Synset> localList,
                             Map<Synset, Integer> localMap, 
-                            Annotation word) {
-        String token = AnnotationUtil.word(word);
-
+                            Annotation annot) {
         // Ignore words without senses in word net.
-        Synset[] synsets = wordnet.getSynsets(
-                token, PartsOfSpeech.fromPennTag(AnnotationUtil.pos(word)));
+        String word = AnnotationUtil.word(annot);
+        String pos = AnnotationUtil.pos(annot);
+        Synset[] synsets = (pos == null)
+            ? wordnet.getSynsets(word)
+            : wordnet.getSynsets(word, PartsOfSpeech.fromPennTag(pos));
         if (synsets == null || synsets.length == 0)
             return 0;
 

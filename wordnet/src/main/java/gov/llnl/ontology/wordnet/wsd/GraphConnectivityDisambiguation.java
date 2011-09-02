@@ -110,6 +110,13 @@ public abstract class GraphConnectivityDisambiguation
      * {@inheritDoc}
      */
     public Sentence disambiguate(Sentence sentence) {
+        return disambiguate(sentence, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Sentence disambiguate(Sentence sentence, Set<Integer> focusIndices) {
         // Create the new disambiguated sentence.
         Sentence disambiguated = new Sentence(
                 sentence.start(), sentence.end(), sentence.numTokens());
@@ -141,19 +148,24 @@ public abstract class GraphConnectivityDisambiguation
         for (Annotation annot : sentence) {
             Annotation result = new Annotation();
             AnnotationUtil.setSpan(result, AnnotationUtil.span(annot));
-            disambiguated.addAnnotation(i++, result);
+            disambiguated.addAnnotation(i, result);
 
-            PartsOfSpeech pos = PartsOfSpeech.fromPennTag(
-                    AnnotationUtil.pos(annot));
-            if (pos == null)
-                continue;
+            if (focusIndices == null || 
+                focusIndices.isEmpty() || 
+                focusIndices.contains(i)) {
+                PartsOfSpeech pos = PartsOfSpeech.fromPennTag(
+                        AnnotationUtil.pos(annot));
+                String word = AnnotationUtil.word(annot);
+                Synset[] annotSenses = (pos == null)
+                    ? reader.getSynsets(word)
+                    : reader.getSynsets(word, pos);
 
-            Synset[] annotSenses = reader.getSynsets(
-                    AnnotationUtil.word(annot), pos);
-            for (Synset sense : annotSenses)
-                synsets.add(sense);
+                for (Synset sense : annotSenses)
+                    synsets.add(sense);
 
-            targetWords.add(new AnnotationSynset(annotSenses, result));
+                targetWords.add(new AnnotationSynset(annotSenses, result));
+            }
+            i++;
         }
 
         // Now perform a depth first search starting from the known synsets

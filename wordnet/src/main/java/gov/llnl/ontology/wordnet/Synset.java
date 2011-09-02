@@ -321,9 +321,9 @@ public interface Synset {
 
     /**
      * Returns a unique string that identifies this {@link Synset}.  This name
-     * should be based on one of the {@link Synset}'s lemmas, the part of speech,
-     * and the sense number for this {@link Synset}.  For example, "cat.n.01"
-     * signifies that the {@link Synset} is a noun and corresponds to
+     * should be based on one of the {@link Synset}'s lemmas, the part of
+     * speech, and the sense number for this {@link Synset}.  For example,
+     * "cat.n.01" signifies that the {@link Synset} is a noun and corresponds to
      * the first sense of the "cat" {@link Lemma}.
      */
     String getName();
@@ -334,12 +334,12 @@ public interface Synset {
      * lexicographer's file.  This is often the same as the lemma key of the
      * {@link Synset}'s first {@link Lemma}.
      */
-    String getSenseKey();
+    String getSenseKey(String base);
 
     /**
      * Sets the unique sense key string.
      */
-    void setSenseKey(String senseKey);
+    void addSenseKey(String senseKey);
 
     /**
      * Returns the sense number for this {@link Synset}.  Sense numbers may be
