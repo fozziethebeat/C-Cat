@@ -157,7 +157,13 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
                 }
                 sb.append(AnnotationUtil.word(satMap.get(satId))).append(" ");
             }
-            AnnotationUtil.setWord(word, sb.toString().trim().toLowerCase());
+            if (!addedLemma)
+                sb.append(lemma);
+
+            word.set(StemAnnotation.class, lemma);
+            String newLemma = sb.toString().trim().toLowerCase();
+            newLemma = newLemma.replaceAll("himself|herself", "oneself");
+            AnnotationUtil.setWord(word, newLemma);
         }
         sentences.add(sentence);
         currentSentence.clear();
@@ -179,6 +185,12 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
         for (int i = 0; i < parts.length; ++i) {
             if (parts[i].equals("'s"))
                 parts[i] = "is";
+            if (parts[i].equals("'m"))
+                parts[i] = "am";
+            if (parts[i].equals("%"))
+                parts[i] = "percent";
+            if (parts[i].equals("ft."))
+                parts[i] = "ft";
             parts[i] = parts[i].toLowerCase();
         }
 
