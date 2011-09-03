@@ -319,6 +319,8 @@ public interface Synset {
      */
     /* package private */ void setId(int id);
 
+    /* package private */ void addMorphyMapping(String original, String lemma);
+
     /**
      * Returns a unique string that identifies this {@link Synset}.  This name
      * should be based on one of the {@link Synset}'s lemmas, the part of

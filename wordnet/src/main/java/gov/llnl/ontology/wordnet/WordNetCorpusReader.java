@@ -831,7 +831,10 @@ public class WordNetCorpusReader implements OntologyReader {
             String alternative = formIter.next();
             lemmaSynsets = lemmaPosOffsetMap.get(alternative);
             if (lemmaSynsets != null && lemmaSynsets[pos.ordinal()].length > 0)
-                allSynsets.addAll(Arrays.asList(lemmaSynsets[pos.ordinal()]));
+                for (Synset s : lemmaSynsets[pos.ordinal()]) {
+                    s.addMorphyMapping(lemma, alternative);
+                    allSynsets.add(s);
+                }
         }
         return allSynsets.toArray(new Synset[allSynsets.size()]);
     }
