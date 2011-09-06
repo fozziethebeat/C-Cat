@@ -59,7 +59,8 @@ public class WordNetSynsetWriter implements SynsetWriter {
      */
     public String serializeSynsetKey(Synset synset) {
         StringBuilder sb = new StringBuilder();
-        sb.append(synset.getSenseKey()).append(" ");
+        // TODO fix
+        //sb.append(synset.getSenseKey()).append(" ");
         sb.append(String.format(offsetFormat, synset.getId()));
         sb.append(synset.getSenseNumber()).append(" ");
         sb.append("0 ");

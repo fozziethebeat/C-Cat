@@ -182,14 +182,14 @@ public class SnowEtAlFeatureMaker implements SynsetPairFeatureMaker {
     // or 0 otherwise.
     values.set(values.length() - 1, 0);
     if (mergedSenseInfo != null) {
-      Set<String> senseKeys = mergedSenseInfo.get(sense1.getSenseKey());
+      Set<String> senseKeys = mergedSenseInfo.get(sense1.getName());
 
       // If we have a data point that lacks sense clustering info when it is
       // required, drop the data point.
       if (senseKeys == null)
         return null;
 
-      if (senseKeys.contains(sense2.getSenseKey()))
+      if (senseKeys.contains(sense2.getName()))
         values.set(values.length() - 1, 1);
     }
 

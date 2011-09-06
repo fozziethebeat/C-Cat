@@ -61,8 +61,17 @@ public class FirstSenseDisambiguation implements WordSenseDisambiguation {
     private Synset[] getSynsets(Annotation annot) {
         String word = AnnotationUtil.word(annot);
         String pos = AnnotationUtil.pos(annot);
-        return (pos == null)
-            ? reader.getSynsets(word)
-            : reader.getSynsets(word, PartsOfSpeech.fromPennTag(pos));
+        System.out.printf("%s:%s\n", word, pos);
+        if (pos == null) 
+            return reader.getSynsets(word);
+
+        Synset[] synsets = reader.getSynsets(
+                word, PartsOfSpeech.fromPennTag(pos));
+        if (synsets == null || synsets.length == 0) {
+            System.out.println("nothing found with pos");
+            return reader.getSynsets(word);
+        }
+        System.out.println("found with pos");
+        return synsets;
     }
 }

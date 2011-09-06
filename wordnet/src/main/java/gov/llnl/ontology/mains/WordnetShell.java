@@ -19,15 +19,20 @@ public class WordnetShell {
         while (true) {
             BufferedReader br = new BufferedReader(
                     new InputStreamReader(System.in));
+            System.out.print("> ");
             for (String line = null; (line = br.readLine()) != null; ) {
+                if (line.trim().length() != 0) {
+                    int spaceIndex = line.lastIndexOf(" ");
+                    String word = line.substring(0, spaceIndex).trim();
+                    String p = line.substring(spaceIndex).trim();
+                    PartsOfSpeech pos = PartsOfSpeech.valueOf(
+                            p.toUpperCase());
+                    for (Synset sense : wordnet.getSynsets(word, pos))
+                        System.out.printf("%s %s\n", 
+                                          sense.getName(),
+                                          sense.getSenseKey(word));
+                }
                 System.out.print("> ");
-                String[] wordPos = line.split("\\s+");
-                PartsOfSpeech pos = PartsOfSpeech.valueOf(
-                        wordPos[1].toUpperCase());
-                for (Synset sense : wordnet.getSynsets(wordPos[0], pos))
-                    System.out.printf("%s %s\n", 
-                                      sense.getName(),
-                                      sense.getSenseKey(wordPos[0]));
             }
         }
     }

@@ -816,24 +816,67 @@ public class WordNetCorpusReader implements OntologyReader {
      * {@inheritDoc}
      */
     public Synset[] getSynsets(String lemma, PartsOfSpeech pos) {
+        // If there are spaces, replace them with underscores, since no lemma
+        // has spaces in it.
+        String fixedLemma = lemma.replaceAll("\\s+", "_");
+
+        // If pos is null, try searching with the fixed lemma.
         if (pos == null)
-            return getSynsets(lemma);
+            return getSynsets(fixedLemma);
 
-        // Get the synsets for the original form.
-        Synset[][] lemmaSynsets = lemmaPosOffsetMap.get(lemma);
-        if (lemmaSynsets != null && lemmaSynsets[pos.ordinal()].length > 0)
+        // Get the synsets for the original form, doing no morphological
+        // parsing.
+        Synset[][] lemmaSynsets = lemmaPosOffsetMap.get(fixedLemma);
+        if (lemmaSynsets != null && lemmaSynsets[pos.ordinal()].length > 0) {
+            for (Synset s : lemmaSynsets[pos.ordinal()])
+                s.addMorphyMapping(lemma, fixedLemma); 
             return lemmaSynsets[pos.ordinal()];
+        }
 
+        // Try getting the word with the full string as it is.
+        List<Synset> synsets = getWithMorphy(lemma, fixedLemma, "", pos);
+        // If that failed, try splitting the string based on underscores and
+        // running morphy on just the first part.  The second part will no be
+        // run through morphy and just be a post fix.
+        if (synsets.size() == 0) {
+            String[] parts = fixedLemma.split("_", 2);
+            if (parts.length == 2)
+                synsets = getWithMorphy(lemma, parts[0], "_"+parts[1], pos);
+        }
+
+        // If we couldn't find anything using underscores instead of spaces, try
+        // using hyphens.  If there are still spaces, then we know that -'s
+        // haven't been tried, on the recursive call, this will check will fail
+        // and it will return what we find, no matter what.
+        if (synsets.size() == 0 && lemma.indexOf(" ") > -1)
+            return getSynsets(lemma.replaceAll("\\s+", "-"), pos);
+        // Similarity, try the whole thing without any spaces, some words like
+        // "guest room" are like this.
+        if (synsets.size() == 0 && lemma.indexOf("-") > -1)
+            return getSynsets(lemma.replaceAll("-", ""), pos);
+
+        // Otherwise return all that we have found.
+        return synsets.toArray(new Synset[synsets.size()]);
+    }
+
+    private List<Synset> getWithMorphy(String lemma,
+                                       String fixedLemma,
+                                       String post,
+                                       PartsOfSpeech pos) {
         // Find the Synsets for each morphological variation.
         List<Synset> allSynsets = new ArrayList<Synset>();
-        Iterator<String> formIter = morphy(lemma, pos);
+        Iterator<String> formIter = morphy(fixedLemma, pos);
+        Synset[][] lemmaSynsets;
         while (formIter.hasNext()) {
-            String alternative = formIter.next();
+            String alternative = formIter.next() + post;
             lemmaSynsets = lemmaPosOffsetMap.get(alternative);
             if (lemmaSynsets != null && lemmaSynsets[pos.ordinal()].length > 0)
-                allSynsets.addAll(Arrays.asList(lemmaSynsets[pos.ordinal()]));
+                for (Synset s : lemmaSynsets[pos.ordinal()]) {
+                    s.addMorphyMapping(lemma, alternative);
+                    allSynsets.add(s);
+                }
         }
-        return allSynsets.toArray(new Synset[allSynsets.size()]);
+        return allSynsets;
     }
 
     /**
@@ -1322,7 +1365,7 @@ public class WordNetCorpusReader implements OntologyReader {
                             String suffix,
                             String[][] posReplacements,
                             String exception) {
-            this.form = form;
+            this.form = form.replaceAll("\\s+", "_");
             this.suffix = suffix;
             this.posReplacements = posReplacements;
             this.exception = exception;
@@ -1339,14 +1382,14 @@ public class WordNetCorpusReader implements OntologyReader {
         private String advance(String form) {
             if (replacementIndex >= posReplacements.length)
                 return null;
-            replacementIndex++;
             for (; replacementIndex < posReplacements.length;
                     replacementIndex++) {
-                String[] replacement = posReplacements[replacementIndex-1];
+                String[] replacement = posReplacements[replacementIndex];
                 if (form.endsWith(replacement[0])) {
                     String base = form.substring(
                             0, form.length()-replacement[0].length());
-                        return base + replacement[1];
+                    replacementIndex++;
+                    return base + replacement[1];
                 }
             }
             return null;
@@ -1377,78 +1420,5 @@ public class WordNetCorpusReader implements OntologyReader {
             throw new UnsupportedOperationException(
                     "Cannot remove replacements.");
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        /*
-        Synset[] synsets = reader.getSynsets("cat", PartsOfSpeech.NOUN);
-        Set<String> writtenLinks = new HashSet<String>();
-        for (Synset synset : synsets) {
-            for (List<Synset> parentPath : synset.getParentPaths()) {
-                Synset prev = null;
-                System.out.println("parent Path");
-                for (Synset parent : parentPath) {
-                    if (prev != null)
-                        writtenLinks.add("\"" + prev.getName() + "\" -- \"" + parent.getName()+ "\"");
-                    prev = parent;
-                    System.out.println(parent.getName());
-                }
-            }
-        }
-
-        synsets = reader.getSynsets("bacteria", PartsOfSpeech.NOUN);
-        for (Synset synset : synsets) {
-            for (List<Synset> parentPath : synset.getParentPaths()) {
-                Synset prev = null;
-                System.out.println("parent Path");
-                for (Synset parent : parentPath) {
-                    if (prev != null)
-                        writtenLinks.add("\"" + prev.getName() + "\" -- \"" + parent.getName()+ "\"");
-                    prev = parent;
-                    System.out.println(parent.getName());
-                }
-            }
-        }
-
-        PrintWriter writer = new PrintWriter("graph.dat");
-        writer.println("graph    {");
-        for (String link : writtenLinks)
-            writer.println(link);
-        writer.println("}");
-        writer.close();
-
-        Synset[] catSynsets = reader.getSynsets("cat", PartsOfSpeech.NOUN);
-        for (Synset synset : catSynsets)
-            System.out.printf("%s, %s\n", synset.getName(), synset.getDefinition());
-
-        catSynsets = reader.getSynsets("direction", PartsOfSpeech.NOUN);
-        for (Synset synset : catSynsets)
-            System.out.printf("%s, %s, %s\n", synset.getName(), synset.getDefinition(), synset.getId());
-
-        List<List<Synset>> parentPaths = reader.getSynset(
-                "dog", PartsOfSpeech.NOUN, 1).getParentPaths();
-        for (List<Synset> parentPath : parentPaths) {
-            System.out.println("PARENT PATH");
-            for (Synset parent : parentPath)
-                System.out.println(parent);
-        }
-
-        System.out.println(SynsetRelations.getHypernymStatus("dog", "canine").toString());
-        System.out.println(SynsetRelations.getHypernymStatus("dog", "domestic_animal").toString());
-        System.out.println(SynsetRelations.getHypernymStatus("dog", "entity").toString());
-        System.out.println(SynsetRelations.getCousinDistance("dog", "canine", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("dog", "entity", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("dog", "wolf", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("puppy", "wolf", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("puppy", "dog", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("puppy", "DOESNOTEXIST", 7).toString());
-
-
-        System.out.println(SynsetRelations.getCousinDistance("13th", "gate", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("145th", "train", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("12th", "tie", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("0", "tie", 7).toString());
-        System.out.println(SynsetRelations.getCousinDistance("1960", "gates", 7).toString());
-        */
     }
 }

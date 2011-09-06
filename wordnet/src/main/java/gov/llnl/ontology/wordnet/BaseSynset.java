@@ -56,6 +56,8 @@ public class BaseSynset implements Synset {
      */
     private Map<String, Attribute> attributes;
 
+    private Map<String, String> morphyMap;
+
     /**
      * The total number of {@link Relation}s that this {@link Synset} has with
      * others.
@@ -149,6 +151,7 @@ public class BaseSynset implements Synset {
         relations = new HashMultiMap<String, Synset>();
         attributes = new HashMap<String, Attribute>();
         relatedForms = new HashMap<Synset, RelatedForm>();
+        morphyMap = new HashMap<String, String>();
         examples = new ArrayList<String>();
         frameIds = new int[0];
         lemmaIds = new int[0];
@@ -172,6 +175,7 @@ public class BaseSynset implements Synset {
         relations = new HashMultiMap<String, Synset>();
         attributes = new HashMap<String, Attribute>();
         relatedForms = new HashMap<Synset, RelatedForm>();
+        morphyMap = new HashMap<String, String>();
         examples = new ArrayList<String>();
         lemmas = new ArrayList<Lemma>();
         senseKeys = new ArrayList<String>();
@@ -192,6 +196,13 @@ public class BaseSynset implements Synset {
      */
     public BaseSynset(PartsOfSpeech pos) {
         this(-1, pos);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void addMorphyMapping(String original, String lemma) {
+        morphyMap.put(original, lemma);
     }
 
     /**
@@ -223,8 +234,10 @@ public class BaseSynset implements Synset {
         if (senseKeys.size() == 1)
             return senseKeys.get(0);
 
+        String lemma = morphyMap.get(base);
+        lemma = (lemma == null) ? base : lemma;
         for (String senseKey : senseKeys)
-            if (senseKey.startsWith(base))
+            if (senseKey.startsWith(lemma))
                 return senseKey;
         return "";
     }

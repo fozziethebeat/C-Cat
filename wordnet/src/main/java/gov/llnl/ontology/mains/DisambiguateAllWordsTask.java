@@ -10,6 +10,7 @@ import gov.llnl.ontology.text.tag.OpenNlpMEPOSTagger;
 
 import com.google.common.collect.Sets;
 
+import edu.stanford.nlp.ling.CoreAnnotations.StemAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.ValueAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 
@@ -51,6 +52,9 @@ public class DisambiguateAllWordsTask {
             String[] tokens = new String[sentence.numTokens()];
             for (Annotation annot : sentence) {
                 tokens[i] = AnnotationUtil.word(annot);
+                if (tokens[i].indexOf(" ") != -1)
+                    tokens[i] = annot.get(StemAnnotation.class);
+
                 if (annot.get(ValueAnnotation.class) != null) {
                     focusIndices.add(i);
                 }
@@ -66,6 +70,8 @@ public class DisambiguateAllWordsTask {
             Sentence disambiguated = wsd.disambiguate(sentence, focusIndices);
             for (Annotation annot : disambiguated) {
                 String sense = AnnotationUtil.wordSense(annot);
+                if (sense == null)
+                    sense = "U";
                 String id = sentence.getAnnotation(i).get(
                         ValueAnnotation.class);
                 if (id != null) {
