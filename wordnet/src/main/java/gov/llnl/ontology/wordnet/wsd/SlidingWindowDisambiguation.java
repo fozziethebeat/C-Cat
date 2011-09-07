@@ -25,6 +25,9 @@ package gov.llnl.ontology.wordnet.wsd;
 
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.wordnet.OntologyReader;
+import gov.llnl.ontology.wordnet.Synset;
+import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 
 import com.google.common.collect.Lists;
 
@@ -104,8 +107,8 @@ public abstract class SlidingWindowDisambiguation
             Annotation result = new Annotation();
             resultSent.addAnnotation(index++, result);
             AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
-            if (offer(word, nextWords))
-                resultWords.offer(result);
+            nextWords.offer(word);
+            resultWords.offer(result);
         }
 
         // Iterate through each word in the sliding window.  For each focus
@@ -123,14 +126,10 @@ public abstract class SlidingWindowDisambiguation
                 resultSent.addAnnotation(index++, result);
                 AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
 
-                if (offer(word, nextWords))
-                    resultWords.offer(result);
-                else
-                    continue;
+                nextWords.offer(word);
+                resultWords.offer(result);
             }
-            // If we are out of tokens altogether, that is ok, we will just
-            // continue in the loop until nextWords is empty.
-            
+
             // Get the focus word and the corresponding result annotation that
             // will be updated with the sense name.
             Annotation focus = nextWords.remove();
@@ -144,7 +143,7 @@ public abstract class SlidingWindowDisambiguation
 
             // Advange the previous window.
             prevWords.offer(focus);
-            if (prevWords.size() > 10)
+            if (prevWords.size() > 5)
                 prevWords.remove();
         }
 
@@ -166,5 +165,24 @@ public abstract class SlidingWindowDisambiguation
             return true;
         }
         return false;
+    }
+
+    /**
+     * Returns all of the {@link Synset}s found given the word and part of
+     * speech information, if present, in {@code annot}.  If the part of speech
+     * is available, but provides no synsets, all possible synsets are returned
+     * for the word, under the assumption that the tag may be incorrect.
+     */
+    protected Synset[] getSynsets(OntologyReader reader, Annotation annot) {
+        String word = AnnotationUtil.word(annot);
+        String pos = AnnotationUtil.pos(annot);
+        if (pos == null) 
+            return reader.getSynsets(word);
+
+        Synset[] synsets = reader.getSynsets(
+                word, PartsOfSpeech.fromPennTag(pos));
+        if (synsets == null || synsets.length == 0)
+            return reader.getSynsets(word);
+        return synsets;
     }
 }

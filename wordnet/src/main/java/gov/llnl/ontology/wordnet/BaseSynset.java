@@ -230,6 +230,13 @@ public class BaseSynset implements Synset {
     /**
      * {@inheritDoc}
      */
+    public String getSenseKey() {
+        return (senseKeys.size() > 0) ? senseKeys.get(0) : "";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public String getSenseKey(String base) {
         if (senseKeys.size() == 1)
             return senseKeys.get(0);

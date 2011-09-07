@@ -27,6 +27,10 @@ import gov.llnl.ontology.util.StreamUtil;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 import gov.llnl.ontology.wordnet.Synset.Relation;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
 import edu.ucla.sspace.util.CombinedIterator;
 
 import java.io.BufferedReader;
@@ -40,17 +44,13 @@ import java.io.PrintWriter;
 import java.io.Reader;
 
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeSet;
 
 import java.util.logging.Logger;
 
@@ -86,8 +86,7 @@ public class WordNetCorpusReader implements OntologyReader {
      * A simple mapping from part of speech characters their respective {@link
      * ParstOfSpeech} enumerations.
      */
-    public static final Map<String, PartsOfSpeech> POS_MAP =
-        new HashMap<String, PartsOfSpeech>();
+    public static final Map<String, PartsOfSpeech> POS_MAP = Maps.newHashMap();
 
     static {
         // Load the mappings into the part of speech map.
@@ -192,7 +191,7 @@ public class WordNetCorpusReader implements OntologyReader {
      * {@inheritDoc}
      */
     public Iterator<String> morphy(String form) {
-        List<Iterator<String>> formIters = new ArrayList<Iterator<String>>();
+        List<Iterator<String>> formIters = Lists.newArrayList();
         for (PartsOfSpeech pos : PartsOfSpeech.values())
             formIters.add(morphy(form, pos));
         return new CombinedIterator<String>(formIters);
@@ -213,6 +212,27 @@ public class WordNetCorpusReader implements OntologyReader {
         return new FormIterator(form, suffix,
                                 MORPHOLOGICAL_SUBSTITUTIONS[pos.ordinal()],
                                 posExceptionMap.get(pos.ordinal()).get(form));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Set<Synset> allSynsets() {
+        Set<Synset> allSynsets = Sets.newHashSet();
+        for (Synset[][] lemmaSynsets : lemmaPosOffsetMap.values())
+            for (Synset[] posSynsets : lemmaSynsets)
+                allSynsets.addAll(Arrays.asList(posSynsets));
+        return allSynsets;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Set<Synset> allSynsets(PartsOfSpeech pos) {
+        Set<Synset> allSynsets = Sets.newHashSet();
+        for (Synset[][] lemmaSynsets : lemmaPosOffsetMap.values())
+            allSynsets.addAll(Arrays.asList(lemmaSynsets[pos.ordinal()]));
+        return allSynsets;
     }
 
     /**
@@ -269,7 +289,7 @@ public class WordNetCorpusReader implements OntologyReader {
         // Add two bytes for the lemma id and one for a space.
         sizePerVerbFrame += 3;
 
-        Map<Synset, Integer> synsetSizes = new HashMap<Synset, Integer>();
+        Map<Synset, Integer> synsetSizes = Maps.newHashMap();
 
         // Compute the number of nodes, total number of relations stemming from
         // each node, and the total synset size for each part of speech,
@@ -376,15 +396,12 @@ public class WordNetCorpusReader implements OntologyReader {
         // related synsets.  Once all of it's related synsetse has an offset,
         // they are written to their respective part of speech files.
         int[] dataFileSize = new int[POS_TAGS.length];
-        Set<Synset> writtenSynsets = new HashSet<Synset>();
+        Set<Synset> writtenSynsets = Sets.newHashSet();
 
         // Add output streams for each part of speech.
-        List<BufferedOutputStream> dataOutputStreams =
-            new ArrayList<BufferedOutputStream>(POS_TAGS.length);
-        List<BufferedOutputStream> indexOutputStreams =
-            new ArrayList<BufferedOutputStream>(POS_TAGS.length);
-        List<PrintWriter> senseMappingWriters =
-            new ArrayList<PrintWriter>(POS_TAGS.length);
+        List<BufferedOutputStream> dataOutputStreams = Lists.newArrayList();
+        List<BufferedOutputStream> indexOutputStreams = Lists.newArrayList();
+        List<PrintWriter> senseMappingWriters = Lists.newArrayList();
         for (int pos = 0; pos < POS_TAGS.length; ++pos) {
             if (FILE_EXTENSIONS[pos].length() != 0) {
                 dataOutputStreams.add(new BufferedOutputStream(
@@ -407,9 +424,9 @@ public class WordNetCorpusReader implements OntologyReader {
         // Create an array that will store the sense keys lines.  The sense key
         // lines will be written to "index.sense" in alphabetical order after
         // all sense keys have been generated.
-        List<String> senseKeys = new ArrayList<String>();
+        List<String> senseKeys = Lists.newArrayList();
 
-        Set<String> lemmaKeys = new TreeSet<String>(lemmaPosOffsetMap.keySet());
+        Set<String> lemmaKeys = Sets.newTreeSet(lemmaPosOffsetMap.keySet());
 
         SynsetWriter synsetWriter = new WordNetSynsetWriter(finalOffsetSize);
 
@@ -425,7 +442,7 @@ public class WordNetCorpusReader implements OntologyReader {
 
                     // Initialize a queue that will hold all synsets we find
                     // starting from the current synset.
-                    Queue<Synset> toWriteSynsets = new LinkedList<Synset>();
+                    Queue<Synset> toWriteSynsets = Lists.newLinkedList();
 
                     int pos = posIndex;
                     // Remap all sat adjectives to use the adjective data.
@@ -537,7 +554,7 @@ public class WordNetCorpusReader implements OntologyReader {
 
                 // Write out the number of pointers that all senses have and
                 // then each of the pointers.
-                Set<String> pointers = new HashSet<String>();
+                Set<String> pointers = Sets.newHashSet();
                 // Compute the set of pointers for all synsets.
                 for (Synset synset : synsets)
                     pointers.addAll(synset.getKnownRelationTypes());
@@ -589,7 +606,7 @@ public class WordNetCorpusReader implements OntologyReader {
     public void addSynset(Synset synset, int index) {
         int pos = synset.getPartOfSpeech().ordinal();
 
-        Set<String> seenLemmas = new HashSet<String>();
+        Set<String> seenLemmas = Sets.newHashSet();
 
         for (Lemma lemma : synset.getLemmas()) {
             String lemmaName = lemma.getLemmaName().toLowerCase();
@@ -636,7 +653,7 @@ public class WordNetCorpusReader implements OntologyReader {
     public void removeSynset(Synset synset) {
         int pos = synset.getPartOfSpeech().ordinal();
 
-        Set<String> seenLemmas = new HashSet<String>();
+        Set<String> seenLemmas = Sets.newHashSet();
 
         // Remove reflexive relations from other synsets to this synset.  This
         // is simple as nearly all relations have a reflexive form, so we can
@@ -693,12 +710,12 @@ public class WordNetCorpusReader implements OntologyReader {
         // Create the set of lemmas that the replacement synset knows about.
         // This will be used to determine when the replacement synset is in the
         // same lemma mapping as the old synset.
-        Set<String> replacementLemmas = new HashSet<String>();
+        Set<String> replacementLemmas = Sets.newHashSet();
         for (Lemma lemma : replacement.getLemmas())
             replacementLemmas.add(lemma.getLemmaName().toLowerCase());
 
         // Iterate through all of the lemmas that could refer to this synset.
-        Set<String> seenLemmas = new HashSet<String>();
+        Set<String> seenLemmas = Sets.newHashSet();
         for (Lemma lemma : synset.getLemmas()) {
             String lemmaName = lemma.getLemmaName().toLowerCase();
 
@@ -762,7 +779,7 @@ public class WordNetCorpusReader implements OntologyReader {
      * {@inheritDoc}
      */
     public Set<String> wordnetTerms(PartsOfSpeech pos) {
-        Set<String> posLemmas = new HashSet<String>();
+        Set<String> posLemmas = Sets.newHashSet();
         for (Map.Entry<String, Synset[][]> entry : lemmaPosOffsetMap.entrySet())
             if (entry.getValue()[pos.ordinal()].length != 0)
                 posLemmas.add(entry.getKey());
@@ -806,7 +823,7 @@ public class WordNetCorpusReader implements OntologyReader {
      * {@inheritDoc}
      */
     public Synset[] getSynsets(String lemma) {
-        List<Synset> allSynsets = new ArrayList<Synset>();
+        List<Synset> allSynsets = Lists.newArrayList();
         for (PartsOfSpeech pos : PartsOfSpeech.values())
             allSynsets.addAll(Arrays.asList(getSynsets(lemma, pos)));
         return allSynsets.toArray(new Synset[allSynsets.size()]);
@@ -864,7 +881,7 @@ public class WordNetCorpusReader implements OntologyReader {
                                        String post,
                                        PartsOfSpeech pos) {
         // Find the Synsets for each morphological variation.
-        List<Synset> allSynsets = new ArrayList<Synset>();
+        List<Synset> allSynsets = Lists.newArrayList();
         Iterator<String> formIter = morphy(fixedLemma, pos);
         Synset[][] lemmaSynsets;
         while (formIter.hasNext()) {
@@ -954,11 +971,10 @@ public class WordNetCorpusReader implements OntologyReader {
         this.maxDepths = new int[POS_TAGS.length];
 
         // Initialzie basic data structures.
-        lemmaPosOffsetMap = new HashMap<String, Synset[][]>();
-        posExceptionMap = new ArrayList<Map<String, String>>();
-        verbFrames = new ArrayList<String>();
-        posOffsetToSynsetMap = new ArrayList<Map<Integer, Synset>>(
-                POS_TAGS.length);
+        lemmaPosOffsetMap = Maps.newHashMap();
+        posExceptionMap = Lists.newArrayList();
+        verbFrames = Lists.newArrayList();
+        posOffsetToSynsetMap = Lists.newArrayList();
         for (int i = 0; i < POS_TAGS.length; ++i)
             posExceptionMap.add(new HashMap<String, String>());
 
@@ -987,7 +1003,7 @@ public class WordNetCorpusReader implements OntologyReader {
      */
     private String[] parseLexNames() throws IOException {
         BufferedReader br = getReader("lexnames");
-        List<String> names = new ArrayList<String>();
+        List<String> names = Lists.newArrayList();
         for (String line = null; (line = br.readLine()) != null; )
             names.add(line.split("\\s+")[1]);
         return names.toArray(new String[names.size()]);
@@ -1013,8 +1029,7 @@ public class WordNetCorpusReader implements OntologyReader {
         // Evaluate the index for for each part of speech.
         for (String suffix : FILE_EXTENSIONS) {
             // Initialize the part of speech to Synset map.
-            Map<Integer, Synset> offsetToSynset =
-                new HashMap<Integer, Synset>();
+            Map<Integer, Synset> offsetToSynset = Maps.newHashMap();
             posOffsetToSynsetMap.add(offsetToSynset);
 
             // Skip parts of speech that do not have an index file.
@@ -1063,6 +1078,7 @@ public class WordNetCorpusReader implements OntologyReader {
                     synsets[s] = offsetToSynset.get(offset);
                     if (synsets[s] == null) {
                         synsets[s] = new BaseSynset(offset, posTag);
+                        synsets[s].setSenseNumber(s);
                         offsetToSynset.put(offset, synsets[s]);
                     }
                 }
@@ -1224,22 +1240,20 @@ public class WordNetCorpusReader implements OntologyReader {
                     Synset pointerSynset =
                         posOffsetToSynsetMap.get(pointerPos).get(pointerOffset);
 
-                    // Get the lemma id for this pointed to synset.  Add a
-                    // related link if the lemmaId is nonzero.
+                    // Add the relation link.
+                    synset.addRelation(symbol, pointerSynset);
+
+                    // When the lemma id is non zero it is a derivationally
+                    // related lemma.  Since not all lemmas have been added
+                    // to their Synsets yet, just add in a link based on the
+                    // Synset and the lemma index that corresponds to the
+                    // related form.
                     String lemmaId = columns[index++];
-                    if (lemmaId.equals("0000"))
-                        synset.addRelation(symbol, pointerSynset);
-                    else {
-                        // When the lemma id is non zero it is a derivationally
-                        // related lemma.  Since not all lemmas have been added
-                        // to their Synsets yet, just add in a link based on the
-                        // Synset and the lemma index that corresponds to the
-                        // related form.
+                    if (!lemmaId.equals("0000")) {
                         int sourceIndex = Integer.parseInt(
                                 lemmaId.substring(0, 2), 16);
                         int targetIndex = Integer.parseInt(
                                 lemmaId.substring(2), 16);
-                        synset.addRelation(symbol, pointerSynset);
                         synset.addDerivationallyRelatedForm(
                                 pointerSynset, new SimpleRelatedForm(
                                     sourceIndex, targetIndex));
@@ -1306,7 +1320,7 @@ public class WordNetCorpusReader implements OntologyReader {
             Synset synset = offsetToSynsetMap.get(offset); 
             synset.addSenseKey(tokens[0]);
 
-            synset.setSenseNumber(Integer.parseInt(tokens[2]));
+            //synset.setSenseNumber(Integer.parseInt(tokens[2]));
 
         }
     }

@@ -88,11 +88,12 @@ public class PageRankCentralityDisambiguation
         // mapping from synsets to their indices.
         List<Synset> synsetList = Lists.newArrayList();
         Map<Synset, Integer> synsetMap = Maps.newHashMap();
-        for (int i = 0; i < synsetBasis.numDimensions(); ++i) {
-            Synset newSynset = new BaseSynset(
-                    synsetBasis.getDimensionDescription(i));
+        for (Synset synset : synsets) {
+            int index = synsetBasis.getDimension(synset.getSenseKey());
+            Synset newSynset = new BaseSynset(synset.getPartOfSpeech());
+            newSynset.addSenseKey(synset.getSenseKey());
             synsetList.add(newSynset);
-            synsetMap.put(newSynset, i);
+            synsetMap.put(newSynset, index);
         }
 
         // Add a link to each synset based on the adjacency matrix.
@@ -120,18 +121,19 @@ public class PageRankCentralityDisambiguation
         // and mark the result annotation with that sense.
         for (AnnotationSynset annotSynset : targetWords) {
             Annotation word = annotSynset.annotation;
-            Synset bestSense = null;
+            Synset bestSense = annotSynset.senses[0];
             double bestRank = 0;
             for (Synset synset : annotSynset.senses) {
-                int index = synsetBasis.getDimension(synset.getName());
+                int index = synsetBasis.getDimension(synset.getSenseKey());
                 double rank = ranks.get(index);
                 if (rank >= bestRank) {
                     bestRank = rank;
                     bestSense = synset;
                 }
             }
-            if (bestSense != null)
-                AnnotationUtil.setWordSense(word, bestSense.getName());
+
+            String term = AnnotationUtil.word(word);
+            AnnotationUtil.setWordSense(word, bestSense.getSenseKey(term));
         }
     }
 

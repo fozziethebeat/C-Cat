@@ -44,7 +44,7 @@ public class DisambiguateAllWordsTask {
             new SenseEvalAllWordsDocumentReader();
         reader.parse(testCorpusName);
 
-        PrintWriter writer = new PrintWriter(outputPostFix);
+        PrintWriter writer = new PrintWriter(wsd.toString() + outputPostFix);
         String prevId = null;
         for (Sentence sentence : reader.sentences()) {
             int i = 0;
@@ -69,12 +69,13 @@ public class DisambiguateAllWordsTask {
             i = 0;
             Sentence disambiguated = wsd.disambiguate(sentence, focusIndices);
             for (Annotation annot : disambiguated) {
-                String sense = AnnotationUtil.wordSense(annot);
-                if (sense == null)
-                    sense = "U";
                 String id = sentence.getAnnotation(i).get(
                         ValueAnnotation.class);
                 if (id != null) {
+                    String sense = AnnotationUtil.wordSense(annot);
+                    if (sense == null)
+                        sense = "U";
+
                     if (prevId == null)
                         writer.printf("%s %s", id, sense);
                     else if (prevId.equals(id))
@@ -83,8 +84,8 @@ public class DisambiguateAllWordsTask {
                         writer.printf("\n%s %s", id, sense);
                     prevId = id;
                 }
+
                 ++i;
-                
             }
         }
         writer.close();

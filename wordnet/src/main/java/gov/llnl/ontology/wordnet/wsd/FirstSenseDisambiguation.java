@@ -46,7 +46,7 @@ public class FirstSenseDisambiguation implements WordSenseDisambiguation {
             if (focusIndices == null || 
                 focusIndices.isEmpty() ||
                 focusIndices.contains(i)) {
-                Synset[] senses = getSynsets(annot);
+                Synset[] senses = getSynsets(reader, annot);
                 String word = AnnotationUtil.word(annot);
                 if (senses != null && senses.length > 0)
                     AnnotationUtil.setWordSense(
@@ -58,20 +58,26 @@ public class FirstSenseDisambiguation implements WordSenseDisambiguation {
         return resultSent;
     }
 
-    private Synset[] getSynsets(Annotation annot) {
+    public String toString() {
+        return "fsd";
+    }
+
+    /**
+     * Returns all of the {@link Synset}s found given the word and part of
+     * speech information, if present, in {@code annot}.  If the part of speech
+     * is available, but provides no synsets, all possible synsets are returned
+     * for the word, under the assumption that the tag may be incorrect.
+     */
+    protected Synset[] getSynsets(OntologyReader reader, Annotation annot) {
         String word = AnnotationUtil.word(annot);
         String pos = AnnotationUtil.pos(annot);
-        System.out.printf("%s:%s\n", word, pos);
         if (pos == null) 
             return reader.getSynsets(word);
 
         Synset[] synsets = reader.getSynsets(
                 word, PartsOfSpeech.fromPennTag(pos));
-        if (synsets == null || synsets.length == 0) {
-            System.out.println("nothing found with pos");
+        if (synsets == null || synsets.length == 0)
             return reader.getSynsets(word);
-        }
-        System.out.println("found with pos");
         return synsets;
     }
 }

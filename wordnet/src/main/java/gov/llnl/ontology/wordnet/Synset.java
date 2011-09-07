@@ -331,10 +331,18 @@ public interface Synset {
     String getName();
 
     /**
-     * Returns a unique string that identifies this {@link Synset} based on it's
-     * part of speech, lexicographer file assignment and index in the
+     * Returns the first unique string that identifies this {@link Synset} based
+     * on it's part of speech, lexicographer file assignment and index in the
      * lexicographer's file.  This is often the same as the lemma key of the
      * {@link Synset}'s first {@link Lemma}.
+     */
+    String getSenseKey();
+
+    /**
+     * Returns a unique string that identifies this {@link Synset} based on it's
+     * part of speech, the {@code base} query term, the lexicographer file
+     * assignment and index in the lexicographer's file.  This is often the same
+     * as the lemma key of the {@link Synset}'s first {@link Lemma}.
      */
     String getSenseKey(String base);
 
