@@ -419,7 +419,6 @@ public class WordNetCorpusReader implements OntologyReader {
                 senseMappingWriters.add(null);
             }
         }
-
  
         // Create an array that will store the sense keys lines.  The sense key
         // lines will be written to "index.sense" in alphabetical order after
@@ -914,9 +913,10 @@ public class WordNetCorpusReader implements OntologyReader {
         Synset[][] lemmaSynsets = lemmaPosOffsetMap.get(lemma);
         if (lemmaSynsets == null)
             return null;
-        if (senseNum < 1 || senseNum > lemmaSynsets[pos.ordinal()].length)
+        Sysnet[] lemmaPosSynsets = lemmaSynsets[pos.ordinal()];
+        if (senseNum < 1 || senseNum > lemmaPosSynsets.length)
             return null;
-        return lemmaSynsets[pos.ordinal()][senseNum-1];
+        return lemmaPosSynsets[senseNum-1];
     }
 
     /**
@@ -934,8 +934,13 @@ public class WordNetCorpusReader implements OntologyReader {
         return maxDepths[pIndex];
     }
 
+    /**
+     * Returns a {@link Synset} based on it's btye offset and part of speech.
+     * This is to be used internally to the package only by other methods that
+     * track the offset information.
+     */
     /* package private */ Synset getSynsetFromOffset(int offset,
-                                                                                                     PartsOfSpeech pos) {
+                                                     PartsOfSpeech pos) {
         return posOffsetToSynsetMap.get(pos.ordinal()).get(offset);
     }
 
@@ -1078,7 +1083,9 @@ public class WordNetCorpusReader implements OntologyReader {
                     synsets[s] = offsetToSynset.get(offset);
                     if (synsets[s] == null) {
                         synsets[s] = new BaseSynset(offset, posTag);
-                        synsets[s].setSenseNumber(s);
+                        synsets[s].setSenseNumber(s+1);
+                        synsets[s].addLemma(
+                                new BaseLemma(synsets[s], lemma, pos));
                         offsetToSynset.put(offset, synsets[s]);
                     }
                 }
