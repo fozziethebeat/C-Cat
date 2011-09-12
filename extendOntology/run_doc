@@ -1,6 +1,0 @@
-#! /bin/bash
-
-for jar in /lib/*.jar; do export cp=$cp:$jar; done
-ant preprocess &&
-
-java -cp build:$cp -Xmx1g gov.llnl.document.preprocess.BBCArticle

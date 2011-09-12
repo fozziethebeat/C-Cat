@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.util.ArrayList;;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.logging.Logger;
+
 
 import edu.ucla.sspace.text.FileDocument;
 import edu.ucla.sspace.vector.DoubleVector;
@@ -47,9 +49,15 @@ public class FileVectorSpaceModel extends VectorSpaceModel {
 	 */
 	private static final String VSM_SSPACE_NAME = "file-vector-space-model";
 
+	/**
+	 *  Used to keep track of the documents.
+	 */
+	private final AtomicInteger internalDocumentCounter;
+
 	public FileVectorSpaceModel() throws IOException{
 		super();
 		documentToColumnIndex = new ConcurrentHashMap();
+		internalDocumentCounter = new AtomicInteger(0);
 	}
 
 	/**
@@ -142,7 +150,11 @@ public class FileVectorSpaceModel extends VectorSpaceModel {
 		LOGGER.info("Processing: " + file.getCanonicalPath());
 		super.processDocument(fileDocument.reader());
 		
+		Integer docLocation = internalDocumentCounter.incrementAndGet();
+		documentToColumnIndex.put(file, docLocation);
+
 		// Keep track of which document is in which column.
-		documentToColumnIndex.put(file, Integer.valueOf(super.documentCounter.get()));
+		// TODO(thuang513): CAUSES COMPILE ERROR!
+		//		documentToColumnIndex.put(file, Integer.valueOf(super.documentCounter.get()));
 	}
 }

@@ -16,10 +16,10 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class NewsHandler extends DefaultHandler {
 
-	/** 
-	 *  Setup the logger 
-	 */
-	private static final Logger LOGGER = 
+    /** 
+     *  Setup the logger 
+     */
+    private static final Logger LOGGER = 
 		Logger.getLogger(NewsHandler.class.getName());
 
 	private static final String ITEM_TAG_NAME = "item";

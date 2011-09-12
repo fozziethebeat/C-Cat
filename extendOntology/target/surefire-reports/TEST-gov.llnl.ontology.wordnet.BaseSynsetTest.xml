@@ -19,7 +19,7 @@
     <property name="basedir" value="/home/thuang513/research/C-Cat/extendOntology"/>
     <property name="java.endorsed.dirs" value="/usr/lib/jvm/java-6-sun-1.6.0.15/jre/lib/endorsed"/>
     <property name="os.arch" value="amd64"/>
-    <property name="surefire.real.class.path" value="/tmp/surefirebooter323520613617610668.jar"/>
+    <property name="surefire.real.class.path" value="/tmp/surefirebooter2022856855178770525.jar"/>
     <property name="java.io.tmpdir" value="/tmp"/>
     <property name="line.separator" value="
 "/>
@@ -59,7 +59,7 @@
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testName"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testConstructor"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testLemma"/>
-  <testcase time="0.001" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testSenseKey"/>
+  <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testSenseKey"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testSenseNumber"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testExample"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testDefinition"/>
@@ -71,7 +71,7 @@
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testParents"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testChildren"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testStringParents"/>
-  <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testStringChildren"/>
+  <testcase time="0.001" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testStringChildren"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testParentPaths"/>
   <testcase time="0" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testMergedParentPaths"/>
   <testcase time="0.001" classname="gov.llnl.ontology.wordnet.BaseSynsetTest" name="testAttribute"/>
