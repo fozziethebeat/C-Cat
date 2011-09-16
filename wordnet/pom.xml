@@ -16,6 +16,13 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- general -->
+    <opennlp.version>1.5.1-incubating</opennlp.version>
+    <guava.version>r09</guava.version>
+    <logging.version>1.1.1</logging.version>
+    <sspace.version>2.0</sspace.version>
+    <stanford.version>2010-11-12</stanford.version>
   </properties>
 
   <dependencies>

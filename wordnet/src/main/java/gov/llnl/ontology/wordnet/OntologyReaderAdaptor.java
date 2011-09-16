@@ -89,6 +89,20 @@ public class OntologyReaderAdaptor implements OntologyReader {
     /**
      * {@inheriDoc}
      */
+    public Set<Synset> allSynsets() {
+        return reader.allSynsets();
+    }
+
+    /**
+     * {@inheriDoc}
+     */
+    public Set<Synset> allSynsets(PartsOfSpeech pos) {
+        return reader.allSynsets(pos);
+    }
+
+    /**
+     * {@inheriDoc}
+     */
     public Synset[] getSynsets(String lemma) {
         return reader.getSynsets(lemma);
     }

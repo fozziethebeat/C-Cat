@@ -93,6 +93,7 @@ public class PageRankCentralityDisambiguation
             Synset newSynset = new BaseSynset(synset.getPartOfSpeech());
             newSynset.addSenseKey(synset.getSenseKey());
             synsetList.add(newSynset);
+            System.out.println(newSynset.getSenseKey() + " : " + index);
             synsetMap.put(newSynset, index);
         }
 
@@ -132,7 +133,7 @@ public class PageRankCentralityDisambiguation
                 }
             }
 
-            String term = AnnotationUtil.word(word);
+            String term = annotSynset.term;
             AnnotationUtil.setWordSense(word, bestSense.getSenseKey(term));
         }
     }

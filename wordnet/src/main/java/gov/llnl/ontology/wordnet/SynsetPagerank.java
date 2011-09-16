@@ -99,10 +99,9 @@ public class SynsetPagerank {
 
         // Create the set of transition probabilities for this synset.
         SparseDoubleVector transitionProbabilities = new CompactSparseVector();
-        for (String relation : synset.getKnownRelationTypes())
-            for (Synset related : synset.getRelations(relation))
-                transitionProbabilities.set(
-                        synsetMap.get(related).intValue(), 1d/numRelations);
+        for (Synset related : synset.allRelations())
+            transitionProbabilities.set(
+                    synsetMap.get(related).intValue(), 1d/numRelations);
 
         // Set the attribute.
         synset.setAttribute(
@@ -157,7 +156,7 @@ public class SynsetPagerank {
         SparseDoubleVector pageRanks = sourceWeights;
 
         // For now, just compute a fixed number of iterations.
-        for (int i = 0; i < 15; ++i) {
+        for (int i = 0; i < 30; ++i) {
             SparseDoubleVector newRanks = new SparseHashDoubleVector(
                     pageRanks.length());
 
@@ -200,7 +199,7 @@ public class SynsetPagerank {
             double newL1Norm = 0;
             for (int index : newRanks.getNonZeroIndices())
                 newL1Norm += Math.abs(newRanks.get(index));
-            double gamma = oldL1Norm - newL1Norm;
+            double gamma = (1-weight);//oldL1Norm - newL1Norm;
 
             // Add in random surfer probabilities.
             for (int index : newRanks.getNonZeroIndices())

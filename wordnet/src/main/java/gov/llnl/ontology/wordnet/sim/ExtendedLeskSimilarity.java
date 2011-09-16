@@ -27,8 +27,7 @@ import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.SynsetSimilarity;
 import gov.llnl.ontology.util.StringUtils;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
 
 /**
@@ -40,15 +39,8 @@ public class ExtendedLeskSimilarity implements SynsetSimilarity {
      * {@inheritDoc}
      */
     public double similarity(Synset synset1, Synset synset2) {
-        Set<Synset> synsets1 = new HashSet<Synset>();
-        synsets1.addAll(synset1.getParents());
-        synsets1.addAll(synset1.getChildren());
-        synsets1.add(synset1);
-
-        Set<Synset> synsets2 = new HashSet<Synset>();
-        synsets2.addAll(synset2.getParents());
-        synsets2.addAll(synset2.getChildren());
-        synsets2.add(synset2);
+        Collection<Synset> synsets1 = synset1.allRelations();
+        Collection<Synset> synsets2 = synset2.allRelations();
 
         double score = 0;
         for (Synset s1 : synsets1) 

@@ -127,7 +127,7 @@ public abstract class GraphConnectivityDisambiguation
             for (Relation relation : Relation.values())
                 for (Synset related : synset.getRelations(relation)) {
                     synset.addRelation(LINK, related);
-                    related.addRelation(LINK, synset);
+                    //related.addRelation(LINK, synset);
                 }
 
             // Now add the gloss links.
@@ -139,7 +139,7 @@ public abstract class GraphConnectivityDisambiguation
                 // synsets.
                 if (glossSynsets.length == 1 && synset != glossSynsets[0]) {
                     synset.addRelation(LINK, glossSynsets[0]);
-                    glossSynsets[0].addRelation(LINK, synset);
+                    //glossSynsets[0].addRelation(LINK, synset);
                 }
             }
         }
@@ -197,20 +197,28 @@ public abstract class GraphConnectivityDisambiguation
             }
         }
 
+        // Ensure that each target sense has a mapping in the basis map.
+        StringBasisMapping synsetBasis = new StringBasisMapping();
+        for (Synset synset : synsets)
+            synsetBasis.getDimension(synset.getSenseKey());
+
+        System.err.println("Starting search");
         // Now perform a depth first search starting from the known synsets
         // to find any paths connecting synsets within this set.
         Deque<Synset> path = Lists.newLinkedList();
+        Set<Synset> seen = Sets.newHashSet();
         Map<Pair<Synset>, Deque<Synset>> shortestPaths = Maps.newHashMap();
         for (Synset synset : synsets) 
             for (Synset related : synset.getRelations(LINK))
-                search(synset, related, synsets, path, shortestPaths, 6);
+                search(synset, related, synsets, path, seen, shortestPaths, 5);
+        System.err.println("Ending search");
 
 
+        System.err.println("Starting matrix build");
         // Build the mapping between each synset's first sense key and a
         // unique dimension.  Also compute the adjacency matrix for the relevant
         // senses.
         Matrix adjacencyMatrix = new GrowingSparseMatrix();
-        StringBasisMapping synsetBasis = new StringBasisMapping();
         for (Map.Entry<Pair<Synset>, Deque<Synset>> e :
                 shortestPaths.entrySet()) {
             // Add the last value in the path to the path list.  With this, the
@@ -227,15 +235,19 @@ public abstract class GraphConnectivityDisambiguation
                 int k = synsetBasis.getDimension(node.getSenseKey());
                 adjacencyMatrix.set(j, k, 1.0);
                 prev = node;
+                synsets.add(node);
             }
         }
         synsetBasis.setReadOnly(true);
+        System.err.println("Ending matrix build");
 
+        System.err.println("Starting graph");
         // Now that we've carved out the interesting subgraph and recorded
         // the shortest path between the synsets, pass it off to the sub
         // class which will do the rest of the disambiguation.
         processSentenceGraph(targetWords, synsets,
                              synsetBasis, adjacencyMatrix);
+        System.err.println("Ending graph");
 
         return disambiguated;
     }
@@ -252,6 +264,7 @@ public abstract class GraphConnectivityDisambiguation
                                Synset current,
                                Set<Synset> goals,
                                Deque<Synset> path,
+                               Set<Synset> seen,
                                Map<Pair<Synset>, Deque<Synset>> shortestPaths,
                                int maxLength) {
         // If we've found a goal node, update the shortest distance found
@@ -263,6 +276,7 @@ public abstract class GraphConnectivityDisambiguation
             Deque<Synset> oldPath = shortestPaths.get(key);
             if (oldPath == null || oldPath.size() > path.size())
                 shortestPaths.put(key, Lists.newLinkedList(path));
+            return;
         }
 
         // Bactrack out of the search if we've gone to deep.
@@ -272,9 +286,12 @@ public abstract class GraphConnectivityDisambiguation
         // Push the current node onto the path and search it's neighbors.  After
         // searching all neighbors, backtrack.
         path.addLast(current);
+        seen.add(current);
         for (Synset related : current.getRelations(LINK))
-            search(start, related, goals, path, shortestPaths, maxLength);
+            if (!seen.contains(related))
+                search(start, related, goals, path, seen, shortestPaths, maxLength);
         path.removeLast();
+        seen.remove(current);
     }
     
     /**

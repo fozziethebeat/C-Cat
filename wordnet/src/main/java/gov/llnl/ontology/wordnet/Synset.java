@@ -347,6 +347,11 @@ public interface Synset {
     String getSenseKey(String base);
 
     /**
+     * Returns all sense keys associated with this {@link Synset}.
+     */
+    List<String> getSenseKeys();
+
+    /**
      * Sets the unique sense key string.
      */
     void addSenseKey(String senseKey);
@@ -442,16 +447,18 @@ public interface Synset {
     Set<Synset> getRelations(String relation);
 
     /**
-     * Connects this {@link Synset} to {@code related} via a link of type {@code
-     * relation}.
+     * Returns {@code true} if a new relation is added between {@code this} and
+     * {@code related} by {@code relation}.  Returning {@code false} signifies
+     * that the relation already exists.
      */
-    void addRelation(Relation relation, Synset related);
+    boolean addRelation(Relation relation, Synset related);
 
     /**
-     * Connects this {@link Synset} to {@code related} via a link of type {@code
-     * relation}.
+     * Returns {@code true} if a new relation is added between {@code this} and
+     * {@code related} by {@code relation}.  Returning {@code false} signifies
+     * that the relation already exists.
      */
-    void addRelation(String relation, Synset related);
+    boolean addRelation(String relation, Synset related);
 
     /**
      * Returns the set of {@link Synset}s that are connected to this {@link
@@ -460,16 +467,18 @@ public interface Synset {
     Set<Synset> getRelations(Relation relation);
 
     /**
-     * Disconnects this {@link Synset} from {@code related} via the link of type
-     * {@link relation}.
+     * Returns {@code true} if a relation between {@code this} and {@code related} by
+     * the link {@code relation} was removed.  Returning {@code false} signifies
+     * that there was no link to remove.
      */
-    void removeRelation(Relation relation, Synset related);
+    boolean removeRelation(Relation relation, Synset related);
 
     /**
-     * Disconnects this {@link Synset} from {@code related} via the link of type
-     * {@link relation}.
+     * Returns {@code true} if a relation between {@code this} and {@code related} by
+     * the link {@code relation} was removed.  Returning {@code false} signifies
+     * that there was no link to remove.
      */
-    void removeRelation(String relation, Synset related);
+    boolean removeRelation(String relation, Synset related);
 
     /**
      * Returns the total number of known relations for this synset.

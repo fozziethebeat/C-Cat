@@ -187,7 +187,7 @@ public class Sentence extends Annotation
      */
     public StringPair[] taggedTokens() {
         StringPair[] taggedTokens = new StringPair[tokenAnnotations.length];
-        for (int i = 0; i < taggedTokens.length; ++i)
+        for (int i = 0; i < taggedTokens.length; ++i) 
             taggedTokens[i] = new StringPair(
                     AnnotationUtil.word(tokenAnnotations[i]),
                     AnnotationUtil.pos(tokenAnnotations[i]));

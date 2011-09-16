@@ -312,8 +312,14 @@ public class WordNetCorpusReader implements OntologyReader {
                     }
 
                     // Count up the size required for storing the lemmas.
+                    // Always skip the first lemma because it lacks any valuable
+                    // information and won't be printed.
                     int lemmaSize = 0;
-                    for (Lemma lemma : synset.getLemmas()) {
+                    Iterator<Lemma> lemmaIter = synset.getLemmas().iterator();
+                    lemmaIter.next();
+                    while (lemmaIter.hasNext()) {
+                        Lemma lemma = lemmaIter.next();
+
                         // Get the number of bytes need to store this lemma in
                         // utf-8 format.
                         lemmaSize += lemma.getLemmaName().getBytes(UTF8).length;
@@ -516,7 +522,7 @@ public class WordNetCorpusReader implements OntologyReader {
                                 synsetPos).write(bytes, 0, bytes.length);
 
                         // Store the sense key line for this synset.
-                        senseKeys.add(synsetWriter.serializeSynsetKey(s));
+                        senseKeys.addAll(synsetWriter.serializeSynsetKeys(s));
                     }
                 }
             }
@@ -899,10 +905,14 @@ public class WordNetCorpusReader implements OntologyReader {
      * {@inheritDoc}
      */
     public Synset getSynset(String fullSynsetName) {
-        String[] parts = fullSynsetName.split("\\.", 3);
-        String lemma = parts[0].trim();
-        PartsOfSpeech pos = POS_MAP.get(parts[1].trim());
-        int senseNum = Integer.parseInt(parts[2].trim());
+        fullSynsetName = fullSynsetName.trim();
+
+        int lastDot = fullSynsetName.lastIndexOf(".");
+        int secondDot = fullSynsetName.lastIndexOf(".", lastDot-1);
+        int senseNum = Integer.parseInt(fullSynsetName.substring(lastDot+1));
+        PartsOfSpeech pos = POS_MAP.get(
+                fullSynsetName.substring(secondDot+1, lastDot));
+        String lemma = fullSynsetName.substring(0, secondDot);
         return getSynset(lemma, pos, senseNum);
     }
 
@@ -913,7 +923,7 @@ public class WordNetCorpusReader implements OntologyReader {
         Synset[][] lemmaSynsets = lemmaPosOffsetMap.get(lemma);
         if (lemmaSynsets == null)
             return null;
-        Sysnet[] lemmaPosSynsets = lemmaSynsets[pos.ordinal()];
+        Synset[] lemmaPosSynsets = lemmaSynsets[pos.ordinal()];
         if (senseNum < 1 || senseNum > lemmaPosSynsets.length)
             return null;
         return lemmaPosSynsets[senseNum-1];
@@ -1055,7 +1065,7 @@ public class WordNetCorpusReader implements OntologyReader {
                 String[] tokens = line.split("\\s+");
 
                 // Extract the lemma and part of speech.
-                String lemma = tokens[index++];
+                String lemma = tokens[index++].intern();
                 String pos = tokens[index++];
                 PartsOfSpeech posTag = POS_MAP.get(pos);
 
@@ -1103,9 +1113,9 @@ public class WordNetCorpusReader implements OntologyReader {
                 // file but requries the same mappings as the adjective data, so
                 // add anything added to the adjective part of speech to the
                 // adjective satalite part of speech mappings.
-                if (posTag == PartsOfSpeech.ADJECTIVE)
-                    posToOffsets[PartsOfSpeech.ADJECTIVE_SAT.ordinal()] = 
-                        synsets;
+                //if (posTag == PartsOfSpeech.ADJECTIVE)
+                //    posToOffsets[PartsOfSpeech.ADJECTIVE_SAT.ordinal()] = 
+                //        synsets;
             }
 
         }
@@ -1326,9 +1336,6 @@ public class WordNetCorpusReader implements OntologyReader {
             int offset = Integer.parseInt(tokens[1]);
             Synset synset = offsetToSynsetMap.get(offset); 
             synset.addSenseKey(tokens[0]);
-
-            //synset.setSenseNumber(Integer.parseInt(tokens[2]));
-
         }
     }
 

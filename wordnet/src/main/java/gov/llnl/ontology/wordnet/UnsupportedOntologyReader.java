@@ -99,6 +99,20 @@ public class UnsupportedOntologyReader implements OntologyReader {
     /**
      * @throws UnsupportedOperationException
      */
+    public Set<Synset> allSynsets() {
+        throw new UnsupportedOperationException("Cannot perform this action");
+    }
+
+    /**
+     * @throws UnsupportedOperationException
+     */
+    public Set<Synset> allSynsets(PartsOfSpeech pos) {
+        throw new UnsupportedOperationException("Cannot perform this action");
+    }
+
+    /**
+     * @throws UnsupportedOperationException
+     */
     public Synset[] getSynsets(String lemma) {
         throw new UnsupportedOperationException("Cannot perform this action");
     }

@@ -23,6 +23,8 @@
 
 package gov.llnl.ontology.wordnet;
 
+import java.util.List;
+
 
 /**
  * An interface for serializing a series of {@link Synset}s.
@@ -37,8 +39,8 @@ public interface SynsetWriter {
     String serializeSynset(Synset synset);
 
     /**
-     * Returns a {@link String} version of a {@link Synset}'s key.
+     * Returns a {@link List} of each sense key linked to it's {@link Synset}'s
+     * serialziation id.
      */
-    String serializeSynsetKey(Synset synset);
+    List<String> serializeSynsetKeys(Synset synset);
 }
-
