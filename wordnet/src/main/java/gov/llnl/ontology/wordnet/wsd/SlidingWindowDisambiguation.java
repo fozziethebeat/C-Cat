@@ -25,6 +25,9 @@ package gov.llnl.ontology.wordnet.wsd;
 
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.wordnet.OntologyReader;
+import gov.llnl.ontology.wordnet.Synset;
+import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 
 import com.google.common.collect.Lists;
 
@@ -37,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 
 
 /**
@@ -74,6 +78,13 @@ public abstract class SlidingWindowDisambiguation
      * {@inheritDoc}
      */
     public Sentence disambiguate(Sentence sentence) {
+        return disambiguate(sentence, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Sentence disambiguate(Sentence sentence, Set<Integer> focusIndices) {
         Sentence resultSent = new Sentence(
                 sentence.start(), sentence.end(), sentence.numTokens());
 
@@ -96,13 +107,14 @@ public abstract class SlidingWindowDisambiguation
             Annotation result = new Annotation();
             resultSent.addAnnotation(index++, result);
             AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
-            if (offer(word, nextWords))
-                resultWords.offer(result);
+            nextWords.offer(word);
+            resultWords.offer(result);
         }
 
         // Iterate through each word in the sliding window.  For each focus
         // word, have the subclass disambiguate the focus word using the
         // previous and next contexts.
+        int focusIndex = 0;
         while (!nextWords.isEmpty()) {
             // Get the next annotation from the iterator to advance the next
             // window.  If we can, create a new result annotation for it and
@@ -114,25 +126,24 @@ public abstract class SlidingWindowDisambiguation
                 resultSent.addAnnotation(index++, result);
                 AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
 
-                if (offer(word, nextWords))
-                    resultWords.offer(result);
-                else
-                    continue;
+                nextWords.offer(word);
+                resultWords.offer(result);
             }
-            // If we are out of tokens altogether, that is ok, we will just
-            // continue in the loop until nextWords is empty.
-            
+
             // Get the focus word and the corresponding result annotation that
             // will be updated with the sense name.
             Annotation focus = nextWords.remove();
             Annotation result = resultWords.remove();
 
-            // Disambiguate the focus word.
-            processContext(focus, result, prevWords, nextWords);
+            // Disambiguate the focus word if it's in the selected list.
+            if (focusIndices == null ||
+                focusIndices.isEmpty() ||
+                focusIndices.contains(focusIndex++))
+                processContext(focus, result, prevWords, nextWords);
 
             // Advange the previous window.
             prevWords.offer(focus);
-            if (prevWords.size() > 10)
+            if (prevWords.size() > 5)
                 prevWords.remove();
         }
 
@@ -145,10 +156,8 @@ public abstract class SlidingWindowDisambiguation
      */
     private static boolean offer(Annotation annot, Queue<Annotation> words) {
         String pos = AnnotationUtil.pos(annot);
-        if (pos == null)
-            return false;
-
-        if (pos.startsWith("N") ||
+        if (pos == null ||
+            pos.startsWith("N") ||
             pos.startsWith("V") ||
             pos.startsWith("J") ||
             pos.startsWith("R")) {
@@ -156,5 +165,24 @@ public abstract class SlidingWindowDisambiguation
             return true;
         }
         return false;
+    }
+
+    /**
+     * Returns all of the {@link Synset}s found given the word and part of
+     * speech information, if present, in {@code annot}.  If the part of speech
+     * is available, but provides no synsets, all possible synsets are returned
+     * for the word, under the assumption that the tag may be incorrect.
+     */
+    protected Synset[] getSynsets(OntologyReader reader, Annotation annot) {
+        String word = AnnotationUtil.word(annot);
+        String pos = AnnotationUtil.pos(annot);
+        if (pos == null) 
+            return reader.getSynsets(word);
+
+        Synset[] synsets = reader.getSynsets(
+                word, PartsOfSpeech.fromPennTag(pos));
+        if (synsets == null || synsets.length == 0)
+            return reader.getSynsets(word);
+        return synsets;
     }
 }

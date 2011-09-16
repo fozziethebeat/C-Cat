@@ -56,6 +56,8 @@ public class BaseSynset implements Synset {
      */
     private Map<String, Attribute> attributes;
 
+    private Map<String, String> morphyMap;
+
     /**
      * The total number of {@link Relation}s that this {@link Synset} has with
      * others.
@@ -105,6 +107,11 @@ public class BaseSynset implements Synset {
     private List<Lemma> lemmas;
 
     /**
+     * The list of possible sense keys.
+     */
+    private List<String> senseKeys;
+
+    /**
      * A mapping from related {@link Synset}s to the lemma to which they are
      * related.
      */
@@ -135,6 +142,7 @@ public class BaseSynset implements Synset {
      */
     public BaseSynset(String synsetName) {
         String[] namePosId = synsetName.split("\\.");
+        senseKeys = new ArrayList<String>();
         lemmas = new ArrayList<Lemma>();
         lemmas.add(new BaseLemma(this, namePosId[0], "", 0, 0, ""));
         pos = WordNetCorpusReader.POS_MAP.get(namePosId[1]);
@@ -143,6 +151,7 @@ public class BaseSynset implements Synset {
         relations = new HashMultiMap<String, Synset>();
         attributes = new HashMap<String, Attribute>();
         relatedForms = new HashMap<Synset, RelatedForm>();
+        morphyMap = new HashMap<String, String>();
         examples = new ArrayList<String>();
         frameIds = new int[0];
         lemmaIds = new int[0];
@@ -166,8 +175,10 @@ public class BaseSynset implements Synset {
         relations = new HashMultiMap<String, Synset>();
         attributes = new HashMap<String, Attribute>();
         relatedForms = new HashMap<Synset, RelatedForm>();
+        morphyMap = new HashMap<String, String>();
         examples = new ArrayList<String>();
         lemmas = new ArrayList<Lemma>();
+        senseKeys = new ArrayList<String>();
         frameIds = new int[0];
         lemmaIds = new int[0];
 
@@ -185,6 +196,13 @@ public class BaseSynset implements Synset {
      */
     public BaseSynset(PartsOfSpeech pos) {
         this(-1, pos);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void addMorphyMapping(String original, String lemma) {
+        morphyMap.put(original, lemma);
     }
 
     /**
@@ -213,14 +231,36 @@ public class BaseSynset implements Synset {
      * {@inheritDoc}
      */
     public String getSenseKey() {
-        return senseKey;
+        return (senseKeys.size() > 0) ? senseKeys.get(0) : "";
     }
 
     /**
      * {@inheritDoc}
      */
-    public void setSenseKey(String senseKey) {
-        this.senseKey = senseKey;
+    public String getSenseKey(String base) {
+        if (senseKeys.size() == 1)
+            return senseKeys.get(0);
+
+        String lemma = morphyMap.get(base);
+        lemma = (lemma == null) ? base : lemma;
+        for (String senseKey : senseKeys)
+            if (senseKey.startsWith(lemma))
+                return senseKey;
+        return "";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public List<String> getSenseKeys() {
+        return senseKeys;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void addSenseKey(String senseKey) {
+        senseKeys.add(senseKey);
     }
 
     /**
@@ -393,34 +433,43 @@ public class BaseSynset implements Synset {
     }
 
     /**
-     * Adds the given {@link Synset} to the set of related synsets with the
-     * given relation.
+     * {@inheritDoc}
      */
-    public void addRelation(Relation relation, Synset synset) {
-        addRelation(relation.toString(), synset);
+    public boolean addRelation(Relation relation, Synset synset) {
+        if (relation == null || synset == null)
+            return false;
+
+        return addRelation(relation.toString(), synset);
     }
 
     /**
      * {@inheritDoc}
      */
-    public void addRelation(String relation, Synset synset) {
-        relations.put(relation, synset);
-        numRelations++;
+    public boolean addRelation(String relation, Synset synset) {
+        if (relation == null || synset == null)
+            return false;
+
+        boolean added = relations.put(relation.intern(), synset);
+        if (added)
+            numRelations++;
+        return added;
     }
 
     /**
      * {@inheritDoc}
      */
-    public void removeRelation(Relation relation, Synset synset) {
-        removeRelation(relation.toString(), synset);
+    public boolean removeRelation(Relation relation, Synset synset) {
+        return removeRelation(relation.toString(), synset);
     }
 
     /**
      * {@inheritDoc}
      */
-    public void removeRelation(String relation, Synset synset) {
-        relations.remove(relation, synset);
-        numRelations--;
+    public boolean removeRelation(String relation, Synset synset) {
+        boolean removed = relations.remove(relation, synset);
+        if (removed)
+            numRelations--;
+        return removed;
     }
 
     /**

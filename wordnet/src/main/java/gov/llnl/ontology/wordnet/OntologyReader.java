@@ -95,10 +95,22 @@ public interface OntologyReader {
     public void replaceSynset(Synset synset, Synset replacement);
 
     /**
-     * Returns a {@link Set} of lemmas that the current word net instance is
-     * aware of.
+     * Returns a {@link Set} of lemmas that serve as keys in this {@link
+     * OntologyReader}.
      */
     public Set<String> wordnetTerms();
+
+    /**
+     * Returns a {@link Set} of all {@link Synset}s maintained by this {@link
+     * OntologyReader}.
+     */
+    public Set<Synset> allSynsets();
+
+    /**
+     * Returns a {@link Set} of all {@link Synset}s for the given {@link
+     * PartsOfSpeech} maintained by this {@link OntologyReader}.
+     */
+    public Set<Synset> allSynsets(PartsOfSpeech pos);
 
     /**
      * Returns a {@link Set} of lemmas that the current word net instance is

@@ -173,7 +173,8 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
         }
 
         // Store the word sense annotation.
-        AnnotationUtil.setWordSense(result, maxSynset.getName());
+        String word = AnnotationUtil.word(focus);
+        AnnotationUtil.setWordSense(result, maxSynset.getSenseKey(word));
     }
 
     /**
@@ -184,17 +185,14 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
      */
     private int addTermNode(List<Synset> localList,
                             Map<Synset, Integer> localMap, 
-                            Annotation word) {
-        String token = AnnotationUtil.word(word);
-
+                            Annotation annot) {
         // Ignore words without senses in word net.
-        Synset[] synsets = wordnet.getSynsets(
-                token, PartsOfSpeech.fromPennTag(AnnotationUtil.pos(word)));
+        Synset[] synsets = getSynsets(wordnet, annot);
         if (synsets == null || synsets.length == 0)
             return 0;
 
         // Create a link for each artificial synset to the word's possible
-        // senses.
+        // senses.  Note that the part of speech doesn't matter for these nodes.
         BaseSynset termSynset = new BaseSynset(PartsOfSpeech.NOUN);
         for (Synset possibleSense : synsets)
             termSynset.addRelation(LINK, possibleSense);

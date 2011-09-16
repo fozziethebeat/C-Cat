@@ -80,14 +80,15 @@ public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
                                   Annotation result,
                                   Queue<Annotation> prevWords,
                                   Queue<Annotation> nextWords) {
+        String word = AnnotationUtil.word(focus);
+
         // Get the target synsets for the focus word.
-        Synset[] focusSynsets = reader.getSynsets(
-                AnnotationUtil.word(focus),
-                PartsOfSpeech.fromPennTag(AnnotationUtil.pos(focus)));
+        Synset[] focusSynsets = getSynsets(reader, focus);
 
         // Skip any words that have no known synsets.
         if (focusSynsets == null || focusSynsets.length == 0)
             return;
+
         double[] synsetScores = new double[focusSynsets.length];
 
         // Compute the total similarity between each focus synset and the words
@@ -106,7 +107,8 @@ public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
                 maxId = i;
             }
 
-        AnnotationUtil.setWordSense(result, focusSynsets[maxId].getName());
+        AnnotationUtil.setWordSense(result,
+                                    focusSynsets[maxId].getSenseKey(word));
     }
 
     /**
@@ -116,8 +118,7 @@ public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
     private void computeScore(double[] synsetScores,
                               Synset[] focusSynsets,
                               Annotation word) {
-        Synset[] others = reader.getSynsets(
-                AnnotationUtil.word(word), PartsOfSpeech.NOUN);
+        Synset[] others = getSynsets(reader, word);
         for (int i = 0; i < focusSynsets.length; ++i)
             for (Synset other : others)
                 synsetScores[i] += sim.similarity(focusSynsets[i], other);

@@ -75,7 +75,7 @@ public class DegreeCentralityDisambiguation
         // Count the degree for each link in the subgraph centered around the
         // content words stored in targetWords.  As the graph is undirected, we
         // increase the count for both nodes in each edge.
-        int[] degreeCounts = new int[synsets.size()];
+        int[] degreeCounts = new int[adjacencyMatrix.rows()];
         for (int r = 0; r < adjacencyMatrix.rows(); ++r)
             for (int c = 0; c < adjacencyMatrix.columns(); ++c)
                 if (adjacencyMatrix.get(r,c) != 0d) {
@@ -87,19 +87,21 @@ public class DegreeCentralityDisambiguation
         // target senses and determine which one has the highest degree. 
         for (AnnotationSynset annotSynset : targetWords) {
             Annotation word = annotSynset.annotation;
-            Synset bestSense = null;
+            String term = annotSynset.term;
+            Synset bestSense = annotSynset.senses[0];
             double bestDegree = 0;
             for (Synset synset : annotSynset.senses) {
-                int index = synsetBasis.getDimension(synset.getName());
+                int index = synsetBasis.getDimension(synset.getSenseKey(term));
+                if (index < 0)
+                    continue;
+
                 if (degreeCounts[index] >= bestDegree) {
                     bestDegree = degreeCounts[index];
                     bestSense = synset;
                 }
             }
 
-            // If we found a best sense, store it in the result annotation.
-            if (bestSense != null)
-                AnnotationUtil.setWordSense(word, bestSense.getName());
+            AnnotationUtil.setWordSense(word, bestSense.getSenseKey(term));
         }
     }
 

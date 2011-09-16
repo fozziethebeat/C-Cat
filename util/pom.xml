@@ -16,6 +16,25 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- testing -->
+    <cobertura.version>2.4</cobertura.version> 
+    <junit.version>4.7</junit.version>
+
+    <!-- util only -->
+    <ant.version>1.6.5</ant.version>
+    <commons.version>3.0.1</commons.version>
+    <gson.version>1.7.1</gson.version>
+    <guava.version>r09</guava.version>
+    <hadoop.version>0.20.2</hadoop.version>
+    <liblinear.version>1.7</liblinear.version>
+    <libsvm.version>1.0</libsvm.version>
+    <log4j.version>1.2.9</log4j.version>
+    <malt.version>1.5.3</malt.version>
+    <opennlp.version>1.5.1-incubating</opennlp.version>
+    <sspace.version>2.0</sspace.version>
+    <stanford.version>2010-11-12</stanford.version>
+    <text.version>1.5.2</text.version>
   </properties>
 
   <dependencies>
@@ -23,6 +42,7 @@
     <dependency>
       <artifactId>extendOntology-data</artifactId>
       <groupId>${project.groupId}</groupId>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- third party -->
@@ -36,6 +56,11 @@
       <groupId>ant</groupId>
       <artifactId>ant</artifactId>
       <version>${ant.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <version>${hadoop.version}</version>
     </dependency>
     <dependency>
       <groupId>edu.ucla.sspace</groupId>
@@ -97,11 +122,28 @@
       <artifactId>log4j</artifactId>
       <version>${log4j.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-core</artifactId>
-      <version>${hadoop.version}</version>
-    </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2.1</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+            <phase>package</phase> <!-- bind to the packaging phase -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+  </plugins>
+  </build>
 </project>

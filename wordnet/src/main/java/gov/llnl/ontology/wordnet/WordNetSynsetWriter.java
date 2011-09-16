@@ -25,6 +25,9 @@ package gov.llnl.ontology.wordnet;
 
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 
+import com.google.common.collect.Lists;
+
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -57,13 +60,17 @@ public class WordNetSynsetWriter implements SynsetWriter {
     /**
      * {@inheritDoc}.
      */
-    public String serializeSynsetKey(Synset synset) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(synset.getSenseKey()).append(" ");
-        sb.append(String.format(offsetFormat, synset.getId()));
-        sb.append(synset.getSenseNumber()).append(" ");
-        sb.append("0 ");
-        return sb.toString();
+    public List<String> serializeSynsetKeys(Synset synset) {
+        List<String> senseKeys = Lists.newArrayList();
+        for (String senseKey : synset.getSenseKeys()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(senseKey).append(" ");
+            sb.append(String.format(offsetFormat, synset.getId()));
+            sb.append(synset.getSenseNumber()).append(" ");
+            sb.append("0 ");
+            senseKeys.add(sb.toString());
+        }
+        return senseKeys;
     }
 
     /**
@@ -78,14 +85,18 @@ public class WordNetSynsetWriter implements SynsetWriter {
         List<Lemma> lemmas = synset.getLemmas();
         PartsOfSpeech pos = synset.getPartOfSpeech();
         // Add the offest, lemma lexical file name index, and part of speech.
+        // Always skip the first lemma because it is added in an ad hoc manner.
         sb.append(String.format(offsetFormat, synset.getId()));
-        sb.append(String.format("%02d ", lemmas.get(0).getLexNameIndex()));
+        sb.append(String.format("%02d ", lemmas.get(1).getLexNameIndex()));
         sb.append(String.format(
                     "%s ",WordNetCorpusReader.POS_TAGS[pos.ordinal()]));
 
         // Add the lemmas for this synset.
-        sb.append(String.format("%02x ", lemmas.size()));
-        for (Lemma lemma : lemmas) {
+        sb.append(String.format("%02x ", lemmas.size()-1));
+        Iterator<Lemma> lemmaIter = lemmas.iterator();
+        lemmaIter.next();
+        while(lemmaIter.hasNext()) {
+            Lemma lemma = lemmaIter.next();
             sb.append(lemma.getLemmaName()).append(" ");
             sb.append(String.format("%01x ", lemma.getLexicalId()));
         }

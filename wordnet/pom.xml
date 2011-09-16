@@ -16,6 +16,13 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- general -->
+    <opennlp.version>1.5.1-incubating</opennlp.version>
+    <guava.version>r09</guava.version>
+    <logging.version>1.1.1</logging.version>
+    <sspace.version>2.0</sspace.version>
+    <stanford.version>2010-11-12</stanford.version>
   </properties>
 
   <dependencies>
@@ -53,6 +60,11 @@
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.opennlp</groupId>
+      <artifactId>opennlp-tools</artifactId>
+    <version>${opennlp.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -61,6 +73,26 @@
         <directory>data</directory>
       </resource>
     </resources>
-  </build>
 
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2.1</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+            <phase>package</phase> <!-- bind to the packaging phase -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+  </plugins>
+  </build>
 </project>

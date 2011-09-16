@@ -78,6 +78,13 @@ public class BaseLemma implements Lemma {
     /**
      * Creates a new {@link Lemma}.
      */
+    public BaseLemma(Synset synset, String lemmaName, String syntacticMarker) {
+        this(synset, lemmaName, "", 0, 0, syntacticMarker);
+    }
+
+    /**
+     * Creates a new {@link Lemma}.
+     */
     public BaseLemma(Synset synset, String lemmaName, String lexName, 
                      int lexNameIndex, int lexId, String syntacticMarker) {
         this.synset = synset;

@@ -319,27 +319,42 @@ public interface Synset {
      */
     /* package private */ void setId(int id);
 
+    /* package private */ void addMorphyMapping(String original, String lemma);
+
     /**
      * Returns a unique string that identifies this {@link Synset}.  This name
-     * should be based on one of the {@link Synset}'s lemmas, the part of speech,
-     * and the sense number for this {@link Synset}.  For example, "cat.n.01"
-     * signifies that the {@link Synset} is a noun and corresponds to
+     * should be based on one of the {@link Synset}'s lemmas, the part of
+     * speech, and the sense number for this {@link Synset}.  For example,
+     * "cat.n.01" signifies that the {@link Synset} is a noun and corresponds to
      * the first sense of the "cat" {@link Lemma}.
      */
     String getName();
 
     /**
-     * Returns a unique string that identifies this {@link Synset} based on it's
-     * part of speech, lexicographer file assignment and index in the
+     * Returns the first unique string that identifies this {@link Synset} based
+     * on it's part of speech, lexicographer file assignment and index in the
      * lexicographer's file.  This is often the same as the lemma key of the
      * {@link Synset}'s first {@link Lemma}.
      */
     String getSenseKey();
 
     /**
+     * Returns a unique string that identifies this {@link Synset} based on it's
+     * part of speech, the {@code base} query term, the lexicographer file
+     * assignment and index in the lexicographer's file.  This is often the same
+     * as the lemma key of the {@link Synset}'s first {@link Lemma}.
+     */
+    String getSenseKey(String base);
+
+    /**
+     * Returns all sense keys associated with this {@link Synset}.
+     */
+    List<String> getSenseKeys();
+
+    /**
      * Sets the unique sense key string.
      */
-    void setSenseKey(String senseKey);
+    void addSenseKey(String senseKey);
 
     /**
      * Returns the sense number for this {@link Synset}.  Sense numbers may be
@@ -432,16 +447,18 @@ public interface Synset {
     Set<Synset> getRelations(String relation);
 
     /**
-     * Connects this {@link Synset} to {@code related} via a link of type {@code
-     * relation}.
+     * Returns {@code true} if a new relation is added between {@code this} and
+     * {@code related} by {@code relation}.  Returning {@code false} signifies
+     * that the relation already exists.
      */
-    void addRelation(Relation relation, Synset related);
+    boolean addRelation(Relation relation, Synset related);
 
     /**
-     * Connects this {@link Synset} to {@code related} via a link of type {@code
-     * relation}.
+     * Returns {@code true} if a new relation is added between {@code this} and
+     * {@code related} by {@code relation}.  Returning {@code false} signifies
+     * that the relation already exists.
      */
-    void addRelation(String relation, Synset related);
+    boolean addRelation(String relation, Synset related);
 
     /**
      * Returns the set of {@link Synset}s that are connected to this {@link
@@ -450,16 +467,18 @@ public interface Synset {
     Set<Synset> getRelations(Relation relation);
 
     /**
-     * Disconnects this {@link Synset} from {@code related} via the link of type
-     * {@link relation}.
+     * Returns {@code true} if a relation between {@code this} and {@code related} by
+     * the link {@code relation} was removed.  Returning {@code false} signifies
+     * that there was no link to remove.
      */
-    void removeRelation(Relation relation, Synset related);
+    boolean removeRelation(Relation relation, Synset related);
 
     /**
-     * Disconnects this {@link Synset} from {@code related} via the link of type
-     * {@link relation}.
+     * Returns {@code true} if a relation between {@code this} and {@code related} by
+     * the link {@code relation} was removed.  Returning {@code false} signifies
+     * that there was no link to remove.
      */
-    void removeRelation(String relation, Synset related);
+    boolean removeRelation(String relation, Synset related);
 
     /**
      * Returns the total number of known relations for this synset.

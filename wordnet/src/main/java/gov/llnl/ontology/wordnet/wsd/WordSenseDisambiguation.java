@@ -27,6 +27,7 @@ import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.wordnet.OntologyReader;
 
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -51,4 +52,10 @@ public interface WordSenseDisambiguation {
      * labels for each noun found in {@code sentences}.  
      */
     Sentence disambiguate(Sentence sentences);
+
+    /**
+     * Returns a new {@link List} of {@link Sentence}s which have word sense
+     * labels for each annotation index stored in {@code targetWords}.
+     */
+    Sentence disambiguate(Sentence sentence, Set<Integer> targetWords);
 }
