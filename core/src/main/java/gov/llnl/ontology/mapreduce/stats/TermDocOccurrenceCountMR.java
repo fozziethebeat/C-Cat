@@ -26,6 +26,7 @@ package gov.llnl.ontology.mapreduce.stats;
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.Sentence;
+import gov.llnl.ontology.text.TextUtil;
 import gov.llnl.ontology.util.MRArgOptions;
 import gov.llnl.ontology.util.StringCounter;
 import gov.llnl.ontology.util.StringPair;
@@ -35,6 +36,7 @@ import com.google.common.collect.Sets;
 import edu.ucla.sspace.util.ReflectionUtil;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
@@ -46,7 +48,11 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
 
@@ -76,6 +82,32 @@ public class TermDocOccurrenceCountMR extends CorpusTableMR {
     protected void validateOptions(MRArgOptions options) {
         options.validate(ABOUT, "<outdir>",
                          TermDocOccurrenceCountMR.class, 1, 'C', 'S');
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void addOptions(MRArgOptions options) {
+        options.addOption('l', "wordList",
+                          "Specifies a list of words that should be " +
+                          "represented by wordsi. The format should have " +
+                          "one word per line and the file should be on hdfs.",
+                          true, "FILE", "Required");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setupConfiguration(MRArgOptions options,
+                                      Configuration conf) {
+        try {
+            DistributedCache.addCacheFile(
+                    new URI(options.getStringOption('l')), conf);
+        } catch (URISyntaxException use) {
+            use.printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
@@ -125,6 +157,24 @@ public class TermDocOccurrenceCountMR extends CorpusTableMR {
 
         public static final IntWritable ONE = new IntWritable(1);
 
+        private Set<String> wordList;
+
+        /**
+         * {@inheritDoc}
+         */
+        protected void setup(Context context, Configuration conf)
+                throws IOException, InterruptedException {
+            wordList = Sets.newHashSet();
+            Path[] paths = DistributedCache.getLocalCacheFiles(conf);
+            if (paths.length < 1)
+                return;
+            BufferedReader br = new BufferedReader(
+                    new FileReader(paths[0].toString()));
+
+            for (String line = null; (line = br.readLine()) != null; )
+                wordList.add(line.trim().toLowerCase());
+        }
+
         /**
          * {@inheritDoc}
          */
@@ -135,12 +185,17 @@ public class TermDocOccurrenceCountMR extends CorpusTableMR {
             context.setStatus("Processing Docs");
             Set<String> terms = Sets.newHashSet();
             for (Sentence sentence : table.sentences(row))
-                for (StringPair word : sentence.taggedTokens())
-                    terms.add(word.x);
+                for (StringPair word : sentence.taggedTokens()) {
+                    String cleanedWord = TextUtil.cleanTerm(word.x);
+                    if (wordList.isEmpty() || wordList.contains(cleanedWord))
+                        terms.add(cleanedWord);
+                }
 
-            for (String focus : terms)
+            for (String focus : terms) {
+                context.write(new StringPair("", focus), ONE);
                 for (String other : terms)
                     context.write(new StringPair(focus, other), ONE);
+            }
 
             context.getCounter("TermDocOccurrenceCountMR", "Documents").increment(1);
         }
