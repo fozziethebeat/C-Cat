@@ -467,16 +467,16 @@ public interface Synset {
     Set<Synset> getRelations(Relation relation);
 
     /**
-     * Returns {@code true} if a relation between {@code this} and {@code related} by
-     * the link {@code relation} was removed.  Returning {@code false} signifies
-     * that there was no link to remove.
+     * Returns {@code true} if a relation between {@code this} and {@code
+     * related} by the link {@code relation} was removed.  Returning {@code
+     * false} signifies that there was no link to remove.
      */
     boolean removeRelation(Relation relation, Synset related);
 
     /**
-     * Returns {@code true} if a relation between {@code this} and {@code related} by
-     * the link {@code relation} was removed.  Returning {@code false} signifies
-     * that there was no link to remove.
+     * Returns {@code true} if a relation between {@code this} and {@code
+     * related} by the link {@code relation} was removed.  Returning {@code
+     * false} signifies that there was no link to remove.
      */
     boolean removeRelation(String relation, Synset related);
 
