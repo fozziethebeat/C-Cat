@@ -556,10 +556,23 @@ public class NYTCorpusDocument implements Document {
     protected String originalText;
 
     /**
+     * The corpus name for this {@link Document}, originall {@link
+     * #CORPUS_NAME}.
+     */
+    private String corpusName = CORPUS_NAME;
+
+    /**
      * {@inheritDoc}
      */
     public String sourceCorpus() {
-        return CORPUS_NAME;
+        return corpusName;
+    }
+
+    /**
+     * Sets the source corpus name.
+     */
+    void setSourceCorpus(String corpusName) {
+        this.corpusName = corpusName;
     }
 
     /**

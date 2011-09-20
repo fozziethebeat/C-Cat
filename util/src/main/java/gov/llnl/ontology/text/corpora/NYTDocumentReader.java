@@ -301,19 +301,17 @@ public class NYTDocumentReader implements DocumentReader {
     /**
      * {@inheritDoc}
      */
-    public gov.llnl.ontology.text.Document readDocument(String doc) {
+    public NYTCorpusDocument readDocument(String doc) {
         return parseNYTCorpusDocumentFromString(doc, false);
     }
 
     /**
      * {@inheritDoc}
      */
-    public gov.llnl.ontology.text.Document readDocument(String doc,
-                                                        String corpusName) {
+    public NYTCorpusDocument readDocument(String doc, String corpusName) {
         NYTCorpusDocument d = parseNYTCorpusDocumentFromString(doc, false);
-        return new SimpleDocument(corpusName, d.rawText(),
-                                  d.originalText(), d.key(), d.id(),
-                                  d.title(), d.categories());
+        d.setSourceCorpus(corpusName);
+        return d;
     }
 
     /**

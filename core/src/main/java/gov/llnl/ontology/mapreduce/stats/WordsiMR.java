@@ -200,10 +200,10 @@ public class WordsiMR extends CorpusTableMR {
                           "valid paths.",
                           true, "CLASSNAME", "Optional");
         options.addOption('l', "wordList",
-                           "Specifies a list of words that should be " +
-                           "represented by wordsi. The format should have " +
-                           "one word per line and the file should be on hdfs.",
-                           true, "FILE", "Required");
+                          "Specifies a list of words that should be " +
+                          "represented by wordsi. The format should have " +
+                          "one word per line and the file should be on hdfs.",
+                          true, "FILE", "Required");
     }
 
     /**

@@ -243,7 +243,7 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
 
             wordList = Sets.newHashSet();
             Path[] paths = DistributedCache.getLocalCacheFiles(conf);
-            if (paths.length == 0)
+            if (paths.length < 1)
                 return;
 
             BufferedReader br = new BufferedReader(
@@ -251,6 +251,7 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
 
             for (String line = null; (line = br.readLine()) != null; )
                 wordList.add(line.trim().toLowerCase());
+            System.out.println(wordList.size());
         }
 
         /**
@@ -306,11 +307,12 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
                         occurrences = new StringCounter();
                         wocCounts.put(" ", occurrences);
                     }
+                    occurrences.count(focusWord, prev.size() + next.size());
 
                     //  Count the co-occurrences in with the previous and next
                     //  words.
-                    addContextTerms(counts, occurrences, prev, -1 * prev.size());
-                    addContextTerms(counts, occurrences, next, 1);
+                    addContextTerms(counts, prev, -1 * prev.size());
+                    addContextTerms(counts, next, 1);
                 }
 
                 // Shift the focus token to the prev queue and remove any old
@@ -331,7 +333,6 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
          * plus the distance, positive or negative, from the focus word.
          */
         protected void addContextTerms(StringCounter counts,
-                                       StringCounter occurrences,
                                        Queue<Annotation> words,
                                        int distance)
                 throws IOException, InterruptedException {
@@ -353,18 +354,16 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
 
                 // Ignore words not in the word list if it's non empty.
                 word = word.toLowerCase();
-                occurrences.count(word);
-                if (!wordList.isEmpty() && !wordList.contains(word))
-                    continue;
-
-                // Modify the feature if needed and add the count.
-                if (usePos) 
-                    if (pos != null)
-                        counts.count(word + "-" + pos);
-                else if (useOrdering) 
-                    counts.count(word + "-" + distance);
-                else
-                    counts.count(word);
+                if (wordList.isEmpty() || wordList.contains(word)) {
+                    // Modify the feature if needed and add the count.
+                    if (usePos) {
+                        if (pos != null)
+                            counts.count(word + "-" + pos);
+                    } else if (useOrdering) 
+                        counts.count(word + "-" + distance);
+                    else
+                        counts.count(word);
+                }
             }
         }
     }
