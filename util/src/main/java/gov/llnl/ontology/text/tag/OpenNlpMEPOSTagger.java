@@ -61,8 +61,8 @@ public class OpenNlpMEPOSTagger implements POSTagger {
 
     /**
      * Loads a {@link POSTaggerME} model from {@code modelPath}.  If {@code
-     * loadFromJar} is true, the binary file will found within the running class
-     * path.
+     * loadFromJar} is true, the binary file will be found from within the
+     * running class path.
      */
     public OpenNlpMEPOSTagger(String modelPath, boolean loadFromJar) {
         try {

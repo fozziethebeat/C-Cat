@@ -194,13 +194,18 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
             parts[i] = parts[i].toLowerCase();
         }
 
-        AnnotationUtil.setWord(currentAnnotation, parts[0]);
-        currentSentence.add(currentAnnotation);
-        if (parts[0].equals("."))
-            endSentence();
+        if (!parts[0].startsWith("0") && 
+            !parts[0].startsWith("*")) {
+            AnnotationUtil.setWord(currentAnnotation, parts[0]);
+            currentSentence.add(currentAnnotation);
+            if (parts[0].equals("."))
+                endSentence();
+        }
 
         for (int i = 1; i < parts.length; ++i) {
-            if ("".equals(parts[i]))
+            if ("".equals(parts[i]) || 
+                parts[i].startsWith("0") || 
+                parts[i].startsWith("*"))
                 continue;
             currentAnnotation = new Annotation(currentAnnotation);
             AnnotationUtil.setWord(currentAnnotation, parts[i]);
@@ -215,18 +220,5 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
 
     public List<Sentence> sentences() {
         return sentences;
-    }
-
-    public static void main(String[] args) {
-        SenseEvalAllWordsDocumentReader reader =
-            new SenseEvalAllWordsDocumentReader();
-        reader.parse(args[0]);
-        for (Sentence sentence : reader.sentences())
-            for (Annotation annot : sentence) {
-                String id = annot.get(ValueAnnotation.class);
-                if (id != null)
-                    System.out.printf("%s %s\n", 
-                                      id, AnnotationUtil.word(annot));
-            }
     }
 }

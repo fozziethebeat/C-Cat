@@ -24,7 +24,10 @@
 package gov.llnl.ontology.wordnet;
 
 import gov.llnl.ontology.wordnet.Synset;
+import gov.llnl.ontology.wordnet.OntologyReader;
+import gov.llnl.ontology.wordnet.OntologyWriter;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
+import gov.llnl.ontology.wordnet.WordNetCorpusWriter;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 
 import gov.llnl.ontology.wordnet.feature.ExtendedSnowEtAlFeatureMaker;
@@ -115,7 +118,7 @@ public class WordNetCondenser {
         String newWordNetDir = options.getPositionalArg(1);
 
         // Create the word net reader and the root synset.
-        WordNetCorpusReader wordnet = WordNetCorpusReader.initialize(
+        OntologyReader wordnet = WordNetCorpusReader.initialize(
                 wordNetDir);
         Synset root = (options.hasOption('r'))
             ? wordnet.getSynsets(options.getStringOption('r'))[1]
@@ -159,7 +162,9 @@ public class WordNetCondenser {
 
         // Condense the word net hierarchy and store it to disk.
         condense(root, featureMaker);
-        wordnet.saveWordNet(newWordNetDir);
+
+        OntologyWriter writer = new WordNetCorpusWriter();
+        writer.saveOntology(wordnet, newWordNetDir);
     }
 
     /**
@@ -186,7 +191,7 @@ public class WordNetCondenser {
                                 SynsetPairFeatureMaker featureMaker) {
         System.out.println("Clustering ambigious words");
 
-        WordNetCorpusReader wordnet = WordNetCorpusReader.getWordNet();
+        OntologyReader wordnet = WordNetCorpusReader.getWordNet();
 
         // Iterate over every lemma.
         Set<String> wordnetLemmas = wordnet.wordnetTerms();

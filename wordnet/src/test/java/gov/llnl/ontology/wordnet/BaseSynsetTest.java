@@ -72,7 +72,7 @@ public class BaseSynsetTest {
 
     @Test public void testSenseKey() {
         Synset synset = new BaseSynset(PartsOfSpeech.NOUN);
-        synset.setSenseKey("cat");
+        synset.addSenseKey("cat");
         assertEquals("cat", synset.getSenseKey());
     }
 

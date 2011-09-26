@@ -27,6 +27,7 @@ import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,10 @@ public class GenericMockReader extends OntologyReaderAdaptor {
             synsetMap.put(synsetAndGloss[0], makeSynset(synsetAndGloss));
     }
 
+    public Set<Synset> allSynsets() {
+        return Sets.newHashSet(synsetMap.values());
+    }
+
     public Set<String> wordnetTerms() {
         return synsetMap.keySet();
     }
@@ -59,6 +64,9 @@ public class GenericMockReader extends OntologyReaderAdaptor {
     }
 
     public Synset[] getSynsets(String lemma, PartsOfSpeech pos) {
+        if (pos == null)
+            return getSynsets(lemma);
+
         return getSynsets(lemma + "." + pos.toString());
     }
 
@@ -71,10 +79,7 @@ public class GenericMockReader extends OntologyReaderAdaptor {
 
     private Synset makeSynset(String[] synsetAndGloss) {
         Synset synset = new BaseSynset(0, PartsOfSpeech.NOUN);
-        String[] namePosId = synsetAndGloss[0].split("\\.");
-        synset.setSenseNumber(Integer.parseInt(namePosId[2]));
-        synset.addLemma(new BaseLemma
-                (synset, namePosId[0], null, 0, 0, null));
+        synset.addSenseKey(synsetAndGloss[0]);
         synset.setDefinition(synsetAndGloss[1]);
         return synset;
     }

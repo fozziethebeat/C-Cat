@@ -179,9 +179,10 @@ public abstract class GraphConnectivityDisambiguation
             AnnotationUtil.setSpan(result, AnnotationUtil.span(annot));
             disambiguated.addAnnotation(i, result);
 
+            i++;
             if (focusIndices == null || 
                 focusIndices.isEmpty() || 
-                focusIndices.contains(i++)) {
+                focusIndices.contains(i-1)) {
                 Synset[] annotSenses = getSynsets(annot);
 
                 // Skip any words that have no senses.

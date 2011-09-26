@@ -1,17 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>gov.llnl.ontology</groupId>
   <artifactId>extendOntology</artifactId>
+  <groupId>gov.llnl.ontology</groupId>
   <version>1.0</version>
-
   <packaging>pom</packaging>
+
   <name>C-Cat</name>
   <url>https://github.com/fozziethebeat/C-Cat</url>
   <inceptionYear>2010</inceptionYear>
   <description>C-Cat's goal is to provide libraries and tools for using and extending the wordnet ontology.  In support of this goal, we include a large framework for processing text documents with tokenization, part of speech tagging, and parsing all within the distributed hadoop framework.</description>
 
+  <modules>
+    <module>data</module>
+    <module>util</module>
+    <module>wordnet</module>
+    <module>core</module>
+  </modules>
+
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
     <!-- testing -->
     <cobertura.version>2.4</cobertura.version> 
     <junit.version>4.7</junit.version>
@@ -38,6 +47,8 @@
     <hbase.version>0.90.1</hbase.version>
     <mahout.version>0.5</mahout.version>
     <sspace-graph.version>1.0</sspace-graph.version>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <dependencyManagement>
@@ -69,9 +80,39 @@
           <scope>test</scope>
         </dependency>
         <dependency>
+          <groupId>ant</groupId>
+          <artifactId>ant</artifactId>
+          <version>${ant.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-core</artifactId>
+          <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase</artifactId>
+          <version>${hbase.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.mahout</groupId>
+          <artifactId>mahout-math</artifactId>
+          <version>${mahout.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.mahout</groupId>
+          <artifactId>mahout-core</artifactId>
+          <version>${mahout.version}</version>
+        </dependency>
+        <dependency>
           <groupId>edu.ucla.sspace</groupId>
           <artifactId>sspace</artifactId>
           <version>${sspace.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>graph.edu.ucla.sspace</groupId>
+          <artifactId>sspace-graph</artifactId>
+          <version>${sspace-graph.version}</version>
         </dependency>
         <dependency>
           <groupId>gov.llnl.text</groupId>
@@ -91,7 +132,7 @@
         <dependency>
           <groupId>org.apache.opennlp</groupId>
           <artifactId>opennlp-tools</artifactId>
-      <version>${opennlp.version}</version>
+          <version>${opennlp.version}</version>
         </dependency>
         <dependency>
           <groupId>com.google.code.gson</groupId>
@@ -99,9 +140,34 @@
           <version>${gson.version}</version>
         </dependency>
         <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-lang3</artifactId>
+          <version>${commons.version}</version>
+        </dependency>
+        <dependency>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
           <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.maltparser</groupId>
+          <artifactId>maltparser</artifactId>
+          <version>${malt.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>lib.linear</groupId>
+          <artifactId>liblinear</artifactId>
+          <version>${liblinear.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>lib.svm</groupId>
+          <artifactId>libsvm</artifactId>
+          <version>${libsvm.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>${log4j.version}</version>
         </dependency>
       </dependencies>
   </dependencyManagement>
@@ -121,6 +187,7 @@
     </plugins>
   </reporting>
 
+  <!--
   <repositories>
     <repository>
         <id>maven2-repository.maven.org</id>
@@ -175,6 +242,7 @@
         </releases>
       </repository>
   </repositories>
+  -->
  
   <build>
       <pluginManagement>
@@ -213,10 +281,4 @@
         </plugins>
       </pluginManagement>
   </build>
-  <modules>
-    <module>data</module>
-    <module>util</module>
-    <module>wordnet</module>
-    <module>core</module>
-  </modules>
 </project>
