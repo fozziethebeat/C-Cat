@@ -37,6 +37,7 @@ import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.util.IntPair;
 
+import edu.ucla.sspace.dependency.DependencyRelation;
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 import edu.ucla.sspace.dependency.SimpleDependencyRelation;
 import edu.ucla.sspace.dependency.SimpleDependencyTreeNode;
@@ -72,10 +73,8 @@ public class Sentence extends Annotation
      * ";" exist outside of quotes.
      */
     private static final String TOK_SEPARATOR = "\\|";
-   // (?=(?:[^\'\"]|'[^\']*'|\"[^\"]*\")*$)";
 
     private static final String ANNOT_SEPARATOR = ";";
-        //(?=(?:[^\'\"]|'[^\']*'|\"[^\"]*\")*$)";
 
     /**
      * The start index of this sentence in a text document.
@@ -162,7 +161,8 @@ public class Sentence extends Annotation
         for (int i = 0; i < nodes.length; ++i)
             nodes[i] = new SimpleDependencyTreeNode(
                     tokenAnnotations[i].get(TextAnnotation.class),
-                    tokenAnnotations[i].get(PartOfSpeechAnnotation.class));
+                    tokenAnnotations[i].get(PartOfSpeechAnnotation.class),
+                    i);
 
         // For each word, add a SimpleDependencyRelation to the tree
         // nodes that records the relation to it's parent.  Parent nodes
@@ -174,8 +174,10 @@ public class Sentence extends Annotation
                     CoNLLDepTypeAnnotation.class);
             if (parent == 0)
                 continue;
-            nodes[i].addNeighbor(new SimpleDependencyRelation(
-                    nodes[parent-1], relation, nodes[i]));
+            DependencyRelation r = new SimpleDependencyRelation(
+                    nodes[parent-1], relation, nodes[i]);
+            nodes[i].addNeighbor(r);
+            nodes[parent-1].addNeighbor(r);
         }
 
         return nodes;
