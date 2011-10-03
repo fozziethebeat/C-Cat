@@ -24,16 +24,13 @@
 package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
-import gov.llnl.ontology.mapreduce.table.CorpusTable;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.text.TextUtil;
-import gov.llnl.ontology.util.MRArgOptions;
-import gov.llnl.ontology.util.StringCounter;
 import gov.llnl.ontology.util.StringPair;
 
 import com.google.common.collect.Sets;
 
-import edu.ucla.sspace.util.ReflectionUtil;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -42,10 +39,8 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.BufferedReader;
@@ -53,7 +48,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 import java.util.Set;
 
 

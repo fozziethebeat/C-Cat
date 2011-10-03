@@ -21,7 +21,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.llnl.ontology.util;
+package gov.llnl.ontology.mapreduce;
 
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.mapreduce.table.EvidenceTable;

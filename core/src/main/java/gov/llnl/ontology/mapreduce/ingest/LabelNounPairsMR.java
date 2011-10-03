@@ -1,6 +1,7 @@
 package gov.llnl.ontology.mapreduce.ingest;
 
 import gov.llnl.ontology.mapreduce.EvidenceTableMR;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.EvidenceTable;
 import gov.llnl.ontology.util.StringPair;
 import gov.llnl.ontology.wordnet.OntologyReader;
@@ -9,7 +10,6 @@ import gov.llnl.ontology.wordnet.SynsetRelations;
 import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 
-import gov.llnl.ontology.util.MRArgOptions;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
@@ -20,9 +20,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.io.Text;
-
-import java.io.IOException;
 
 
 /**

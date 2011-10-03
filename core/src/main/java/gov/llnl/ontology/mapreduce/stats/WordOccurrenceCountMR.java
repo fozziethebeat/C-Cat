@@ -24,12 +24,11 @@
 package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
-import gov.llnl.ontology.mapreduce.table.CorpusTable;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.util.StringCounter;
 import gov.llnl.ontology.util.StringPair;
-import gov.llnl.ontology.util.MRArgOptions;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -37,7 +36,6 @@ import com.google.common.collect.Sets;
 
 import edu.stanford.nlp.pipeline.Annotation;
 
-import edu.ucla.sspace.util.ReflectionUtil;
 import edu.ucla.sspace.util.CombinedIterator;
 
 import org.apache.hadoop.conf.Configuration;
@@ -48,7 +46,6 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -88,6 +85,8 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
     public static final String CONF_PREFIX =
         "gov.llnl.ontology.mapreduce.stats.WordOccurrenceCountMR";
 
+    public static final String MR_NAME = "WordOccurrenceCountMR";
+
     /**
      * The configuration set when part of speech features should be used.
      */
@@ -110,7 +109,8 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
      * Runs the {@link WordOccurrenceCountMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(HBaseConfiguration.create(), new WordOccurrenceCountMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(),
+                       new WordOccurrenceCountMR(), args);
     }
 
     /**
@@ -295,7 +295,7 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
 
                 // Ignore focus words not in the word list when it's non empty.
                 if (wordList.isEmpty() || wordList.contains(focusWord)) {
-                    context.getCounter("WordOccurrenceCountMR", "Focus Word").increment(1);
+                    context.getCounter(MR_NAME, "Focus Word").increment(1);
                     // Get the counter for the focus word.
                     StringCounter counts = wocCounts.get(focusWord);
                     if (counts == null) {
@@ -323,14 +323,14 @@ public class WordOccurrenceCountMR extends CorpusTableMR {
             }
 
             WordCountSumReducer.emitCounts(wocCounts, context);
-            context.getCounter("WordOccurrenceCountMR", "Documents").increment(1);
+            context.getCounter(MR_NAME, "Documents").increment(1);
         }
 
         /**
-         * Adds a count for each word feature in {@code words} to {@code count}.  If
-         * {@code usePos} is true, the feature will be the word plus the part of
-         * speech.  If {@code useOrdering} is true, the feature will be the word
-         * plus the distance, positive or negative, from the focus word.
+         * Adds a count for each word feature in {@code words} to {@code count}.
+         * If {@code usePos} is true, the feature will be the word plus the part
+         * of speech.  If {@code useOrdering} is true, the feature will be the
+         * word plus the distance, positive or negative, from the focus word.
          */
         protected void addContextTerms(StringCounter counts,
                                        Queue<Annotation> words,

@@ -1,14 +1,13 @@
 package gov.llnl.ontology.mains;
 
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
-import gov.llnl.ontology.util.MRArgOptions;
 import gov.llnl.ontology.util.StringPair;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.io.BufferedReader;

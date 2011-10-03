@@ -24,11 +24,11 @@
 package gov.llnl.ontology.mapreduce.ingest;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 
 import gov.llnl.ontology.text.Sentence;
 
-import gov.llnl.ontology.util.MRArgOptions;
 
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SpanAnnotation;
@@ -48,9 +48,6 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.mapreduce.Mapper.Context;
-
-import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;

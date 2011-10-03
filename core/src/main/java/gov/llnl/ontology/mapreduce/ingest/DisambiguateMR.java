@@ -24,11 +24,9 @@
 package gov.llnl.ontology.mapreduce.ingest;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
-import gov.llnl.ontology.mapreduce.table.CorpusTable;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.AnnotationUtil;
-import gov.llnl.ontology.util.MRArgOptions;
 import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 import gov.llnl.ontology.wordnet.wsd.WordSenseDisambiguation;
@@ -45,11 +43,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 
-import java.io.IOException;
-
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -132,7 +126,8 @@ public class DisambiguateMR extends CorpusTableMR{
             extends CorpusTableMR.CorpusTableMapper<ImmutableBytesWritable, Put> {
 
         /**
-         * The {@link Disambiguater} responsible for dependency parsing sentences.
+         * The {@link Disambiguater} responsible for dependency parsing
+         * sentences.
          */
         private WordSenseDisambiguation wsdAlg;
 

@@ -25,7 +25,6 @@ package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.util.Counter;
 
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
