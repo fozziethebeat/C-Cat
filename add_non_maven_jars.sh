@@ -28,3 +28,7 @@ mvn install:install-file -DgroupId=lib.linear -DartifactId=liblinear \
 # Add libsvm 1.0 (Not in trunk yet)
 mvn install:install-file -DgroupId=lib.svm -DartifactId=libsvm \
 -Dversion=1.0 -Dpackaging=jar -Dfile=lib/libsvm.jar
+
+# Add hbase 0.90.1 (Not in trunk yet)
+mvn install:install-file -DgroupId=org.apache.hbase -DartifactId=hbase \
+-Dversion=0.90.1 -Dpackaging=jar -Dfile=lib/hbase-0.90.1.jar

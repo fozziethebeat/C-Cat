@@ -233,9 +233,9 @@
     </site>
   </distributionManagement>
   <scm>
-    <connection>scm:git:git://github.com/fozziethebeat/C-Cat.git</connection>
+    <connection>scm:git:git@github.com:fozziethebeat/C-Cat.git</connection>
     <developerConnection>scm:git:git@github.com:fozziethebeat/C-Cat.git</developerConnection>
-    <url>git@github.com/fozziethebeat/C-Cat.git</url>
+    <url>git@github.com:fozziethebeat/C-Cat.git</url>
   </scm>
 
   <build>
