@@ -1,0 +1,6 @@
+gov.llnl.ontology.mains
+gov.llnl.ontology.wordnet
+gov.llnl.ontology.wordnet.builder
+gov.llnl.ontology.wordnet.wsd
+gov.llnl.ontology.wordnet.sim
+gov.llnl.ontology.wordnet.feature
