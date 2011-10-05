@@ -13,5 +13,5 @@ public interface OntologyWriter {
      * Saves all of the {@link Synset}s mapped by {@code reader} into dictionary
      * files based in the directory designated by {@code outputDir}.
      */
-    int saveOntology(OntologyReader reader, String outputDir);
+    void saveOntology(OntologyReader reader, String outputDir);
 }
