@@ -1,6 +1,7 @@
 package gov.llnl.ontology.text.corpora;
 
 import gov.llnl.ontology.text.Sentence;
+import gov.llnl.ontology.util.AnnotationUtil;
 
 import com.google.common.collect.Lists;
 
@@ -33,6 +34,8 @@ public class SenseEvalTaggedAllWordsDocumentReader extends DefaultHandler {
     private List<Annotation> currentSentence = Lists.newArrayList();
 
     private String currentId;
+
+    private String currentPos;
 
     private boolean inSentence;
 
@@ -90,6 +93,7 @@ public class SenseEvalTaggedAllWordsDocumentReader extends DefaultHandler {
         } else if ("h".equals(name)) {
             inHeadWord = true;
             currentId = atts.getValue("id");
+            currentPos = atts.getValue("pos");
         } else if ("w".equals(name)) {
             inWord = true;
         }
@@ -125,8 +129,10 @@ public class SenseEvalTaggedAllWordsDocumentReader extends DefaultHandler {
 
         String word = (new String(ch, start, length)).trim();
         Annotation token = new Annotation(word);
-        if (inHeadWord)
+        if (inHeadWord) {
+            AnnotationUtil.setPos(token, currentPos);
             token.set(ValueAnnotation.class, currentId);
+        }
         currentSentence.add(token);
     }
 

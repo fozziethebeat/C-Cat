@@ -214,7 +214,6 @@ public abstract class GraphConnectivityDisambiguation
                 search(synset, related, synsets, path, seen, shortestPaths, 5);
         System.err.println("Ending search");
 
-
         System.err.println("Starting matrix build");
         // Build the mapping between each synset's first sense key and a
         // unique dimension.  Also compute the adjacency matrix for the relevant
