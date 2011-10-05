@@ -16,8 +16,8 @@
 'UTF-8'
 -doctitle
 'C-Cat 1.0 API'
--link
-'http://java.sun.com/javase/6/docs/api'
+-linkoffline
+'http://download.oracle.com/javase/6/docs/api' '/home/keith/devel/C-Cat/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
