@@ -1,0 +1,8 @@
+gov.llnl.ontology.clustering
+gov.llnl.ontology.mains
+gov.llnl.ontology.mapreduce
+gov.llnl.ontology.mapreduce.ingest
+gov.llnl.ontology.mapreduce.stats
+gov.llnl.ontology.mapreduce.table
+gov.llnl.ontology.text.hbase
+gov.llnl.ontology.util
