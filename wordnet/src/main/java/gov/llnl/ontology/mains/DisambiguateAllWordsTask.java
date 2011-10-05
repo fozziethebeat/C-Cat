@@ -3,7 +3,6 @@ package gov.llnl.ontology.mains;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.text.corpora.SenseEvalTaggedAllWordsDocumentReader;
 import gov.llnl.ontology.util.AnnotationUtil;
-import gov.llnl.ontology.util.StringPair;
 import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 import gov.llnl.ontology.wordnet.wsd.WordSenseDisambiguation;
