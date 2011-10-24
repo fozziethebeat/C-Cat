@@ -1,7 +1,0 @@
-gov.llnl.ontology.text
-gov.llnl.ontology.text.corpora
-gov.llnl.ontology.text.parse
-gov.llnl.ontology.text.sentsplit
-gov.llnl.ontology.text.tag
-gov.llnl.ontology.text.tokenize
-gov.llnl.ontology.util

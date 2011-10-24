@@ -1,11 +1,11 @@
-gov.llnl.ontology.util
 gov.llnl.ontology.text.parse
-gov.llnl.ontology.text.tokenize
-gov.llnl.ontology.text.corpora
-gov.llnl.ontology.text.sentsplit
 gov.llnl.ontology.text.tag
+gov.llnl.ontology.text.sentsplit
+gov.llnl.ontology.text.corpora
 gov.llnl.ontology.text
-gov.llnl.ontology.wordnet
+gov.llnl.ontology.text.tokenize
+gov.llnl.ontology.util
 gov.llnl.ontology.wordnet.wsd
+gov.llnl.ontology.wordnet
 gov.llnl.ontology.wordnet.sim
 gov.llnl.ontology.mains
