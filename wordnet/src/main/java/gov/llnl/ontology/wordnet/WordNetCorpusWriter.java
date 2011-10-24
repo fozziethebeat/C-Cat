@@ -381,7 +381,7 @@ public class WordNetCorpusWriter implements OntologyWriter {
         String offsetFormat = "%0" + finalOffsetSize + "d ";
         for (String lemma : reader.wordnetTerms()) {
             for (PartsOfSpeech tag : PartsOfSpeech.values()) {
-                Synset[] synsets = reader.getSynsets(lemma, tag);
+                Synset[] synsets = reader.getSynsets(lemma, tag, false);
 
                 // Ignore parts of speech that have no synsets for this lemma.
                 if (synsets.length == 0)

@@ -465,6 +465,18 @@ public class WordNetCorpusReader implements OntologyReader {
      * {@inheritDoc}
      */
     public Synset[] getSynsets(String lemma, PartsOfSpeech pos) {
+        return getSynsets(lemma, pos, true);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Synset[] getSynsets(String lemma, PartsOfSpeech pos, boolean useMorphy) {
+        if (!useMorphy) {
+            Synset[][] termSynsets = lemmaPosOffsetMap.get(lemma);
+            return (termSynsets == null) ? null : termSynsets[pos.ordinal()];
+        }
+
         // If there are spaces, replace them with underscores, since no lemma
         // has spaces in it.
         String fixedLemma = lemma.replaceAll("\\s+", "_");

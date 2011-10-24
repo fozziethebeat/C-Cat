@@ -132,6 +132,15 @@ public interface OntologyReader {
     public Synset[] getSynsets(String lemma, PartsOfSpeech pos);
 
     /**
+     * Returns all {@link Synset}s that match the given lemma name and part of
+     * speech.  If there is no known mapping for the given word and {@code
+     * useMorphy} is true, the {@link
+     * Synset}s for all it's part of speech specific morphological variations
+     * will be returned.
+     */
+    public Synset[] getSynsets(String lemma, PartsOfSpeech pos, boolean useMorphy);
+
+    /**
      * Returns the {@link Synset} specified by the full synset name.  The name
      * should be of the following format:
      *   lemma.pos.senseNum
