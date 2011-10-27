@@ -179,9 +179,10 @@ public abstract class GraphConnectivityDisambiguation
             AnnotationUtil.setSpan(result, AnnotationUtil.span(annot));
             disambiguated.addAnnotation(i, result);
 
+            i++;
             if (focusIndices == null || 
                 focusIndices.isEmpty() || 
-                focusIndices.contains(i++)) {
+                focusIndices.contains(i-1)) {
                 Synset[] annotSenses = getSynsets(annot);
 
                 // Skip any words that have no senses.
@@ -212,7 +213,6 @@ public abstract class GraphConnectivityDisambiguation
             for (Synset related : synset.getRelations(LINK))
                 search(synset, related, synsets, path, seen, shortestPaths, 5);
         System.err.println("Ending search");
-
 
         System.err.println("Starting matrix build");
         // Build the mapping between each synset's first sense key and a

@@ -23,14 +23,12 @@
 
 package gov.llnl.ontology.mapreduce.ingest;
 
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.text.parse.MaltLinearParser;
 import gov.llnl.ontology.text.parse.Parser;
 import gov.llnl.ontology.text.tag.OpenNlpMEPOSTagger;
 import gov.llnl.ontology.text.tokenize.OpenNlpMETokenizer;
-import gov.llnl.ontology.util.MRArgOptions;
 import gov.llnl.ontology.util.StringPair;
-
-import com.google.common.collect.Lists;
 
 import opennlp.tools.postag.POSTagger;
 import opennlp.tools.tokenize.Tokenizer;
@@ -41,13 +39,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -55,7 +50,6 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
-import java.util.List;
 
 
 /**
@@ -185,7 +179,8 @@ public class ParseWordsiMR extends Configured implements Tool {
             pairs[preTokens.length] = new StringPair(header, "NN");
 
             // Add in the post text.
-            for (int i = 0, j = preTokens.length+1; i < postTokens.length; ++i, ++j)
+            for (int i = 0, j = preTokens.length+1; i < postTokens.length; 
+                    ++i, ++j)
                 pairs[j] = new StringPair(postTokens[i], postTags[i]);
 
             // Parse the text.

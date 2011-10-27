@@ -14,17 +14,6 @@
   <name>C-Cat Wordnet</name>
   <description>C-Cat wordnet libraries</description>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <!-- general -->
-    <opennlp.version>1.5.1-incubating</opennlp.version>
-    <guava.version>r09</guava.version>
-    <logging.version>1.1.1</logging.version>
-    <sspace.version>2.0</sspace.version>
-    <stanford.version>2010-11-12</stanford.version>
-  </properties>
-
   <dependencies>
     <!-- our modules -->
     <dependency>
@@ -42,28 +31,23 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>edu.ucla.sspace</groupId>
       <artifactId>sspace</artifactId>
-      <version>${sspace.version}</version>
     </dependency>
     <dependency>
       <groupId>edu.stanford.nlp</groupId>
       <artifactId>stanfordNlp</artifactId>
-      <version>${stanford.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.opennlp</groupId>
       <artifactId>opennlp-tools</artifactId>
-    <version>${opennlp.version}</version>
     </dependency>
   </dependencies>
 

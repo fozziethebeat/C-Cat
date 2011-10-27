@@ -1,10 +1,10 @@
 package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.EvidenceTableMR;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.EvidenceTable;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.Counter;
-import gov.llnl.ontology.util.MRArgOptions;
 import gov.llnl.ontology.util.StringPair;
 
 import edu.ucla.sspace.util.ReflectionUtil;

@@ -34,6 +34,9 @@ import com.google.gson.Gson;
 
 import edu.stanford.nlp.pipeline.Annotation;
 
+import edu.ucla.sspace.dependency.DependencyRelation;
+import edu.ucla.sspace.dependency.DependencyTreeNode;
+
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -67,6 +70,16 @@ public class SentenceTest {
         {-1, 11}
     };
 
+    private static final String[][] TEST_PARSED_SENTENCES = {
+        {"When", "WRB", "2", "advmod"},
+        {"released", "VBN", "0", "null"},
+        {"into", "IN", "2", "prep"}, 
+        {"the", "DT", "5", "det"},
+        {"air", "NN", "3", "pobj"},
+        {",", ",", "7", "punct"},
+        {"CFCs", "NNP", "4", "nn"},
+    };
+
     public static Sentence makeSentence(int start, int end,
                                         String[][] tokenInfo, int[][] ranges) {
         Sentence sent = new Sentence(start, end, tokenInfo.length);
@@ -77,6 +90,126 @@ public class SentenceTest {
             sent.addAnnotation(i, tok);
         }
         return sent;
+    }
+
+    public static Annotation annotationFromCoNLL(String[] conllString) {
+        Annotation token = new Annotation(conllString[0]);
+        AnnotationUtil.setPos(token, conllString[1]);
+        AnnotationUtil.setDependencyRelation(token, conllString[3]);
+        AnnotationUtil.setDependencyParent(
+                token, Integer.parseInt(conllString[2]));
+        return token;
+    }
+
+    @Test public void testConstructorAndGetters() {
+        Sentence sent = new Sentence(0, 100, 8);
+        assertEquals(0, sent.start());
+        assertEquals(100, sent.end());
+        assertEquals(8, sent.numTokens());
+        assertEquals(0, sent.span().getSource());
+        assertEquals(100, sent.span().getTarget());
+    }
+
+    @Test public void testSentenceText() {
+        Sentence sent = new Sentence(2, 10, 8);
+        String text = "abcdefghijlkmop";
+        sent.setText(text);
+        assertEquals(text.substring(2, 10), sent.sentenceText());
+    }
+
+    @Test public void testSetAndGet() {
+        Sentence sent = new Sentence(0, 100, 1);
+        Annotation annot = new Annotation("blah");
+        sent.addAnnotation(0, annot);
+        assertEquals(annot, sent.getAnnotation(0));
+    }
+
+    @Test public void testEmptyGet() {
+        Sentence sent = new Sentence(0, 100, 1);
+        assertEquals(null, sent.getAnnotation(0));
+    }
+
+    @Test (expected=IndexOutOfBoundsException.class)
+    public void testNegativeSet() {
+        Sentence sent = new Sentence(0, 100, 1);
+        Annotation annot = new Annotation("blah");
+        sent.addAnnotation(-1, annot);
+    }
+
+    @Test (expected=IndexOutOfBoundsException.class)
+    public void testTooLargeSet() {
+        Sentence sent = new Sentence(0, 100, 1);
+        Annotation annot = new Annotation("blah");
+        sent.addAnnotation(1, annot);
+    }
+
+    @Test (expected=IndexOutOfBoundsException.class)
+    public void testNegativeGet() {
+        Sentence sent = new Sentence(0, 100, 1);
+        sent.getAnnotation(-1);
+    }
+
+    @Test (expected=IndexOutOfBoundsException.class)
+    public void testTooLargeGet() {
+        Sentence sent = new Sentence(0, 100, 1);
+        sent.getAnnotation(1);
+    }
+
+    @Test public void testAnnotationIterator() {
+        Sentence sentence = new Sentence(0, 100, 7);
+        for (int i = 0; i < TEST_PARSED_SENTENCES.length; ++i)
+            sentence.addAnnotation(
+                    i, annotationFromCoNLL(TEST_PARSED_SENTENCES[i]));
+
+        Iterator<Annotation> iter = sentence.iterator();
+        for (int i = 0; i < TEST_PARSED_SENTENCES.length; ++i) {
+            assertTrue(iter.hasNext());
+            Annotation token = iter.next();
+            assertEquals(TEST_PARSED_SENTENCES[i][0],
+                         AnnotationUtil.word(token));
+            assertEquals(TEST_PARSED_SENTENCES[i][1],
+                         AnnotationUtil.pos(token));
+            assertEquals(Integer.parseInt(TEST_PARSED_SENTENCES[i][2]),
+                         AnnotationUtil.dependencyParent(token));
+            assertEquals(TEST_PARSED_SENTENCES[i][3],
+                         AnnotationUtil.dependencyRelation(token));
+        }
+    }
+
+    @Test public void testDependencyParseTree() {
+        Sentence sentence = new Sentence(0, 100, 7);
+        for (int i = 0; i < TEST_PARSED_SENTENCES.length; ++i)
+            sentence.addAnnotation(
+                    i, annotationFromCoNLL(TEST_PARSED_SENTENCES[i]));
+        DependencyTreeNode[] tree = sentence.dependencyParseTree();
+
+        assertEquals(TEST_PARSED_SENTENCES.length, tree.length);
+        for (int i = 0; i < TEST_PARSED_SENTENCES.length; ++i) {
+            assertEquals(TEST_PARSED_SENTENCES[i][0], tree[i].word());
+            assertEquals(TEST_PARSED_SENTENCES[i][1], tree[i].pos());
+        }
+
+        assertEquals(1, tree[0].neighbors().size());
+        DependencyRelation relation = tree[0].neighbors().get(0);
+        assertEquals("When", relation.dependentNode().word());
+        assertEquals("advmod", relation.relation());
+        assertEquals("released", relation.headNode().word());
+
+        assertEquals(2, tree[1].neighbors().size());
+        relation = tree[1].neighbors().get(0);
+        assertEquals("When", relation.dependentNode().word());
+        assertEquals("advmod", relation.relation());
+        assertEquals("released", relation.headNode().word());
+    }
+
+    @Test public void testTaggedTokens() {
+        Sentence sentence = makeSentence(0, 4, TOKEN_INFO, RANGES);
+        StringPair[] taggedPairs = sentence.taggedTokens();
+        assertEquals(TOKEN_INFO.length, taggedPairs.length);
+        for (int i = 0; i < TOKEN_INFO.length; ++i) {
+            assertEquals(TOKEN_INFO[i][0], taggedPairs[i].x);
+            assertEquals(TOKEN_INFO[i][1], taggedPairs[i].y);
+        }
     }
 
     @Test public void testJSon() {

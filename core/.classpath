@@ -1,9 +1,6 @@
 <classpath>
   <classpathentry kind="src" path="src/test/java" output="target/test-classes" including="**/*.java"/>
   <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
-  <classpathentry kind="src" path="/Users/stevens35/mapr/hadoop/conf" excluding="**/*.java"/>
-  <classpathentry kind="src" path="/Users/stevens35/mapr/hbase/conf" excluding="**/*.java"/>
-  <classpathentry kind="src" path="data" excluding="**/*.java"/>
   <classpathentry kind="output" path="target/classes"/>
   <classpathentry kind="var" path="M2_REPO/javax/activation/activation/1.1/activation-1.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/javax/xml/bind/jaxb-api/2.1/jaxb-api-2.1.jar"/>
@@ -21,11 +18,15 @@
   <classpathentry kind="var" path="M2_REPO/commons-el/commons-el/1.0/commons-el-1.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/commons-httpclient/commons-httpclient/3.0.1/commons-httpclient-3.0.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/commons-lang/commons-lang/2.5/commons-lang-2.5.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-lang3/3.0.1/commons-lang3-3.0.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-math/2.1/commons-math-2.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/commons-net/commons-net/1.4.1/commons-net-1.4.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/commons-pool/commons-pool/1.4/commons-pool-1.4.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/eclipse/jdt/core/3.1.1/core-3.1.1.jar"/>
+  <classpathentry kind="src" path="/extendOntology-data"/>
+  <classpathentry kind="src" path="/extendOntology-util"/>
+  <classpathentry kind="src" path="/extendOntology-wordnet"/>
   <classpathentry kind="var" path="M2_REPO/com/google/collections/google-collections/1.0-rc2/google-collections-1.0-rc2.jar"/>
   <classpathentry kind="var" path="M2_REPO/com/google/code/gson/gson/1.7.1/gson-1.7.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/com/google/guava/guava/r09/guava-r09.jar"/>
@@ -55,7 +56,7 @@
   <classpathentry kind="var" path="M2_REPO/net/sf/kosmosfs/kfs/0.3/kfs-0.3.jar"/>
   <classpathentry kind="var" path="M2_REPO/lib/linear/liblinear/1.7/liblinear-1.7.jar"/>
   <classpathentry kind="var" path="M2_REPO/lib/svm/libsvm/1.0/libsvm-1.0.jar"/>
-  <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.16/log4j-1.2.16.jar"/>
+  <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.9/log4j-1.2.9.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/lucene/lucene-analyzers/3.1.0/lucene-analyzers-3.1.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/lucene/lucene-core/3.1.0/lucene-core-3.1.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/mahout/mahout-collections/1.0/mahout-collections-1.0.jar"/>

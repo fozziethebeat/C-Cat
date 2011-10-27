@@ -24,11 +24,11 @@
 package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.Document;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.AnnotationUtil;
-import gov.llnl.ontology.util.MRArgOptions;
 
 import edu.stanford.nlp.pipeline.Annotation;
 

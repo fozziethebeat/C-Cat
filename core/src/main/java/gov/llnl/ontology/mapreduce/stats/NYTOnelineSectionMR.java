@@ -1,9 +1,9 @@
 package gov.llnl.ontology.mapreduce.stats;
 
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.text.corpora.NYTDocumentReader;
 import gov.llnl.ontology.text.corpora.NYTCorpusDocument;
 import gov.llnl.ontology.text.hbase.GzipTarInputFormat;
-import gov.llnl.ontology.util.MRArgOptions;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,7 +15,6 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;

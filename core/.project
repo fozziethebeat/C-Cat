@@ -1,11 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>extendOntology</name>
-	<comment></comment>
-	<projects>
-	</projects>
-	<buildSpec>
-	</buildSpec>
-	<natures>
-	</natures>
+  <name>extendOntology-core</name>
+  <comment>The Complete C-Cat package. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
+  <projects>
+    <project>extendOntology-data</project>
+    <project>extendOntology-util</project>
+    <project>extendOntology-wordnet</project>
+  </projects>
+  <buildSpec>
+    <buildCommand>
+      <name>org.eclipse.jdt.core.javabuilder</name>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+  </natures>
 </projectDescription>

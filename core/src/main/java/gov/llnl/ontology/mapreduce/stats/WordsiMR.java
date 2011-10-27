@@ -23,24 +23,19 @@
 
 package gov.llnl.ontology.mapreduce.stats;
 
+
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
-import gov.llnl.ontology.text.DependencyWordBasisMapping;
-import gov.llnl.ontology.text.DependencyRelationBasisMapping;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.text.StringBasisMapping;
-import gov.llnl.ontology.util.StringCounter;
-import gov.llnl.ontology.util.MRArgOptions;
-import gov.llnl.ontology.util.StringPair;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import edu.ucla.sspace.basis.BasisMapping;
-import edu.ucla.sspace.dependency.DependencyPath;
 import edu.ucla.sspace.dependency.DependencyPathAcceptor;
 import edu.ucla.sspace.dependency.DependencyPathWeight;
 import edu.ucla.sspace.dependency.DependencyTreeNode;
-import edu.ucla.sspace.dependency.FilteredDependencyIterator;
 import edu.ucla.sspace.dv.DependencyPathBasisMapping;
 import edu.ucla.sspace.util.ReflectionUtil;
 import edu.ucla.sspace.vector.SparseDoubleVector;
@@ -59,7 +54,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -79,11 +73,11 @@ public class WordsiMR extends CorpusTableMR {
 
     public static final String ABOUT =
         "Computes context vectors for a wordsi model using a particular " +
-        "DependencyContextGenerator.  The computed context vectors will be in a pure " +
-        "text format with the context id as the first token and then a list of " +
-        "feature,count pairs.  The full form of each feature will be written, rather " +
-        "than an index matched to each feature since mappers are unable to " +
-        "coordinate feature index mappings.";
+        "DependencyContextGenerator.  The computed context vectors will be " +
+        "in a pure text format with the context id as the first token and " +
+        "then a list of feature,count pairs.  The full form of each feature " +
+        "will be written, rather than an index matched to each feature since " +
+        "mappers are unable to coordinate feature index mappings.";
 
     /**
      * A prefix for any {@link Configuration} setting.
@@ -394,7 +388,8 @@ public class WordsiMR extends CorpusTableMR {
             for (Sentence sentence : table.sentences(row))
                 for (DependencyTreeNode node : sentence.dependencyParseTree())
                     nodes.add(node);
-            DependencyTreeNode[] tree = nodes.toArray(new DependencyTreeNode[0]);
+            DependencyTreeNode[] tree = nodes.toArray(
+                    new DependencyTreeNode[0]);
 
             // Iterate over each tree node and count all valid co-occurring
             // terms connected by a valid dependency path.

@@ -29,6 +29,6 @@ mvn install:install-file -DgroupId=lib.linear -DartifactId=liblinear \
 mvn install:install-file -DgroupId=lib.svm -DartifactId=libsvm \
 -Dversion=1.0 -Dpackaging=jar -Dfile=lib/libsvm.jar
 
-# Add map 0.1 (Not in trunk yet)
-#mvn install:install-file -DgroupId=com.maprfs -DartifactId=maprfs \
-#-Dversion=0.1 -Dpackaging=jar -Dfile=lib/maprfs-0.1.jar
+# Add hbase 0.90.1 (Not in trunk yet)
+mvn install:install-file -DgroupId=org.apache.hbase -DartifactId=hbase \
+-Dversion=0.90.1 -Dpackaging=jar -Dfile=lib/hbase-0.90.1.jar

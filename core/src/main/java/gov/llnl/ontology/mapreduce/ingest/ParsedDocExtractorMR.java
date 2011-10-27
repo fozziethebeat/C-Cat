@@ -24,18 +24,13 @@
 package gov.llnl.ontology.mapreduce.ingest;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
-import gov.llnl.ontology.mapreduce.table.CorpusTable;
-import gov.llnl.ontology.text.Document;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.AnnotationUtil;
 
-import gov.llnl.ontology.util.MRArgOptions;
 
 import edu.stanford.nlp.pipeline.Annotation;
 
-import edu.ucla.sspace.util.ReflectionUtil;
-
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
@@ -44,7 +39,6 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
@@ -128,7 +122,6 @@ public class ParsedDocExtractorMR extends CorpusTableMR {
                         Result row, 
                         Context context)
                 throws IOException, InterruptedException {
-            Document doc = table.document(row);
             List<Sentence> sentences = table.sentences(row);
             StringBuilder sb = new StringBuilder();
 
@@ -150,8 +143,10 @@ public class ParsedDocExtractorMR extends CorpusTableMR {
                     sb.append("_\t");
 
                     // Print the parent id and the relation type.
-                    sb.append(AnnotationUtil.dependencyParent(token)).append("\t");
-                    sb.append(AnnotationUtil.dependencyRelation(token)).append("\t");
+                    sb.append(AnnotationUtil.dependencyParent(token))
+                        .append("\t");
+                    sb.append(AnnotationUtil.dependencyRelation(token))
+                        .append("\t");
 
                     sb.append("\n");
                 }

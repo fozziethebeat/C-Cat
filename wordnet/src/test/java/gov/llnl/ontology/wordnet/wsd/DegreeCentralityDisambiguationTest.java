@@ -70,7 +70,7 @@ public class DegreeCentralityDisambiguationTest
         Sentence sentences = getSentences(TEST_SENTENCE, TEST_POS);
         LinkedMockReader reader = new LinkedMockReader(SYNSET_DATA);
         for (String[] synsetLink : SYNSET_LINKS)
-            reader.connectSynsets(synsetLink[0], synsetLink[1], "r");
+            reader.connectSynsets(synsetLink[0], synsetLink[1], "&");
 
         wsdAlg.setup(reader);
         Sentence sent = wsdAlg.disambiguate(sentences);

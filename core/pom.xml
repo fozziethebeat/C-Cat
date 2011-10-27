@@ -13,10 +13,6 @@
   <name>C-Cat</name>
   <description>The Complete C-Cat package</description>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
   <dependencies>
     <!-- our modules -->
     <dependency>
@@ -31,58 +27,47 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>edu.ucla.sspace</groupId>
       <artifactId>sspace</artifactId>
-      <version>${sspace.version}</version>
     </dependency>
     <dependency>
       <groupId>graph.edu.ucla.sspace</groupId>
       <artifactId>sspace-graph</artifactId>
-      <version>${sspace-graph.version}</version>
     </dependency>
     <dependency>
       <groupId>gov.llnl.text</groupId>
       <artifactId>textCommons</artifactId>
-      <version>${text.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.mahout</groupId>
       <artifactId>mahout-math</artifactId>
-      <version>${mahout.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.mahout</groupId>
       <artifactId>mahout-core</artifactId>
-      <version>${mahout.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-core</artifactId>
-      <version>${hadoop.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
-      <version>${hbase.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.opennlp</groupId>
       <artifactId>opennlp-tools</artifactId>
-      <version>${opennlp.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>${gson.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
     </dependency>
   </dependencies>
 

@@ -23,14 +23,11 @@
 
 package gov.llnl.ontology.mains;
 
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.EvidenceTable;
 import gov.llnl.ontology.util.Counter;
 import gov.llnl.ontology.util.MahoutSparseVector;
-import gov.llnl.ontology.util.MRArgOptions;
-import gov.llnl.ontology.wordnet.OntologyReader;
-import gov.llnl.ontology.wordnet.SynsetRelations;
 import gov.llnl.ontology.wordnet.SynsetRelations.HypernymStatus;
-import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 
 import edu.ucla.sspace.basis.StringBasisMapping;
 import edu.ucla.sspace.vector.SparseDoubleVector;
@@ -42,7 +39,6 @@ import org.apache.mahout.classifier.sgd.AdaptiveLogisticRegression;
 import org.apache.mahout.classifier.sgd.AdaptiveLogisticRegression.Wrapper;
 import org.apache.mahout.classifier.sgd.CrossFoldLearner;
 import org.apache.mahout.classifier.sgd.L1;
-import org.apache.mahout.classifier.sgd.OnlineLogisticRegression;
 import org.apache.mahout.ep.State;
 
 import org.apache.hadoop.hbase.client.Result;

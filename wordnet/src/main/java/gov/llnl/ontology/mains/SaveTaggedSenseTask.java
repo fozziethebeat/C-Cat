@@ -3,23 +3,15 @@ package gov.llnl.ontology.mains;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.text.corpora.SenseEvalAllWordsDocumentReader;
 import gov.llnl.ontology.util.AnnotationUtil;
-import gov.llnl.ontology.util.StringPair;
 import gov.llnl.ontology.text.tag.OpenNlpMEPOSTagger;
-
-import com.google.common.collect.Sets;
 
 import edu.stanford.nlp.ling.CoreAnnotations.StemAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.ValueAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 
-import edu.ucla.sspace.util.ReflectionUtil;
-import edu.ucla.sspace.util.WorkQueue;
-
 import opennlp.tools.postag.POSTagger;
 
 import java.io.PrintWriter;
-import java.util.List;
-import java.util.Set;
 
 
 /**
@@ -37,36 +29,37 @@ public class SaveTaggedSenseTask {
             new SenseEvalAllWordsDocumentReader();
         reader.parse(testCorpusName);
 
-        List<Sentence> sentences = reader.sentences();
-        final String[] output = new String[sentences.size()];
-        int s = 0;
-        WorkQueue workQueue = WorkQueue.getWorkQueue();
-        Object key = workQueue.registerTaskGroup(sentences.size());
-        for (final Sentence sentence : sentences) {
+        PrintWriter writer = new PrintWriter(outputPostFix);
+        writer.println("<?xml version=\"1.0\"?>" +
+                       "<!DOCTYPE corpus SYSTEM  \"all-words.dtd\">" +
+                       "<corpus lang=\"en\">");
+        for (final Sentence sentence : reader.sentences()) {
+            writer.println("<s>");
             int i = 0;
-            final Set<Integer> focusIndices = Sets.newHashSet();
             String[] tokens = new String[sentence.numTokens()];
             for (Annotation annot : sentence) {
-                tokens[i] = AnnotationUtil.word(annot);
-                if (tokens[i].indexOf(" ") != -1)
-                    tokens[i] = annot.get(StemAnnotation.class);
-
-                if (annot.get(ValueAnnotation.class) != null) {
-                    focusIndices.add(i);
-                }
-                ++i;
+                String word = AnnotationUtil.word(annot);
+                if (word.indexOf(" ") != -1)
+                    word = annot.get(StemAnnotation.class);
+                tokens[i++] = word;
             }
 
-            i = 0;
             String[] tags = tagger.tag(tokens);
-            for (Annotation annot : sentence)
-                AnnotationUtil.setPos(annot, tags[i++]);
+
+            i = 0;
+            for (Annotation annot : sentence) {
+                String word = AnnotationUtil.word(annot);
+                String id = annot.get(ValueAnnotation.class);
+                String tag = tags[i++];
+                if (id == null)
+                    writer.printf("<w pos=\"%s\">%s</w>\n", tag, word);
+                else
+                    writer.printf("<h pos=\"%s\" id=\"%s\">%s</h>\n",
+                                  tag, id, word);
+            }
+            writer.println("</s>");
         }
 
-        StringPair lines = Sentence.writeSentences(sentences);
-        PrintWriter writer = new PrintWriter(outputPostFix);
-        writer.println(lines.x);
-        writer.println(lines.y);
         writer.close();
     }
 } 

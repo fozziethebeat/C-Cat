@@ -21,14 +21,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.llnl.ontology;
+package gov.llnl.ontology.mapreduce.ingest;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
-import gov.llnl.ontology.mapreduce.table.CorpusTable;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.text.Document;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.AnnotationUtil;
-import gov.llnl.ontology.util.MRArgOptions;
 
 import com.google.common.collect.Sets;
 
@@ -44,7 +43,6 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.BufferedReader;
@@ -66,11 +64,14 @@ public class OneLinePerDocExtractorMR extends CorpusTableMR {
     public static final String ABOUT =
         "Extracts the raw tokenized text from a corpus and stores it to hdfs";
 
+    public static final String MR_NAME = "OneLinePerDocExtractorMR";
+
     /**
      * Runs the {@link TokenCountMR}.
      */
     public static void main(String[] args) throws Exception {
-        ToolRunner.run(HBaseConfiguration.create(), new OneLinePerDocExtractorMR(), args);
+        ToolRunner.run(HBaseConfiguration.create(),
+                       new OneLinePerDocExtractorMR(), args);
     }
 
     protected void addOptions(MRArgOptions options) {
@@ -88,7 +89,8 @@ public class OneLinePerDocExtractorMR extends CorpusTableMR {
      * {@inheritDoc}
      */
     protected void validateOptions(MRArgOptions options) {
-        options.validate(ABOUT, "<outdir>", OneLinePerDocExtractorMR.class, 1, 'C');
+        options.validate(ABOUT, "<outdir>", OneLinePerDocExtractorMR.class, 
+                         1, 'C');
     }
 
     /**
@@ -196,7 +198,7 @@ public class OneLinePerDocExtractorMR extends CorpusTableMR {
                 context.write(new Text(doc.key()), new Text(sb.toString()));
             else 
                 context.write(new Text(), new Text(sb.toString()));
-            context.getCounter("OneLinePerDocExtractorMR", "Document").increment(1);
+            context.getCounter(MR_NAME, "Document").increment(1);
         }
     }
 }

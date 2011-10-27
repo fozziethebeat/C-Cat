@@ -1,7 +1,6 @@
 package gov.llnl.ontology.mapreduce;
 
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
-import gov.llnl.ontology.util.MRArgOptions;
 
 import com.google.common.collect.Sets;
 

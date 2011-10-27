@@ -24,6 +24,7 @@
 package gov.llnl.ontology.mapreduce.ingest;
 
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 
 import gov.llnl.ontology.text.DocumentReader;
 
@@ -31,7 +32,6 @@ import gov.llnl.ontology.text.hbase.GzipTarInputFormat;
 import gov.llnl.ontology.text.hbase.GzipXmlInputFormat;
 import gov.llnl.ontology.text.hbase.XMLInputFormat;
 
-import gov.llnl.ontology.util.MRArgOptions;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
@@ -41,21 +41,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.IdentityTableReducer;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
-import java.io.IOException;
-
-import java.util.Map;
 
 
 /**

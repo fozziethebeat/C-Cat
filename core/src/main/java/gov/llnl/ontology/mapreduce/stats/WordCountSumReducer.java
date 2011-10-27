@@ -1,13 +1,34 @@
+/*
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the C-Cat package and is covered under the terms and
+ * conditions therein.
+ *
+ * The C-Cat package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.util.StringCounter;
 import gov.llnl.ontology.util.StringPair;
 
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
 
 import java.io.IOException;
 import java.util.Map;
@@ -38,19 +59,13 @@ public class WordCountSumReducer
     /**
      * {@inheritDoc}
      */
-    public void reduce(StringPair key, Iterable<IntWritable> values, Context context)
+    public void reduce(StringPair key,
+                       Iterable<IntWritable> values,
+                       Context context)
             throws IOException, InterruptedException {
         int totalCount = 0;
         for (IntWritable value : values)
             totalCount += value.get();
-        /*
-        StringCounter occurrences = new StringCounter();
-        for (StringCounter counter : values) {
-            for (Map.Entry<String, Integer> e : counter)
-                occurrences.count(e.getKey(), e.getValue());
-        }
-        */
-
         context.write(key, new IntWritable(totalCount));
     }
 }

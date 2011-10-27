@@ -1,11 +1,10 @@
 package gov.llnl.ontology.mapreduce.ingest;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
-import gov.llnl.ontology.mapreduce.table.CorpusTable;
+import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.EvidenceTable;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.util.Counter;
-import gov.llnl.ontology.util.MRArgOptions;
 
 import edu.ucla.sspace.dependency.DependencyRelation;
 import edu.ucla.sspace.dependency.DependencyPath;
@@ -20,12 +19,9 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper.Context;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;

@@ -73,10 +73,8 @@ public class Sentence extends Annotation
      * ";" exist outside of quotes.
      */
     private static final String TOK_SEPARATOR = "\\|";
-   // (?=(?:[^\'\"]|'[^\']*'|\"[^\"]*\")*$)";
 
     private static final String ANNOT_SEPARATOR = ";";
-        //(?=(?:[^\'\"]|'[^\']*'|\"[^\"]*\")*$)";
 
     /**
      * The start index of this sentence in a text document.
@@ -163,7 +161,8 @@ public class Sentence extends Annotation
         for (int i = 0; i < nodes.length; ++i)
             nodes[i] = new SimpleDependencyTreeNode(
                     tokenAnnotations[i].get(TextAnnotation.class),
-                    tokenAnnotations[i].get(PartOfSpeechAnnotation.class));
+                    tokenAnnotations[i].get(PartOfSpeechAnnotation.class),
+                    i);
 
         // For each word, add a SimpleDependencyRelation to the tree
         // nodes that records the relation to it's parent.  Parent nodes

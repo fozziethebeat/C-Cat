@@ -90,6 +90,5 @@ public class LeskWordSenseDisambiguationTest {
         Annotation word = sent.getAnnotation(1);
         assertNotNull(word);
         assertEquals(SYNSET_DATA[0][0], AnnotationUtil.wordSense(word));
-        wsdAlg.disambiguate(sentences);
     }
 }

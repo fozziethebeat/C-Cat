@@ -1,7 +1,6 @@
 package gov.llnl.ontology.mapreduce;
 
 import gov.llnl.ontology.mapreduce.table.EvidenceTable;
-import gov.llnl.ontology.util.MRArgOptions;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
