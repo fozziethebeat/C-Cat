@@ -35,7 +35,7 @@
 
     <!-- core -->
     <hadoop.version>0.20.2</hadoop.version>
-    <hbase.version>0.90.1</hbase.version>
+    <hbase.version>0.90.4</hbase.version>
     <mahout.version>0.5</mahout.version>
     <sspace-graph.version>1.0</sspace-graph.version>
   </properties>

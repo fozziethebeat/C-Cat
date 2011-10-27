@@ -53,18 +53,27 @@ import edu.ucla.sspace.util.ReflectionUtil;
  */
 public class MRArgOptions extends ArgOptions {
 
+    public static final String DEFAULT_CORPUS_TABLE = 
+        "gov.llnl.ontology.mapreduce.table.TrinidadTable";
+
+    public static final String DEFAULT_EVIDENCE_TABLE = 
+        "gov.llnl.ontology.mapreduce.table.WordNetEvidenceTable";
+
     /**
      * Creates a new {@link MRArgOptions}.
      */
     public MRArgOptions() {
         addOption('C', "corpusTable", 
-                  "Specifies the type of CorpusTable being used",
+                  "Specifies the type of CorpusTable being used.  " +
+                  "(Default: TrinidadTable)",
                   true, "CLASSNAME", "Optional");
         addOption('E', "evidenceTable",
-                  "Specifies the type of EvidenceTable being used",
+                  "Specifies the type of EvidenceTable being used.  " +
+                  "(Default: WordNetEvidenceTable",
                   true, "CLASSNAME", "Optional");
         addOption('S', "sourceCorpus",
-                  "Specifies the name of the source corpus to be processed.",
+                  "Specifies the name of the source corpus to be " +
+                  "processed.  By default this will access all corpora",
                   true, "CLASSNAME", "Optional");
     }
 
@@ -73,7 +82,8 @@ public class MRArgOptions extends ArgOptions {
      * line.
      */
     public CorpusTable corpusTable() {
-        return ReflectionUtil.getObjectInstance(getStringOption('C'));
+        return ReflectionUtil.getObjectInstance(
+                getStringOption('C', DEFAULT_CORPUS_TABLE));
     }
 
     /**
@@ -81,7 +91,7 @@ public class MRArgOptions extends ArgOptions {
      * line.
      */
     public String corpusTableType() {
-        return getStringOption('C');
+        return getStringOption('C', DEFAULT_CORPUS_TABLE);
     }
 
     /**
@@ -89,7 +99,8 @@ public class MRArgOptions extends ArgOptions {
      * command line.
      */
     public EvidenceTable evidenceTable() {
-        return ReflectionUtil.getObjectInstance(getStringOption('E'));
+        return ReflectionUtil.getObjectInstance(
+                getStringOption('E', DEFAULT_EVIDENCE_TABLE));
     }
 
     /**
@@ -97,7 +108,7 @@ public class MRArgOptions extends ArgOptions {
      * line.
      */
     public String evidenceTableType() {
-        return getStringOption('E');
+        return getStringOption('E', DEFAULT_EVIDENCE_TABLE);
     }
 
     /**

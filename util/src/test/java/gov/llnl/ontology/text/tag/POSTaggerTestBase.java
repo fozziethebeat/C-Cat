@@ -16,6 +16,7 @@ public abstract class POSTaggerTestBase {
     public static final String[] TEST_SENT =
     { "the", "quick", "brown", "fox", "jumped", "over." };
 
+    /*
     @Test
     public void testPOSTagger() {
         POSTagger tagger = tagger(false);
@@ -26,6 +27,7 @@ public abstract class POSTaggerTestBase {
             assertFalse("".equals(tag));
         }
     }
+    */
 
     @Test
     public void testPOSTaggerFromJar() {

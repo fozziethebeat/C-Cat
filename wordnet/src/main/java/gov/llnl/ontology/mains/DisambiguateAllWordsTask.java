@@ -53,7 +53,7 @@ public class DisambiguateAllWordsTask {
 
         final String[] output = new String[sentences.size()];
         int s = 0;
-        WorkQueue workQueue = new WorkQueue();
+        WorkQueue workQueue = WorkQueue.getWorkQueue();
         Object key = workQueue.registerTaskGroup(sentences.size());
         for (final Sentence sentence : sentences) {
             final Set<Integer> focusIndices = Sets.newHashSet();

@@ -3,12 +3,16 @@ package gov.llnl.ontology.mapreduce;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.util.MRArgOptions;
 
+import com.google.common.collect.Sets;
+
 import edu.ucla.sspace.util.ReflectionUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -20,7 +24,13 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.util.Tool;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOError;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Set;
 
 
 /**
@@ -85,6 +95,15 @@ public abstract class CorpusTableMR extends Configured implements Tool {
                                                IdentityTableReducer.class, 
                                                job);
         job.setNumReduceTasks(0);
+    }
+
+    protected void addToDistrubutedCache(String fileName, Configuration conf) {
+        try {
+            DistributedCache.addCacheFile(new URI(fileName), conf);
+        } catch (URISyntaxException use) {
+            use.printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
@@ -184,6 +203,22 @@ public abstract class CorpusTableMR extends Configured implements Tool {
             context.setStatus("CorpusTable created");
 
             setup(context, conf);
+        }
+
+        public Set<String> loadWordList(Configuration conf) {
+            try {
+                Path wordListPath = 
+                    DistributedCache.getLocalCacheFiles(conf)[0];
+                BufferedReader br = new BufferedReader(
+                        new FileReader(wordListPath.toString()));
+
+                Set<String> wordList = Sets.newHashSet();
+                for (String line = null; (line = br.readLine()) != null; )
+                    wordList.add(line.trim());
+                return wordList;
+            } catch (IOException ioe) {
+                throw new IOError(ioe);
+            }
         }
 
         /**

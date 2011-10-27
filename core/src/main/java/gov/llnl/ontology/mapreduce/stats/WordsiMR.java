@@ -24,7 +24,6 @@
 package gov.llnl.ontology.mapreduce.stats;
 
 import gov.llnl.ontology.mapreduce.CorpusTableMR;
-import gov.llnl.ontology.mapreduce.table.CorpusTable;
 import gov.llnl.ontology.text.DependencyWordBasisMapping;
 import gov.llnl.ontology.text.DependencyRelationBasisMapping;
 import gov.llnl.ontology.text.Sentence;
@@ -71,6 +70,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
+
 
 /**
  * @author Keith Stevens
@@ -204,6 +204,12 @@ public class WordsiMR extends CorpusTableMR {
                           "represented by wordsi. The format should have " +
                           "one word per line and the file should be on hdfs.",
                           true, "FILE", "Required");
+        options.addOption('c', "compoundWords",
+                          "Specifies a compound word list.  These compound " +
+                          "words will be selected a tokens prior to any " +
+                          "other processing.  The format should have " +
+                          "one word per line and the file should be on hdfs.",
+                          true, "FILE", "Optional");
     }
 
     /**

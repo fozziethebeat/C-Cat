@@ -154,8 +154,6 @@ public class ParsedDocExtractorMR extends CorpusTableMR {
                     sb.append(AnnotationUtil.dependencyRelation(token)).append("\t");
 
                     sb.append("\n");
-
-                    ++i;
                 }
             }
             context.write(EMPTY, new Text(sb.toString()));

@@ -59,7 +59,9 @@ public class GenericMockReader extends OntologyReaderAdaptor {
     }
 
     public Synset[] getSynsets(String lemma, PartsOfSpeech pos) {
-        return getSynsets(lemma + "." + pos.toString());
+        return (pos == null)
+            ? getSynsets(lemma)
+            : getSynsets(lemma + "." + pos.toString());
     }
 
     public Synset getSynset(String lemma) {

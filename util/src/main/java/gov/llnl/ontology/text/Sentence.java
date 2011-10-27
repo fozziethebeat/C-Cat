@@ -37,6 +37,7 @@ import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.util.IntPair;
 
+import edu.ucla.sspace.dependency.DependencyRelation;
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 import edu.ucla.sspace.dependency.SimpleDependencyRelation;
 import edu.ucla.sspace.dependency.SimpleDependencyTreeNode;
@@ -174,8 +175,10 @@ public class Sentence extends Annotation
                     CoNLLDepTypeAnnotation.class);
             if (parent == 0)
                 continue;
-            nodes[i].addNeighbor(new SimpleDependencyRelation(
-                    nodes[parent-1], relation, nodes[i]));
+            DependencyRelation r = new SimpleDependencyRelation(
+                    nodes[parent-1], relation, nodes[i]);
+            nodes[i].addNeighbor(r);
+            nodes[parent-1].addNeighbor(r);
         }
 
         return nodes;

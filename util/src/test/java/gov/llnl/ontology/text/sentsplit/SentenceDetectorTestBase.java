@@ -40,6 +40,7 @@ public abstract class SentenceDetectorTestBase {
     public static final String TEST_PARAGRAPH =
         "the quick brown fox jumped over. Then something awesome happened.";
 
+    /*
     @Test
     public void testSentenceDetector() {
         SentenceDetector detector = detector(false);
@@ -50,6 +51,7 @@ public abstract class SentenceDetectorTestBase {
             assertFalse("".equals(sentence));
         }
     }
+    */
 
     @Test
     public void testSentenceDetectorFromJar() {
@@ -62,6 +64,7 @@ public abstract class SentenceDetectorTestBase {
         }
     }
 
+    /*
     @Test
     public void testSpan() {
         SentenceDetector detector = detector(false);
@@ -74,6 +77,7 @@ public abstract class SentenceDetectorTestBase {
             assertTrue(span.getEnd() <= TEST_PARAGRAPH.length());
         }
     }
+    */
 
     @Test
     public void testSpanWithJar() {
