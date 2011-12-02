@@ -23,10 +23,8 @@
 
 package gov.llnl.ontology.wordnet.wsd;
 
-import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.wordnet.Synset;
-
-import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.basis.StringBasisMapping;
 import edu.ucla.sspace.matrix.Matrix;
@@ -101,7 +99,7 @@ public class DegreeCentralityDisambiguation
                 }
             }
 
-            AnnotationUtil.setWordSense(word, bestSense.getSenseKey(term));
+            word.setSense(bestSense.getSenseKey(term));
         }
     }
 

@@ -127,6 +127,13 @@ public class UnsupportedOntologyReader implements OntologyReader {
     /**
      * @throws UnsupportedOperationException
      */
+    public Synset[] getSynsets(String lemma, PartsOfSpeech pos, boolean useMorphy) {
+        throw new UnsupportedOperationException("Cannot perform this action");
+    }
+
+    /**
+     * @throws UnsupportedOperationException
+     */
     public Synset getSynset(String fullSynsetName) {
         throw new UnsupportedOperationException("Cannot perform this action");
     }

@@ -23,7 +23,7 @@
 
 package gov.llnl.ontology.wordnet.wsd;
 
-import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.util.ExtendedList;
 import gov.llnl.ontology.util.ExtendedMap;
 import gov.llnl.ontology.wordnet.BaseSynset;
@@ -35,8 +35,6 @@ import gov.llnl.ontology.wordnet.SynsetPagerank;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-
-import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
@@ -173,8 +171,8 @@ public class PersonalizedPageRankWSD extends SlidingWindowDisambiguation {
         }
 
         // Store the word sense annotation.
-        String word = AnnotationUtil.word(focus);
-        AnnotationUtil.setWordSense(result, maxSynset.getSenseKey(word));
+        String word = focus.word();
+        result.setSense(maxSynset.getSenseKey(word));
     }
 
     /**

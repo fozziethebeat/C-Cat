@@ -23,13 +23,12 @@
 
 package gov.llnl.ontology.wordnet.wsd;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.text.SimpleAnnotation;
 import gov.llnl.ontology.wordnet.GenericMockReader;
 
 import com.google.common.collect.Lists;
-
-import edu.stanford.nlp.pipeline.Annotation;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -67,8 +66,8 @@ public class LeskWordSenseDisambiguationTest {
 
         Sentence sent = new Sentence(0, 1, tokens.length);
         for (int i = 0; i < tokens.length; ++i) {
-            Annotation annot = new Annotation(tokens[i]);
-            AnnotationUtil.setPos(annot, pos[i]);
+            Annotation annot = new SimpleAnnotation(tokens[i]);
+            annot.setPos(pos[i]);
             sent.addAnnotation(i, annot);
         }
 
@@ -89,6 +88,6 @@ public class LeskWordSenseDisambiguationTest {
 
         Annotation word = sent.getAnnotation(1);
         assertNotNull(word);
-        assertEquals(SYNSET_DATA[0][0], AnnotationUtil.wordSense(word));
+        assertEquals(SYNSET_DATA[0][0], word.sense());
     }
 }

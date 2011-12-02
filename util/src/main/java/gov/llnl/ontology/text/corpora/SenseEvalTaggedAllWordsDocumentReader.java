@@ -1,12 +1,10 @@
 package gov.llnl.ontology.text.corpora;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.text.StanfordAnnotation;
 
 import com.google.common.collect.Lists;
-
-import edu.stanford.nlp.ling.CoreAnnotations.ValueAnnotation;
-import edu.stanford.nlp.pipeline.Annotation;
 
 import java.io.File;
 import java.io.IOError;
@@ -128,10 +126,10 @@ public class SenseEvalTaggedAllWordsDocumentReader extends DefaultHandler {
             return;
 
         String word = (new String(ch, start, length)).trim();
-        Annotation token = new Annotation(word);
+        StanfordAnnotation token = new StanfordAnnotation(word);
         if (inHeadWord) {
-            AnnotationUtil.setPos(token, currentPos);
-            token.set(ValueAnnotation.class, currentId);
+            token.setPos(currentPos);
+            token.setLemma(currentId);
         }
         currentSentence.add(token);
     }

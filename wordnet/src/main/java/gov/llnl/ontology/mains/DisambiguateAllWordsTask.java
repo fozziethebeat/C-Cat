@@ -1,5 +1,6 @@
 package gov.llnl.ontology.mains;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.text.corpora.SenseEvalTaggedAllWordsDocumentReader;
 import gov.llnl.ontology.util.AnnotationUtil;
@@ -8,9 +9,6 @@ import gov.llnl.ontology.wordnet.WordNetCorpusReader;
 import gov.llnl.ontology.wordnet.wsd.WordSenseDisambiguation;
 
 import com.google.common.collect.Sets;
-
-import edu.stanford.nlp.ling.CoreAnnotations.ValueAnnotation;
-import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 import edu.ucla.sspace.util.WorkQueue;
@@ -51,7 +49,7 @@ public class DisambiguateAllWordsTask {
 
             final Set<Integer> focusIndices = Sets.newHashSet();
             for (int i = 0; i < sent.numTokens(); ++i)
-                if (sent.getAnnotation(i).get(ValueAnnotation.class) != null) 
+                if (sent.getAnnotation(i).hasSense())
                     focusIndices.add(i);
 
             final int sentenceId = s++;
@@ -82,10 +80,9 @@ public class DisambiguateAllWordsTask {
         StringBuilder sb = new StringBuilder();
         String prevId = null;
         for (Annotation annot : disambiguated) {
-            String id = sentence.getAnnotation(i).get(
-                    ValueAnnotation.class);
+            String id = sentence.getAnnotation(i).sense();
             if (id != null) {
-                String sense = AnnotationUtil.wordSense(annot);
+                String sense = annot.sense();
                 if (sense == null)
                     sense = "U";
 
