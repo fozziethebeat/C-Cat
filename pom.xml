@@ -69,6 +69,7 @@
     <opennlp.version>1.5.1-incubating</opennlp.version>
     <stanford.version>2010-11-12</stanford.version>
     <text.version>1.5.2</text.version>
+    <htmlparser.version>1.6</htmlparser.version>
 
     <!-- general -->
     <gson.version>1.7.1</gson.version>
@@ -201,6 +202,11 @@
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
           <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.htmlparser</groupId>
+          <artifactId>htmlparser</artifactId>
+          <version>${htmlparser.version}</version>
         </dependency>
       </dependencies>
   </dependencyManagement>
