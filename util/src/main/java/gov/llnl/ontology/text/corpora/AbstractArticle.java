@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.Set;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.htmlparser.nodes.TextNode;
 import org.htmlparser.filters.AndFilter;
 import org.htmlparser.filters.OrFilter;
@@ -269,7 +269,7 @@ public abstract class AbstractArticle implements Article {
 				SimpleNodeIterator nodeIter = textNodes.elements();
 				while (nodeIter.hasMoreNodes()) {
 					Node innerNode = nodeIter.nextNode();
-					content.add(StringEscapeUtils.unescapeHtml(innerNode.toHtml()));
+					content.add(StringEscapeUtils.unescapeHtml3(innerNode.toHtml()));
 				}
 			}
 		}
@@ -310,7 +310,7 @@ public abstract class AbstractArticle implements Article {
 		NodeList titleNode = rootNode.extractAllNodesThatMatch(titleFilter, true);
 		NodeList titleTextNode = extractTextNodes(titleNode);
 		this.setTitle(StringEscapeUtils
-		              .unescapeHtml(titleTextNode.toHtml()));
+		              .unescapeHtml3(titleTextNode.toHtml()));
 	}
 	
 	/**

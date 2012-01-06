@@ -32,3 +32,6 @@ mvn install:install-file -DgroupId=lib.svm -DartifactId=libsvm \
 # Add hbase 0.90.1 (Not in trunk yet)
 mvn install:install-file -DgroupId=org.apache.hbase -DartifactId=hbase \
 -Dversion=0.90.1 -Dpackaging=jar -Dfile=lib/hbase-0.90.1.jar
+
+mvn install:install-file -DgroupId=org.htmlparser -DartifactId=htmlparser \
+-Dversion=1.6 -Dpackaging=jar -Dfile=lib/htmlparser.jar 
