@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>extendOntology</artifactId>
+    <groupId>gov.llnl.ontology</groupId>
+    <version>1.0</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>extendOntology-contrib-castaweb</artifactId>
+  <name>C-Cat Castanet WebApp</name>
+  <description>A simple demo WebApp for Castanet</description>
+  <packaging>war</packaging>
+
+  <dependencies>
+    <!-- our modules -->
+    <dependency>
+      <artifactId>extendOntology-wordnet</artifactId>
+      <groupId>${project.groupId}</groupId>
+    </dependency>
+
+    <dependency>
+      <artifactId>extendOntology-util</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <exclusions>
+        <exclusion>
+          <artifactId>extendOntology-data</artifactId>
+          <groupId>${project.groupId}</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+
+</project>

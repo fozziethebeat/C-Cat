@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+                      http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+  version="3.0"
+  metadata-complete="true">  
+
+  <context-param>
+    <param-name>wordnet</param-name>
+    <param-value>/home/keith/devel/src/WordNet3.0/dict</param-value>
+  </context-param>
+  
+  <context-param>
+    <param-name>stopfile</param-name>
+    <param-value>/home/keith/devel/S-Space/data/english-stop-words-large.txt</param-value>
+  </context-param>
+  
+  <servlet>
+    <servlet-name>Castanet</servlet-name>
+    <servlet-class>gov.llnl.ontology.wordnet.castanet.CastanetServlet</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>Castanet</servlet-name>
+    <url-pattern>/castanet.do</url-pattern>
+  </servlet-mapping>
+</web-app>

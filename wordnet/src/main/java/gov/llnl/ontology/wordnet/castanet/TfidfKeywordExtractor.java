@@ -22,7 +22,7 @@ import edu.ucla.sspace.vsm.VectorSpaceModel;
  *
  *  @author thuang513@gmail.com (Terry Huang)
  */
-public class TfidfKeywordExtractor implements KeywordExtractor {
+public class TfidfKeywordExtractor {
 	
 	/**
 	 * The logger used to record all output
@@ -38,16 +38,6 @@ public class TfidfKeywordExtractor implements KeywordExtractor {
 	 *  Enforce the singleton property.
 	 */
 	private TfidfKeywordExtractor() {}
-
-	/**
-	 *  Enforce the singleton property.
-	 */
-	public static KeywordExtractor getInstance() {
-		if (instance == null) {
-			return new TfidfKeywordExtractor();
-		}
-		return instance;
-	}
 
 	public Map<File, List<Keyword>> extractKeywordsFromFiles(File docFolder,
 	                                                        int topN,

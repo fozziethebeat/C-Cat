@@ -1,173 +1,277 @@
 package gov.llnl.ontology.wordnet.castanet;
 
-import gov.llnl.ontology.wordnet.Synset;
-import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
+import gov.llnl.ontology.text.Document;
+import gov.llnl.ontology.text.CorpusReader;
+import gov.llnl.ontology.text.NewLineSplitCorpusReader;
+import gov.llnl.ontology.text.corpora.TasaDocumentReader;
+import gov.llnl.ontology.wordnet.Attribute;
+import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.WordNetCorpusReader;
-import gov.llnl.ontology.wordnet.castanet.Node;
+import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
+import gov.llnl.ontology.wordnet.Synset;
 
-import java.io.File;
-import java.util.Iterator;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
+import edu.ucla.sspace.matrix.TfIdfTransform;
+
+import java.io.PrintWriter;
 import java.util.List;
-import java.util.Map;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
 
+
 /**
- *  This class represents the Castanet tree presented in:
  *
- *  <li style="font-family:Garamond, Georgia, serif"> E. Stoica, M. A. Hearst, and M. Richardson. 
- *  Automating creation of hierarchical faceted metadata structures. In Proc.
- *  NAACL-HLT 2007, pages 244–251, 2007.</li>
+ * This class implements the Castanet Algorithim described by 
  *
- *  @author thuang513@gmail.com (Terry Huang)
+ *   <li style="font-family:Garamond, Georgia, serif"> E. Stoica, M. A. Hearst, and M. Richardson. Automating
+ *  creation of hierarchical faceted metadata structures. In Proc.
+ *  NAACL-HLT 2007, pages 244–251, 2007.
+ *
+ * @author Terry Huang
  */
 public class Castanet {
+    
+    /**
+     * The logger used to record all output
+     */
+    private static final Logger LOGGER = 
+        Logger.getLogger(Castanet.class.getName());
 
-	/**
-	 * The logger used to record all output
-	 */
-	private static final Logger LOGGER =
-		Logger.getLogger(Castanet.class.getName());
+    /**
+     * The {@link OntologyReader} used to access {@link Synset}s.
+     */
+    private final OntologyReader reader;
 
-	private String stopWordsFile;
-	private File directory;
+    /**
+     * The {@link KeywordExtractor} used to extract keywords from each document.
+     */
+    private final KeywordExtractor extractor;
 
-	private static final int TOP_N_KEYWORDS = 10;
+    public Castanet (OntologyReader reader, KeywordExtractor extractor) {
+        this.reader = reader;
+        this.extractor = extractor;
+    }
 
-	/**
-	 *  WordNet Reader used to create the Castanet tree.
-	 */
-	private static WordNetCorpusReader reader;
-	
-	public Castanet(String directory, String wordnetFilePath) {
-		this(directory, wordnetFilePath, "");
-	}
+    private Node eliminateSingleParents(Node root) {
+        Set<Node> children = root.getChildren();
+        Node parent = root.getParent();
+        if (children.size() == 0)
+            return root;
+        if (children.size() == 1 && parent != null && 
+            !root.getValue().attributeLabels().contains("files"))
+            return eliminateSingleParents(children.iterator().next());
+        else {
+            List<Node> newChildren = Lists.newArrayList();
+            for (Node child : children)
+                newChildren.add(eliminateSingleParents(child));
+            root.setChildren(newChildren);
+            return root;
+        }
+    }
 
-	public Castanet(String directory, String wordNetFilePath, String stopWordsFile) {
-		File directoryFile = new File(directory);
-		if (!directoryFile.isDirectory()) {
-			LOGGER.severe("Invalid directory given to Castanet!");
-			throw new IllegalStateException("Invalid directory given to Castanet!");
-		}
+    /**
+     * Merges the Synset attributes of both nodes. The receiver Node, will get
+     * all the attributes the giver Node has
+     */
+    private Node mergeAttributes(Node receiver, Node giver) {
+        Set<String> receiverLabels = receiver.getValue().attributeLabels();
+        Set<String> giverLabels = giver.getValue().attributeLabels();
 
-		this.directory = directoryFile;
-		this.stopWordsFile = stopWordsFile;
+        for (String giverLabel : giverLabels) {
+            Attribute giveAttr = giver.getValue().getAttribute(giverLabel);
+            if (receiverLabels.contains(giverLabel)) {
+                Attribute recAttr = receiver.getValue().getAttribute(giverLabel);
+                recAttr.merge(giveAttr);
+            } else {
+                receiver.getValue().setAttribute(giverLabel, giveAttr);
+            }
+        }
 
-		reader = WordNetCorpusReader.initialize(wordNetFilePath);
-	}
+        return receiver;
+    }
 
-	// Builds the Castanet tree of the files in a given directory.
-	public void buildTree() {
-		// Get all the keywords for a document.
-		//		Map<File, List<String>> fileKeywords = 
-		//	keywordExtractor.extractKeywordsFromFiles(directory, 
-		//                                          TOP_N_KEYWORDS, 
-		//                                          stopWordsFile);
+    /** 
+     * Merges two graphs. This keeps traversing the two graphs until there is a
+     * split, and then attaches the difference to a children
+     */
+    private Node mergeOntologyGraphs(Node first, Node second) {
+        if (first == null && second != null)
+            return second;
+        if (second == null && first != null) 
+            return first;
+        if (first == null && second == null)
+            return null;
 
-		// For every keyword, Build its "chain" to the root in WordNet
-		
-		// Merge this chain with the tree that we are building.
-	}
+        if (first.compareTo(second) == 0) {
+            Set<Node> firstChildren = first.getChildren();
+            Set<Node> secondChildren = second.getChildren();
 
-	protected Node getChainToRoot(String word, PartsOfSpeech pos, int sense) {
-		Synset wordSynset = reader.getSynset(word, pos, sense);
-		List<List<Synset>> listOfRootPaths = wordSynset.getParentPaths();
+            List<Node> newChildren = Lists.newArrayList();
+            newChildren.addAll(Sets.difference(firstChildren, secondChildren));
+            newChildren.addAll(Sets.difference(secondChildren, firstChildren));
 
-		Node root = null;
-		
-		// For all the paths to the parent, we must merge them together into one tree.
-		for (List<Synset> pathToRoot : listOfRootPaths) {
-			Node  newChain = createChainOfNodes(pathToRoot);
-			
-		}
-
-		return null;
-	}
-	
-	/**
-	 *  Merge two Castanet trees together. And returns the root.
-	 */
-	protected Node mergeTree(Node originalTree, Node toMergeTree) {
-		// Make sure the two nodes are not null
-		if (originalTree == null || toMergeTree == null) {
-			return null;
-		}
-
-		// Make sure that the two tree root nodes are the same (in value), 
-		// otherwise this is a confusing issue that we want to avoid.
-		if (!originalTree.getValue().getName().equals(
-		                                           toMergeTree.getValue().getName())) {
-			LOGGER.warning("Two unequal nodes attempting to merge!");
-			return null;
-		}
-		
-		Set<Node> originalTreeChildren = originalTree.getChildren();
-
-		// Look for children that originalTree doesn't have, but toMergeTree has.
-		// Then take these children and add them to the original tree.
-		for (Node child : toMergeTree.getChildren()) {
-			
-			// Add children that the current node doesn't already have.
-			if (!originalTreeChildren.contains(child)) {
-				originalTree.addChild(child);
-				continue;
-			}
-
-			// TODO(thuang513): figure out a way to do this with better performance.
-			// Find the common element by iterating through the list.
-			Iterator<Node> iter = originalTreeChildren.iterator();
-			while (iter.hasNext()) {
-				Node current = (Node)iter.next();
-
-				// When we have the nodes with the same values,
-				// go down and merge their children.
-				if (child.equals(current)) {
-					mergeTree(current, child);
-				}
-			}
-		}
-
-		return originalTree;
-	}
-
-	/**
-	 *  Create a chain of nodes.
-	 */
-	protected Node createChainOfNodes(List<Synset> pathToRoot) {
-		if (pathToRoot.isEmpty()) {
-			LOGGER.warning("There was nothing in the path to the root node...");
-			return null;
-		}
-		
-		// Go through the list of synset, make them all Nodes, and connect them.
-		Node rootChainNode = null;
-		Node lastNode = null;
-		for (Synset synset : pathToRoot) {
-			Node newNode = new Node(synset, lastNode);
-
-			// Ideally these should be the same conditions.
-			// There should be no root node if there wasn't
-			// a last node.
-			if (rootChainNode == null || lastNode == null) {
-				rootChainNode = newNode;
-
-				// Also since there was no last node, then keep going.
-				continue;
-			}
-			
-			lastNode.addChild(newNode);
-			lastNode = newNode;
-		}
-
-		return rootChainNode;
-	}
-	
-	/**
-	 *  Returns the root node of the Castanet tree.
-	 */
-	public void getRootNode() {
-
-	}
+            for (Node firstChild : firstChildren)
+                if (secondChildren.contains(firstChild))
+                    for (Node secondChild : secondChildren)
+                        if (firstChild.compareTo(secondChild) == 0) {
+                            Node merged = mergeOntologyGraphs(
+                                    firstChild, secondChild);
+                            if (merged != null)
+                                newChildren.add(merged);
+                        }
+            first.setChildren(newChildren);
+            return first;
+        }
+        return null;
+    }
 
 
+    /**
+     * Creates a node tree structure all the way down to the leaf.
+     */
+    private Node createOntologyGraph(List<Synset> pathToRoot, Node parent) {
+        // This is the leaf
+        if (pathToRoot.size() == 0)  
+            return null;
+
+        Node currentNode = new Node(pathToRoot.get(0), parent);
+        Node child = createOntologyGraph(
+                pathToRoot.subList(1, pathToRoot.size()), currentNode);
+        // This is a non leaf node. 
+        if (child != null) 
+            currentNode.addChild(child);
+        return currentNode;
+    }
+
+    /**
+     * Used for debugging purposes... 
+     */
+    public void printGraph(Node root, PrintWriter out) {
+        out.print("[");
+        out.print(root.getValue().getName());
+        for (Node child : root.getChildren()) {
+            // Use tabs to make it easier to read.
+            out.print("<");
+            printGraph(child, out);
+            out.print(">");
+        }
+        out.print("]");
+    }
+
+    /** 
+     *  Takes a word, part of speech and word sense, then creates a Tree based
+     *  off of its ontology starting from
+     *  the root. 
+     */
+    public Node getOntologyGraph(String word, PartsOfSpeech pos, int senseNum) {
+        return getOntologyGraph(reader.getSynset(word, pos, senseNum));
+    }
+
+    /** 
+     *  Takes a {@link Synset}, then creates a Tree based off of its ontology
+     *  starting from the root.
+     */
+    public Node getOntologyGraph(Synset synset) {
+        List<List<Synset>> pathsToRoot = synset.getParentPaths();
+        Node castanetGraph = null;
+        // For all the paths to the parent, we must merge them together into one tree.
+        for(List<Synset> path : pathsToRoot) {
+            Node backboneTree = createOntologyGraph(path, null);
+            if (castanetGraph == null)
+                castanetGraph = backboneTree;
+            else
+                castanetGraph = mergeOntologyGraphs(
+                        castanetGraph, backboneTree);
+        }
+        return castanetGraph;
+    }
+
+    public Node runCastanet(CorpusReader corpus, String stopWordsFile) {
+        corpus.initialize();
+        Keyword[][] keywords = extractor.extractKeywords(
+                corpus, 5, stopWordsFile);
+
+        Node masterGraph = null;
+        corpus.initialize();
+        for (int docId = 0; docId < keywords.length; ++docId) {
+            Keyword[] docKeywords = keywords[docId];
+            Document doc = corpus.next();
+            for (Keyword k : docKeywords) {
+                String word = k.getWord();
+                Synset wordSynset = reader.getSynset(word, PartsOfSpeech.NOUN, 1);
+
+                // if the synset does not exist then skip it
+                if (wordSynset == null)
+                    continue;
+
+                // For every keyword, create an ontology tree, attach a File object to it.
+                // Check if there is a DocumentListAttribute, if yes add to it, if not create one.
+                Attribute fileAttribute = wordSynset.getAttribute("files");
+                
+                List<Document> synsetDocs = null;
+                if (fileAttribute == null) {
+                    synsetDocs = Lists.newArrayList();
+                    DocumentListAttribute docList = new DocumentListAttribute();
+                    wordSynset.setAttribute("files", docList);
+                } else {
+                    DocumentListAttribute docList = (DocumentListAttribute) fileAttribute;
+                    synsetDocs = docList.object();
+                }
+                synsetDocs.add(doc);
+
+                Node wordGraph = getOntologyGraph(wordSynset);
+
+                if (masterGraph == null)
+                    masterGraph = wordGraph;
+                else
+                    masterGraph = mergeOntologyGraphs(masterGraph, wordGraph);
+            }
+        }
+
+        // Remove the single parents
+        eliminateSingleParents(masterGraph);
+        return masterGraph;
+    }
+    
+    public Node followTheRabbit(Node rootNode, String[] path){
+        Node currentNode = rootNode;
+
+        for (int i = 0; i < path.length; i++) {
+            String nextPath = path[i];
+
+            // Find the child with the unique id (the name).
+            boolean foundChild = false;
+            for (Node child : currentNode.getChildren()) {
+                String childID = child.getValue().getName();
+                if(nextPath.equals(childID)) {
+                    // Follow the rabbit...
+                    currentNode = child;
+                    foundChild = true;
+                    break;
+                } else
+                    System.out.printf("Looking for %s but got %s = Failed!\n",
+                                       nextPath, childID);
+            }
+            if (!foundChild) {
+                 throw new IllegalStateException(
+                         "Could not find node: " + nextPath +
+                         " in "+ rootNode.getValue().getName());
+            }
+        }
+        return currentNode;
+    }
+
+    public static void main(String[] args) {
+        KeywordExtractor extractor = new TransformKeywordExtractor(
+                new TfIdfTransform());
+        OntologyReader wordnet = WordNetCorpusReader.initialize(args[0]);
+        Castanet cnet = new Castanet(wordnet, extractor);
+
+        CorpusReader corpReader = new NewLineSplitCorpusReader(
+                args[1], new TasaDocumentReader());
+        cnet.runCastanet(corpReader, args[2]);
+    }
 }

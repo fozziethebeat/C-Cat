@@ -2,6 +2,7 @@ package gov.llnl.ontology.wordnet.castanet;
 
 import gov.llnl.ontology.wordnet.Synset;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
@@ -12,7 +13,7 @@ import java.util.logging.Logger;
  *
  *  @author thuang513@gmail.com (Terry Huang)
  */
-public class Node {
+public class Node implements Comparable<Node> {
 
 	/**
 	 * The logger used to record all output
@@ -53,6 +54,11 @@ public class Node {
 		return true;
 	}
 
+    public void setChildren(Collection<Node> newChildren) {
+        children.clear();
+        children.addAll(newChildren);
+    }
+
 	public Synset getValue() {
 		return synset;
 	}
@@ -62,7 +68,7 @@ public class Node {
 	 *  as long as two nodes have the same {@code Synset} then the two nodes are
 	 *  equal.
 	 */
-	public boolean equals(Object other) {
-		return getValue().getName().equals(((Node)other).getValue().getName());
+	public int compareTo(Node other) {
+		return getValue().getName().compareTo(other.getValue().getName());
 	}
 }

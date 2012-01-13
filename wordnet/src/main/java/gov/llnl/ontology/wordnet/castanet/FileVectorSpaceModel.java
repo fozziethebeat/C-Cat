@@ -152,9 +152,5 @@ public class FileVectorSpaceModel extends VectorSpaceModel {
 		
 		Integer docLocation = internalDocumentCounter.incrementAndGet();
 		documentToColumnIndex.put(file, docLocation);
-
-		// Keep track of which document is in which column.
-		// TODO(thuang513): CAUSES COMPILE ERROR!
-		//		documentToColumnIndex.put(file, Integer.valueOf(super.documentCounter.get()));
 	}
 }

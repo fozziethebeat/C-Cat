@@ -149,6 +149,11 @@
           <version>${sspace-graph.version}</version>
         </dependency>
         <dependency>
+          <groupId>org.htmlparser</groupId>
+          <artifactId>htmlparser</artifactId>
+          <version>${htmlparser.version}</version>
+        </dependency>
+        <dependency>
           <groupId>gov.llnl.text</groupId>
           <artifactId>textCommons</artifactId>
           <version>${text.version}</version>
@@ -202,11 +207,6 @@
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
           <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-          <groupId>org.htmlparser</groupId>
-          <artifactId>htmlparser</artifactId>
-          <version>${htmlparser.version}</version>
         </dependency>
       </dependencies>
   </dependencyManagement>
