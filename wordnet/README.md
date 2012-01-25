@@ -13,7 +13,7 @@ C-Cat Wordnet uses maven for compilation and dependency management.  It depends
 a sister sub-module for the larger C-Cat package (util).  After installing the
 C-Cat util package, run the following from the wordnet directory:
 
-  mvn package 
+    mvn package 
 
 This will create an all inclusive jar that includes the C-Cat Wordnet library,
 all depenendencies, and a copy of the Princeton Wordnet 3.0 dictionary files.
@@ -34,11 +34,11 @@ The default `OntologyReader` reads the standard Princeton Wordnet dictionary
 files and is named `WordNetCorpusReader`.  You can load the database using two
 simple methods:
 
-  OntologyReader reader = WordNetCorpusReader.initialize("/path/to/dict");
+    OntologyReader reader = WordNetCorpusReader.initialize("/path/to/dict");
 
 or
 
-  OntologyReader reader = WordNetCorpusReader.initialize("dict", true);
+    OntologyReader reader = WordNetCorpusReader.initialize("dict", true);
 
 The first method simply reads the dictionary files from the specified path and
 loads the entire hierarhcy into memory.  The second method makes use of the
@@ -51,9 +51,9 @@ the database from within nearly any environment.
 The `OntologyReader` provides several methods for accessing `Synset`s given
 words.  To get all possible `Synset`s for the word 'cat', you can do the following:
 
-  Synset[] allSynsets = reader.getSynsets("cat");
-  Synset[] nounSynsets = reader.getSynsets("cat", PartsOfSpeech.NOUN);
-  Synset cat1 = reader.getSynset("cat", PartsOfSpeech.NOUN, 1);
+    Synset[] allSynsets = reader.getSynsets("cat");
+    Synset[] nounSynsets = reader.getSynsets("cat", PartsOfSpeech.NOUN);
+    Synset cat1 = reader.getSynset("cat", PartsOfSpeech.NOUN, 1);
 
 Each example shows how to access increasingly more specific `Synset`s for a
 word.  The first returns any `Synset` associated with 'cat'.  The second returns
@@ -62,33 +62,33 @@ only noun `Synset`s associated with 'cat'.  The last returns only the first noun
 
 Once you've obtained a synset, you can access a variety of details:
 
-  // Get the definition
-  cat1.getGloss();
+    // Get the definition
+    cat1.getGloss();
 
-  // Iterate through the lemmas
-  for (Lemma lemma : cat1.getLemmas())
+    // Iterate through the lemmas
+    for (Lemma lemma : cat1.getLemmas())
       System.out.println(lemma);
 
-  // Print the Synset name.  This is a simple reference for the Synset.
-  System.out.println(cat1.getName());
+    // Print the Synset name.  This is a simple reference for the Synset.
+    System.out.println(cat1.getName());
 
-  // Print the name of each parent Synset
-  for (Synset parent : cat1.getParents())
+    // Print the name of each parent Synset
+    for (Synset parent : cat1.getParents())
       System.out.println(parent.getName());
 
-  // Print the name of any related Synset
-  for (Synset related : cat1.allRelations())
+    // Print the name of any related Synset
+    for (Synset related : cat1.allRelations())
       System.out.println(related.getName());
 
 You can furthremore modify the synset with new details:
 
-  // Change the definition
-  cat1.setDefinition("A cute fluffy pet");
+    // Change the definition
+    cat1.setDefinition("A cute fluffy pet");
 
-  // Add a new related Synset into the hierachy.
-  Synset newSyn = new BaseSynset("nori.n.1");
-  cat1.addRelation(Relation.HYPONYM, newSyn);
-  newSyn.addRelation(Relation.HYPERNYM, cat1);
+    // Add a new related Synset into the hierachy.
+    Synset newSyn = new BaseSynset("nori.n.1");
+    cat1.addRelation(Relation.HYPONYM, newSyn);
+    newSyn.addRelation(Relation.HYPERNYM, cat1);
 
 ### Saving Your Modifications
 
@@ -96,8 +96,8 @@ The C-Cat Wordnet package makes it easy to save these changes to any format you
 can design.  If you want to save the changes we've made to the database above,
 you can simply do:
 
-  OntologyWriter writer = new WordNetCorpusWriter();
-  writer.saveOntology(reader, "/path/to/new/dict");
+    OntologyWriter writer = new WordNetCorpusWriter();
+    writer.saveOntology(reader, "/path/to/new/dict");
 
 This will save the modified hierarchy to the specified path in the standard
 Princeton Wordnet database format, which can easily be loaded again using the
