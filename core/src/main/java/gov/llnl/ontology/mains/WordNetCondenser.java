@@ -39,7 +39,6 @@ import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO;
 
-import edu.ucla.sspace.clustering.Assignment;
 import edu.ucla.sspace.clustering.Clustering;
 import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering;
 

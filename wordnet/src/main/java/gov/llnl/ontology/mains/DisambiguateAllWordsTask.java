@@ -46,7 +46,6 @@ public class DisambiguateAllWordsTask {
         int s = 0;
         WorkQueue workQueue = new WorkQueue();
         Object key = workQueue.registerTaskGroup(sentences.size());
-        int s = 0;
         for (final Sentence sent : sentences) {
             System.err.println("Reading sentence: " + s);
 
