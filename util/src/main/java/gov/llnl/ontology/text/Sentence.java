@@ -23,19 +23,10 @@
 
 package gov.llnl.ontology.text;
 
-import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.util.ArrayIterator;
 import gov.llnl.ontology.util.StringPair;
 
 import com.google.common.collect.Lists;
-
-import edu.stanford.nlp.ling.CoreAnnotations.CoNLLDepTypeAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.CoNLLDepParentIndexAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
-
-import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.util.IntPair;
 
 import edu.ucla.sspace.dependency.DependencyRelation;
 import edu.ucla.sspace.dependency.DependencyTreeNode;
@@ -59,8 +50,7 @@ import java.util.List;
  *
  * @author Keith Stevens
  */
-public class Sentence extends Annotation
-                      implements Serializable, Iterable<Annotation> {
+public class Sentence implements Serializable, Iterable<Annotation> {
 
     // Git Commit hash id on 7/23
     static final long serialVersionId = 0x331cf4a;
@@ -151,7 +141,7 @@ public class Sentence extends Annotation
      */
     public DependencyTreeNode[] dependencyParseTree() {
         if (tokenAnnotations.length == 0 ||
-            !tokenAnnotations[0].has(CoNLLDepParentIndexAnnotation.class))
+            !tokenAnnotations[0].hasDependencyParent())
             return new DependencyTreeNode[0];
 
         // Initialize the dependency tree nodes for each token with it's
@@ -160,18 +150,16 @@ public class Sentence extends Annotation
             new SimpleDependencyTreeNode[tokenAnnotations.length];
         for (int i = 0; i < nodes.length; ++i)
             nodes[i] = new SimpleDependencyTreeNode(
-                    tokenAnnotations[i].get(TextAnnotation.class),
-                    tokenAnnotations[i].get(PartOfSpeechAnnotation.class),
+                    tokenAnnotations[i].word(),
+                    tokenAnnotations[i].pos(),
                     i);
 
         // For each word, add a SimpleDependencyRelation to the tree
         // nodes that records the relation to it's parent.  Parent nodes
         // will always be the head node in the relation.
         for (int i = 0; i < nodes.length; ++i) {
-            int parent = tokenAnnotations[i].get(
-                    CoNLLDepParentIndexAnnotation.class);
-            String relation = tokenAnnotations[i].get(
-                    CoNLLDepTypeAnnotation.class);
+            int parent = tokenAnnotations[i].dependencyParent();
+            String relation = tokenAnnotations[i].dependencyRelation();
             if (parent == 0)
                 continue;
             DependencyRelation r = new SimpleDependencyRelation(
@@ -191,8 +179,7 @@ public class Sentence extends Annotation
         StringPair[] taggedTokens = new StringPair[tokenAnnotations.length];
         for (int i = 0; i < taggedTokens.length; ++i) 
             taggedTokens[i] = new StringPair(
-                    AnnotationUtil.word(tokenAnnotations[i]),
-                    AnnotationUtil.pos(tokenAnnotations[i]));
+                    tokenAnnotations[i].word(), tokenAnnotations[i].pos());
         return taggedTokens;
     }
 
@@ -220,13 +207,6 @@ public class Sentence extends Annotation
 
     public int numTokens() {
         return tokenAnnotations.length;
-    }
-
-    /**
-     * Returns the {@link IntPair} recording the span of this {@link Sentence}.
-     */
-    public IntPair span() {
-        return new IntPair(start, end);
     }
 
     /**
@@ -266,8 +246,7 @@ public class Sentence extends Annotation
             // and add the cleaned value to annotation.  When initially creating
             // the annotation, give it empty strings for default values so that
             // there are no null values.
-            Annotation annotation = new Annotation(" ");
-            AnnotationUtil.setPos(annotation, " ");
+            Annotation annotation = new StanfordAnnotation("", "");
             for (int i = 1; i < parts.length; ++i) {
                 // Always split on the first ":" and only that ":" so that if a
                 // ":" appears in the word or text, it won't cause any problems
@@ -278,22 +257,20 @@ public class Sentence extends Annotation
                     keyValue[1] = keyValue[1].replaceAll("&quot,", "\"");
                     keyValue[1] = keyValue[1].replaceAll("&pipe,", "|");
                     keyValue[1] = keyValue[1].replaceAll("&semi,", ";");
-                    AnnotationUtil.setWord(annotation, keyValue[1]);
+                    annotation.setWord(keyValue[1]);
                 }
                 if (keyValue[0].equals("pos"))
-                    AnnotationUtil.setPos(annotation, keyValue[1]);
+                    annotation.setPos(keyValue[1]);
                 if (keyValue[0].equals("sense"))
-                    AnnotationUtil.setWordSense(annotation, keyValue[1]);
+                    annotation.setSense(keyValue[1]);
                 if (keyValue[0].equals("dep-rel"))
-                    AnnotationUtil.setDependencyRelation(annotation, keyValue[1]);
+                    annotation.setDependencyRelation(keyValue[1]);
                 if (keyValue[0].equals("dep-index"))
-                    AnnotationUtil.setDependencyParent(
-                            annotation, Integer.parseInt(keyValue[1]));
+                    annotation.setDependencyParent(Integer.parseInt(keyValue[1]));
                 if (keyValue[0].equals("span")) {
                     String[] startEnd = keyValue[1].split(",");
-                    AnnotationUtil.setSpan(annotation,
-                                           Integer.parseInt(startEnd[0]),
-                                           Integer.parseInt(startEnd[1]));
+                    annotation.setSpan(Integer.parseInt(startEnd[0]),
+                                       Integer.parseInt(startEnd[1]));
                 }
             }
             
@@ -325,40 +302,34 @@ public class Sentence extends Annotation
                 tokenAnnot.append(s).append(" ").append(a++).append(";");
 
                 // Handle the pos.
-                String value = AnnotationUtil.pos(token);
-                if (value != null && value.length() > 0)
-                    tokenAnnot.append("pos").append(":").append(value).append(";");
+                if (token.hasPos())
+                    tokenAnnot.append("pos").append(":").append(token.pos()).append(";");
 
                 // Handle the word.
-                value = AnnotationUtil.word(token);
-                if (value != null && value.length() > 0) {
-                    value = value.replaceAll("\"", "&quot,");
-                    value = value.replaceAll("\\|", "&pipe,");
-                    value = value.replaceAll(";", "&semi,");
+                if (token.hasWord()) {
+                    String value = token.word().replaceAll("\"", "&quot,")
+                                               .replaceAll("\\|", "&pipe,")
+                                               .replaceAll(";", "&semi,");
                     tokenAnnot.append("word").append(":").append(value).append(";");
                 }
 
                 // Handle the word sense.
-                value = AnnotationUtil.wordSense(token);
-                if (value != null && value.length() > 0)
-                    tokenAnnot.append("sense").append(":").append(value).append(";");
+                if (token.hasSense())
+                    tokenAnnot.append("sense").append(":").append(token.sense()).append(";");
 
                 // Handle the dependency relation.
-                value = AnnotationUtil.dependencyRelation(token);
-                if (value != null && value.length() > 0)
-                    tokenAnnot.append("dep-rel").append(":").append(value).append(";");
+                if (token.hasDependencyRelation())
+                    tokenAnnot.append("dep-rel").append(":").append(token.dependencyRelation()).append(";");
 
                 // Handle the dependency relation.
-                int index = AnnotationUtil.dependencyParent(token);
-                if (index >= 0)
-                    tokenAnnot.append("dep-index").append(":").append(index).append(";");
+                if (token.hasDependencyParent())
+                    tokenAnnot.append("dep-index").append(":").append(token.dependencyParent()).append(";");
 
                 // Handle the word span.
-                IntPair span = AnnotationUtil.span(token);
-                if (span != null)
+                if (token.hasSpan())
                     tokenAnnot.append("span").append(":")
-                              .append(span.getSource()).append(",")
-                              .append(span.getTarget()).append(";");
+                              .append(token.start()).append(",")
+                              .append(token.end()).append(";");
 
                 tokenAnnot.append("|");
             }

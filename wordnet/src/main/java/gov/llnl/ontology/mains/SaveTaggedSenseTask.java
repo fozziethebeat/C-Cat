@@ -1,13 +1,9 @@
 package gov.llnl.ontology.mains;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
 import gov.llnl.ontology.text.corpora.SenseEvalAllWordsDocumentReader;
-import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.text.tag.OpenNlpMEPOSTagger;
-
-import edu.stanford.nlp.ling.CoreAnnotations.StemAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.ValueAnnotation;
-import edu.stanford.nlp.pipeline.Annotation;
 
 import opennlp.tools.postag.POSTagger;
 
@@ -38,9 +34,9 @@ public class SaveTaggedSenseTask {
             int i = 0;
             String[] tokens = new String[sentence.numTokens()];
             for (Annotation annot : sentence) {
-                String word = AnnotationUtil.word(annot);
+                String word = annot.word();
                 if (word.indexOf(" ") != -1)
-                    word = annot.get(StemAnnotation.class);
+                    word = annot.lemma();
                 tokens[i++] = word;
             }
 
@@ -48,8 +44,8 @@ public class SaveTaggedSenseTask {
 
             i = 0;
             for (Annotation annot : sentence) {
-                String word = AnnotationUtil.word(annot);
-                String id = annot.get(ValueAnnotation.class);
+                String word = annot.word();
+                String id = annot.sense();
                 String tag = tags[i++];
                 if (id == null)
                     writer.printf("<w pos=\"%s\">%s</w>\n", tag, word);

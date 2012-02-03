@@ -23,15 +23,13 @@
 
 package gov.llnl.ontology.wordnet.wsd;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 import gov.llnl.ontology.wordnet.SynsetSimilarity;
 import gov.llnl.ontology.wordnet.sim.LeskSimilarity;
-
-import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.CombinedIterator;
 
@@ -80,7 +78,7 @@ public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
                                   Annotation result,
                                   Queue<Annotation> prevWords,
                                   Queue<Annotation> nextWords) {
-        String word = AnnotationUtil.word(focus);
+        String word = focus.word();
 
         // Get the target synsets for the focus word.
         Synset[] focusSynsets = getSynsets(reader, focus);
@@ -107,8 +105,7 @@ public class LeskWordSenseDisambiguation extends SlidingWindowDisambiguation {
                 maxId = i;
             }
 
-        AnnotationUtil.setWordSense(result,
-                                    focusSynsets[maxId].getSenseKey(word));
+        result.setSense(focusSynsets[maxId].getSenseKey(word));
     }
 
     /**

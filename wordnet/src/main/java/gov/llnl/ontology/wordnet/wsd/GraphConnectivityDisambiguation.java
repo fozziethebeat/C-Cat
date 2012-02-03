@@ -23,8 +23,9 @@
 
 package gov.llnl.ontology.wordnet.wsd;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.text.SimpleAnnotation;
 import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
@@ -33,8 +34,6 @@ import gov.llnl.ontology.wordnet.Synset.Relation;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-
-import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.basis.StringBasisMapping;
 import edu.ucla.sspace.matrix.Matrix;
@@ -175,8 +174,8 @@ public abstract class GraphConnectivityDisambiguation
         // sentence.
         int i = 0;
         for (Annotation annot : sentence) {
-            Annotation result = new Annotation();
-            AnnotationUtil.setSpan(result, AnnotationUtil.span(annot));
+            Annotation result = new SimpleAnnotation("");
+            result.setSpan(annot.start(), annot.end());
             disambiguated.addAnnotation(i, result);
 
             i++;
@@ -192,7 +191,7 @@ public abstract class GraphConnectivityDisambiguation
                 for (Synset sense : annotSenses)
                     synsets.add(sense);
 
-                String term = AnnotationUtil.word(annot);
+                String term = annot.word();
                 targetWords.add(
                         new AnnotationSynset(annotSenses, result, term));
             }
@@ -334,8 +333,8 @@ public abstract class GraphConnectivityDisambiguation
      * for the word, under the assumption that the tag may be incorrect.
      */
     protected Synset[] getSynsets(Annotation annot) {
-        String word = AnnotationUtil.word(annot);
-        String pos = AnnotationUtil.pos(annot);
+        String word = annot.word();
+        String pos = annot.pos();
         if (pos == null) 
             return reader.getSynsets(word);
 

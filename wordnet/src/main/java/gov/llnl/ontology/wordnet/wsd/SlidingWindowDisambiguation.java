@@ -23,15 +23,14 @@
 
 package gov.llnl.ontology.wordnet.wsd;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.text.SimpleAnnotation;
 import gov.llnl.ontology.wordnet.OntologyReader;
 import gov.llnl.ontology.wordnet.Synset;
 import gov.llnl.ontology.wordnet.Synset.PartsOfSpeech;
 
 import com.google.common.collect.Lists;
-
-import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.CombinedIterator;
 
@@ -104,9 +103,9 @@ public abstract class SlidingWindowDisambiguation
             // new result annotation for it and store it in the same location on
             // the nextWords queue.
             Annotation word = annotIter.next();
-            Annotation result = new Annotation();
+            Annotation result = new SimpleAnnotation("");
             resultSent.addAnnotation(index++, result);
-            AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
+            result.setSpan(word.start(), word.end());
             nextWords.offer(word);
             resultWords.offer(result);
         }
@@ -122,9 +121,9 @@ public abstract class SlidingWindowDisambiguation
             if (annotIter.hasNext()) {
                 Annotation word = annotIter.next();
 
-                Annotation result = new Annotation();
+                Annotation result = new SimpleAnnotation("");
                 resultSent.addAnnotation(index++, result);
-                AnnotationUtil.setSpan(result, AnnotationUtil.span(word));
+                result.setSpan(word.start(), word.end());
 
                 nextWords.offer(word);
                 resultWords.offer(result);
@@ -155,7 +154,7 @@ public abstract class SlidingWindowDisambiguation
      * a any part of speech represented in wordnet
      */
     private static boolean offer(Annotation annot, Queue<Annotation> words) {
-        String pos = AnnotationUtil.pos(annot);
+        String pos = annot.pos();
         if (pos == null ||
             pos.startsWith("N") ||
             pos.startsWith("V") ||
@@ -174,8 +173,8 @@ public abstract class SlidingWindowDisambiguation
      * for the word, under the assumption that the tag may be incorrect.
      */
     protected Synset[] getSynsets(OntologyReader reader, Annotation annot) {
-        String word = AnnotationUtil.word(annot);
-        String pos = AnnotationUtil.pos(annot);
+        String word = annot.word();
+        String pos = annot.word();
         if (pos == null) 
             return reader.getSynsets(word);
 

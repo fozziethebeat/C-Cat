@@ -115,6 +115,13 @@ public class OntologyReaderAdaptor implements OntologyReader {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public Synset[] getSynsets(String lemma, PartsOfSpeech pos, boolean useMorphy) {
+        return reader.getSynsets(lemma, pos, useMorphy);
+    }
+
+    /**
      * {@inheriDoc}
      */
     public Synset getSynset(String fullSynsetName) {

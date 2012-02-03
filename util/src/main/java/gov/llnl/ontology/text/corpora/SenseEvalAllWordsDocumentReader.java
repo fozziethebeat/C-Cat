@@ -1,14 +1,14 @@
 package gov.llnl.ontology.text.corpora;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.AnnotationUtil;
+import gov.llnl.ontology.text.StanfordAnnotation;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import edu.stanford.nlp.ling.CoreAnnotations.StemAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.ValueAnnotation;
-import edu.stanford.nlp.pipeline.Annotation;
 
 import java.io.File;
 import java.io.IOError;
@@ -36,9 +36,9 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
 
     private List<Sentence> sentences = Lists.newArrayList();
 
-    private List<Annotation> currentSentence = Lists.newArrayList();
+    private List<StanfordAnnotation> currentSentence = Lists.newArrayList();
 
-    private Annotation currentAnnotation;
+    private StanfordAnnotation currentAnnotation;
 
     private Map<String, Annotation> satMap = Maps.newHashMap();
 
@@ -101,7 +101,7 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
         if ("text".equals(name)) {
             inText = true;
             currentTextId = atts.getValue("id");
-            currentAnnotation = new Annotation();
+            currentAnnotation = new StanfordAnnotation();
         } else if ("head".equals(name)) {
             inHead = true;
             String id = currentTextId + " " + atts.getValue("id");
@@ -131,14 +131,14 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
     private void endSentence() {
         Sentence sentence = new Sentence(0, 0, currentSentence.size());
         int i = 0;
-        for (Annotation word : currentSentence) {
+        for (StanfordAnnotation word : currentSentence) {
             sentence.addAnnotation(i++, word);
             String satIds = word.get(StemAnnotation.class);
             if (satIds == null)
                 continue;
             String id = word.get(ValueAnnotation.class);
             String idPart = id.split("\\s")[1];
-            String lemma = AnnotationUtil.word(word);
+            String lemma = word.word();
             StringBuilder sb = new StringBuilder();
             boolean addedLemma = false;
             for (String satId : satIds.split("\\s+")) {
@@ -155,7 +155,7 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
                     sb.append(lemma).append(" ");
                     addedLemma = true;
                 }
-                sb.append(AnnotationUtil.word(satMap.get(satId))).append(" ");
+                sb.append(satMap.get(satId).word()).append(" ");
             }
             if (!addedLemma)
                 sb.append(lemma);
@@ -163,7 +163,7 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
             word.set(StemAnnotation.class, lemma);
             String newLemma = sb.toString().trim().toLowerCase();
             newLemma = newLemma.replaceAll("himself|herself", "oneself");
-            AnnotationUtil.setWord(word, newLemma);
+            word.setWord(newLemma);
         }
         sentences.add(sentence);
         currentSentence.clear();
@@ -196,7 +196,7 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
 
         if (!parts[0].startsWith("0") && 
             !parts[0].startsWith("*")) {
-            AnnotationUtil.setWord(currentAnnotation, parts[0]);
+            currentAnnotation.setWord(parts[0]);
             currentSentence.add(currentAnnotation);
             if (parts[0].equals("."))
                 endSentence();
@@ -207,14 +207,14 @@ public class SenseEvalAllWordsDocumentReader extends DefaultHandler {
                 parts[i].startsWith("0") || 
                 parts[i].startsWith("*"))
                 continue;
-            currentAnnotation = new Annotation(currentAnnotation);
-            AnnotationUtil.setWord(currentAnnotation, parts[i]);
+            currentAnnotation = new StanfordAnnotation(currentAnnotation);
+            currentAnnotation.setWord(parts[i]);
             currentSentence.add(currentAnnotation);
             if (parts[i].equals("."))
                 endSentence();
         }
 
-        currentAnnotation = new Annotation();
+        currentAnnotation = new StanfordAnnotation();
 
     }
 

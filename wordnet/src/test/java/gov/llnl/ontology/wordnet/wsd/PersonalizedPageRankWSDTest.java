@@ -23,11 +23,9 @@
 
 package gov.llnl.ontology.wordnet.wsd;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
-import gov.llnl.ontology.util.AnnotationUtil;
 import gov.llnl.ontology.wordnet.LinkedMockReader;
-
-import edu.stanford.nlp.pipeline.Annotation;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -82,7 +80,7 @@ public class PersonalizedPageRankWSDTest
 
         Annotation word = sent.getAnnotation(1);
         assertNotNull(word);
-        assertEquals(SYNSET_DATA[2][0], AnnotationUtil.wordSense(word));
+        assertEquals(SYNSET_DATA[2][0], word.sense());
     }
 
     // TODO: Add test with multiple sentences to handle some interesting use
