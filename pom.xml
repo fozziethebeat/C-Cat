@@ -37,13 +37,11 @@
       <url>http://github.com/fozziethebeat/C-Cat/issues</url>
   </issueManagement>
 
-  <!--
   <parent>
       <groupId>org.sonatype.oss</groupId>
       <artifactId>oss-parent</artifactId>
       <version>7</version>
   </parent>
--->
 
   <modules>
     <module>data</module>
@@ -221,19 +219,12 @@
   </reporting>
 
   <distributionManagement>
-    <repository>
-      <id>ossrh</id>
-      <url>http://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-    </repository>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
     <site>
       <id>github-site</id>
       <url>gitsite:git@github.com/fozziethebeat/C-Cat.git</url>
     </site>
   </distributionManagement>
+
   <scm>
     <connection>scm:git:git@github.com:fozziethebeat/C-Cat.git</connection>
     <developerConnection>scm:git:git@github.com:fozziethebeat/C-Cat.git</developerConnection>

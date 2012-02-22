@@ -94,11 +94,13 @@ public class SemEval2010TrainDocumentReader implements DocumentReader {
 
         // Determine which token, if split by whitespace, matches the instance
         // keyword.
-        String[] tokens = text.split("\\s+");
+        String[] tokens = text.toLowerCase().split("\\s+");
         long id = 0;
         for (int i =0; i < tokens.length; ++i)
-            if (keyWord.equals(stemmer.stem(tokens[i])))
+            if (keyWord.equals(stemmer.stem(tokens[i]))) {
+                tokens[i] = keyWord;
                 id = i;
+            }
 
         return new SimpleDocument(corpusName, text, doc, 
                                   key, id, keyWord, new HashSet<String>());

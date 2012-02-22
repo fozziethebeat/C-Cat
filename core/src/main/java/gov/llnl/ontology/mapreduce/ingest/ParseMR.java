@@ -28,11 +28,10 @@ import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 
 import gov.llnl.ontology.text.parse.Parser;
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
 
 import gov.llnl.ontology.util.AnnotationUtil;
-
-import edu.stanford.nlp.pipeline.Annotation;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
@@ -190,10 +189,8 @@ public class ParseMR extends CorpusTableMR {
                 for (String line : parsedSentence.split("\\n+")) {
                     Annotation token = tokens.next();
                     String[] toks = line.split("\\s+");
-
-                    AnnotationUtil.setDependencyParent(
-                            token, Integer.parseInt(toks[6]));
-                    AnnotationUtil.setDependencyRelation(token, toks[7]);
+                    token.setDependencyParent(Integer.parseInt(toks[6]));
+                    token.setDependencyRelation(toks[7]);
                 }
                 updatedSentences = true;
             }

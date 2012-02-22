@@ -27,12 +27,12 @@ import gov.llnl.ontology.mapreduce.CorpusTableMR;
 import gov.llnl.ontology.mapreduce.MRArgOptions;
 import gov.llnl.ontology.mapreduce.table.CorpusTable;
 
+import gov.llnl.ontology.text.Annotation;
 import gov.llnl.ontology.text.Sentence;
-
+import gov.llnl.ontology.text.SimpleAnnotation;
 
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SpanAnnotation;
-import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.util.IntPair;
 
 import edu.ucla.sspace.util.ReflectionUtil;
@@ -238,10 +238,9 @@ public class IngestCorpusMR extends CorpusTableMR {
                     end = tokSpans[i].getEnd();
 
                     // Create the token annotation and add it to the sentence.
-                    Annotation wordAnnotation = new Annotation(tokens[i]);
-                    wordAnnotation.set(PartOfSpeechAnnotation.class, pos[i]);
-                    wordAnnotation.set(SpanAnnotation.class,
-                                       new IntPair(start, end));
+                    Annotation wordAnnotation = new SimpleAnnotation(tokens[i]);
+                    wordAnnotation.setPos(pos[i]);
+                    wordAnnotation.setSpan(start, end);
                     sentAnnotation.addAnnotation(i, wordAnnotation);
                 }
                 sentenceAnnotations.add(sentAnnotation);
