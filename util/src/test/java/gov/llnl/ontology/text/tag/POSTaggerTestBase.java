@@ -14,20 +14,7 @@ import static org.junit.Assert.*;
 public abstract class POSTaggerTestBase {
 
     public static final String[] TEST_SENT =
-    { "the", "quick", "brown", "fox", "jumped", "over." };
-
-    /*
-    @Test
-    public void testPOSTagger() {
-        POSTagger tagger = tagger(false);
-        String[] tags = tagger.tag(TEST_SENT);
-        assertFalse(0 == tags.length);
-        for (String tag : tags) {
-            assertNotNull(tag);
-            assertFalse("".equals(tag));
-        }
-    }
-    */
+    { "the", "quick", "brown", "fox", "jumped", "over", "the", "lazy", "dog", "." };
 
     @Test
     public void testPOSTaggerFromJar() {
