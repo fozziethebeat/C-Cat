@@ -26,6 +26,8 @@ package gov.llnl.ontology.text.parse;
 import gov.llnl.ontology.util.StreamUtil;
 import gov.llnl.ontology.util.StringPair;
 
+import com.google.common.collect.Lists;
+
 import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.ling.TaggedWord;
 import edu.stanford.nlp.ling.Word;
@@ -39,6 +41,11 @@ import edu.stanford.nlp.trees.GrammaticalStructure;
 import edu.stanford.nlp.trees.GrammaticalStructureFactory;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TypedDependency;
+
+import edu.ucla.sspace.dependency.DependencyRelation;
+import edu.ucla.sspace.dependency.DependencyTreeNode;
+import edu.ucla.sspace.dependency.SimpleDependencyRelation;
+import edu.ucla.sspace.dependency.SimpleDependencyTreeNode;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -112,40 +119,46 @@ public class StanfordParser implements Parser {
     /**
      * {@inheritDoc}
      */
-    public String parseText(String header, String document) {
-        StringBuilder builder = new StringBuilder();
-
+    public DependencyTreeNode[] parseText(String header, String document) {
         DocumentPreprocessor processor = new DocumentPreprocessor(
                                 new StringReader(document));
-
         for (List<HasWord> sentence : processor)
-            parseTokens(builder, header, sentence);
-
-        return builder.toString();
+            parseTokens(header, sentence);
+        return null;
     }
 
     /**
      * {@inheritDoc}
      */
-    public String parseText(String header, StringPair[] sentence) {
-        List<HasWord> tokens = new ArrayList<HasWord>(sentence.length);
+    public DependencyTreeNode[] parseText(String header, String[] tokens) {
+        List<HasWord> sentence = Lists.newArrayList();
+        for (String token : tokens)
+            sentence.add(new Word(token));
+        return parseTokens(header, sentence).toArray(new DependencyTreeNode[0]);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DependencyTreeNode[] parseText(String header, 
+                                          StringPair[] sentence) {
+        List<HasWord> tokens = Lists.newArrayList();
         for (StringPair word : sentence)
             if (word.x != null && word.y != null)
                 tokens.add(new TaggedWord(word.x, word.y));
-        StringBuilder builder = new StringBuilder();
-        parseTokens(builder, header, tokens);
-        return builder.toString();
+        return parseTokens(header, tokens).toArray(new DependencyTreeNode[0]);
     }
 
-    private void parseTokens(StringBuilder builder,
-                             String header,
-                             List<HasWord> sentence) {
+    private List<SimpleDependencyTreeNode> parseTokens(String header, 
+                                                       List<HasWord> sentence) {
+        List<SimpleDependencyTreeNode> nodes = Lists.newArrayList();
+
         // Parse the sentence.  If the sentence has no tokens or the
         // parser fails, simply return an empty string.
         if (sentence.size() == 0 || 
             sentence.size() > 100 ||
             !parser.parse(sentence))
-            return;
+            return nodes;
 
         // Get the parse tree and tagged words for the sentence.
         Tree tree = parser.getBestParse();
@@ -155,9 +168,8 @@ public class StanfordParser implements Parser {
         GrammaticalStructure gs = gsf.newGrammaticalStructure(tree);
         Collection<TypedDependency> dep = gs.typedDependencies();
 
-        // Conver the dependency links into the expected default CoNLL
-        // format.
-        String[] parseLines = new String[sentence.size()];
+        List<Link> links = Lists.newArrayList();
+
         for (TypedDependency dependency : dep) {
             int nodeIndex = dependency.dep().index();
             int parentIndex = dependency.gov().index();
@@ -165,37 +177,11 @@ public class StanfordParser implements Parser {
             String token = taggedSent.get(nodeIndex-1).word();
             String pos = taggedSent.get(nodeIndex-1).tag();
 
-            parseLines[nodeIndex-1] =
-                String.format("%d\t%s\t_\t%s\t%s\t_\t%s\t%s",
-                              nodeIndex, token, pos, pos, 
-                              parentIndex, relation);
+            nodes.add(new SimpleDependencyTreeNode(token, pos, nodeIndex));
+            links.add(new Link(nodeIndex, relation, parentIndex));
         }
 
-        // Add a header for the sentence.
-        if (header != null && !header.equals(""))
-            builder.append(header).append("\n");
-
-        // Write out the text for each node in the dependency tree.    If
-        // there is no text for the node, then it is assumed to be a root
-        // node.
-        for (int i = 0; i < parseLines.length; ++i) {
-            String parseLine = parseLines[i];
-
-            // Assume that nodes without text are root nodes, so create a
-            // line for the root node.
-            if (parseLine == null) {
-                String token = taggedSent.get(i).word();
-                String pos = taggedSent.get(i).tag();
-                builder.append(
-                        String.format("%d\t%s\t_\t%s\t%s\t_\t0\tnull",
-                                      i+1, token, pos, pos));
-            } else {
-                builder.append(parseLine);
-            }
-
-            // Pad the tree with a new line.
-            builder.append("\n");
-        }
-        builder.append("\n");
+        Link.addLinksToTree(nodes, links);
+        return nodes;
     }
 }

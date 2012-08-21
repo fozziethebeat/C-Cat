@@ -26,9 +26,12 @@ package gov.llnl.ontology.text.corpora;
 import gov.llnl.ontology.text.Document;
 import gov.llnl.ontology.text.DocumentReader;
 import gov.llnl.ontology.text.SimpleDocument;
+import gov.llnl.ontology.text.tokenize.OpenNlpMETokenizer;
 
 import edu.ucla.sspace.text.EnglishStemmer;
 import edu.ucla.sspace.text.Stemmer;
+
+import opennlp.tools.tokenize.Tokenizer;
 
 import java.util.HashSet;
 
@@ -55,11 +58,14 @@ public class SemEval2010TrainDocumentReader implements DocumentReader {
      */
     private final Stemmer stemmer;
 
+    private final Tokenizer tokenizer;
+
     /**
      * Constructs a new {@link SemEval2010TrainDocumentReader}.
      */
     public SemEval2010TrainDocumentReader() {
         stemmer = new EnglishStemmer();
+        tokenizer = new OpenNlpMETokenizer();
     }
 
     /**
@@ -94,10 +100,10 @@ public class SemEval2010TrainDocumentReader implements DocumentReader {
 
         // Determine which token, if split by whitespace, matches the instance
         // keyword.
-        String[] tokens = text.toLowerCase().split("\\s+");
+        String[] tokens = tokenizer.tokenize(text);
         long id = 0;
         for (int i =0; i < tokens.length; ++i)
-            if (keyWord.equals(stemmer.stem(tokens[i]))) {
+            if (keyWord.equals(stemmer.stem(tokens[i].toLowerCase()))) {
                 tokens[i] = keyWord;
                 id = i;
             }

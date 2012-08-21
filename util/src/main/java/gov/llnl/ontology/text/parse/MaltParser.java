@@ -25,10 +25,12 @@ package gov.llnl.ontology.text.parse;
 
 import gov.llnl.ontology.util.StringPair;
 
-import edu.stanford.nlp.ling.TaggedWord;
-import edu.stanford.nlp.ling.HasWord;
-import edu.stanford.nlp.process.DocumentPreprocessor;
-import edu.stanford.nlp.tagger.maxent.MaxentTagger;
+import com.google.common.collect.Lists;
+
+import edu.ucla.sspace.dependency.DependencyRelation;
+import edu.ucla.sspace.dependency.DependencyTreeNode;
+import edu.ucla.sspace.dependency.SimpleDependencyRelation;
+import edu.ucla.sspace.dependency.SimpleDependencyTreeNode;
 
 import org.maltparser.MaltParserService;
 import org.maltparser.core.exception.MaltChainedException;
@@ -36,18 +38,13 @@ import org.maltparser.core.syntaxgraph.DependencyStructure;
 import org.maltparser.core.symbol.SymbolTable;
 import org.maltparser.core.syntaxgraph.edge.Edge;
 import org.maltparser.core.syntaxgraph.node.DependencyNode;
+import org.maltparser.core.syntaxgraph.Element;
 
 import opennlp.tools.postag.POSTagger;
 import opennlp.tools.tokenize.Tokenizer;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOError;
-import java.io.IOException;
-import java.io.StringReader;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -105,15 +102,24 @@ public class MaltParser implements Parser {
     /**
      * {@inheritDoc}
      */
-    public String parseText(String header, String document) {
+    public DependencyTreeNode[] parseText(String header, 
+                                          String document) {
         StringBuilder builder = new StringBuilder();
 
         String[] toks = tokenizer.tokenize(document);
-        String[] pos = tagger.tag(toks);
+        return parseText(header, toks);
+    }
 
-        String[] lines = new String[toks.length];
-        for (int i = 0; i < toks.length; ++i)
-            lines[i] = buildLine(i, toks[i], pos[i]);
+    /**
+     * {@inheritDoc}
+     */
+    public DependencyTreeNode[] parseText(String header, 
+                                          String[] tokens) {
+        String[] pos = tagger.tag(tokens);
+
+        String[] lines = new String[tokens.length];
+        for (int i = 0; i < tokens.length; ++i)
+            lines[i] = buildLine(i, tokens[i], pos[i]);
 
         return parseTokens(lines, header);
     }
@@ -121,7 +127,8 @@ public class MaltParser implements Parser {
     /**
      * {@inheritDoc}
      */
-    public String parseText(String header, StringPair[] sentence) {
+    public DependencyTreeNode[] parseText(String header, 
+                                          StringPair[] sentence) {
         String[] lines = new String[sentence.length];
         int i = 0;
         for (StringPair word : sentence)
@@ -130,44 +137,60 @@ public class MaltParser implements Parser {
         return parseTokens(lines, header);
     }
 
-    private synchronized String parseTokens(String[] tokens, String header) {
-        StringBuilder builder = new StringBuilder();
+    private static String[] getSymbols(Element node) {
+        try {
+            Set<SymbolTable> tables = node.getLabelTypes();
+            String[] symbols = new String[tables.size()];
+            int s = 0;
+            for (SymbolTable table : node.getLabelTypes())
+                symbols[s++] = node.getLabelSymbol(table);
+            return symbols;
+        } catch (MaltChainedException ioe) {
+            throw new RuntimeException(ioe);
+        }
+    }
 
-        // Parse the sentence and write the graph to the string builder.
+    private synchronized DependencyTreeNode[] parseTokens(String[] tokens,
+                                                          String header) {
+        StringBuilder builder = new StringBuilder();
+        String nullLink = "null";
+
+        List<SimpleDependencyTreeNode> tree = Lists.newArrayList();
+        List<Link> links = Lists.newArrayList();
+
         try {
             MaltParserService p = parser;
             DependencyStructure graph = p.parse(tokens);
 
-            if (header != null && !header.equals(""))
-                builder.append(header).append("\n");
-
             for (int i = 1; i <= graph.getHighestDependencyNodeIndex(); i++) {
                 DependencyNode node = graph.getDependencyNode(i);
                 if (node != null) {
-                    for (SymbolTable table : node.getLabelTypes())
-                        builder.append(node.getLabelSymbol(table)).append("\t");
-
                     if (node.hasHead()) {
                         Edge e = node.getHeadEdge();
-                        builder.append(e.getSource().getIndex()).append("\t");
+                        int headId = e.getSource().getIndex();
+                        String relation = null;
                         if (e.isLabeled()) {
-                            for (SymbolTable table : e.getLabelTypes())
-                                builder.append(e.getLabelSymbol(table)).append("\t");
+                            relation = getSymbols(e)[0];
                         } else {
-                            for (SymbolTable table : graph.getDefaultRootEdgeLabels().keySet()) 
-                                builder.append(graph.getDefaultRootEdgeLabelSymbol(table)).append("\t");
+                            relation = nullLink;
+                            headId = 0;
                         }
+                        links.add(new Link(tree.size(), relation, headId));
                     }
-                    builder.append('\n');
+
+                    String[] labels = getSymbols(node);
+                    tree.add(new SimpleDependencyTreeNode(
+                                labels[1], labels[3], tree.size()));
                 }
             }
         } catch (MaltChainedException ioe) {
             throw new RuntimeException(ioe);
         } catch (NullPointerException npe) {
-            return "";
+            throw new RuntimeException(npe);
         }
 
-        return builder.toString();
+        Link.addLinksToTree(tree, links);
+        return tree.toArray(new DependencyTreeNode[tree.size()]);
     }
 
     private static String buildLine(int lineNum, String word, String tag) {

@@ -25,6 +25,8 @@ package gov.llnl.ontology.text.parse;
 
 import gov.llnl.ontology.util.StringPair;
 
+import edu.ucla.sspace.dependency.DependencyTreeNode;
+
 import java.util.List;
 
 
@@ -36,26 +38,27 @@ import java.util.List;
 public interface Parser {
 
     /**
-     * Returns a dependency parse tree formatted in the default CoNLL format.
-     * The returned string may represent multiple parse tress, espeically if the
-     * given document contains multiple sentences.  Each parse tree will be
-     * padded with new lines.  If {@code header} is not {@code null}, then it
-     * will be first line of each parse tree, otherwise only padded parse trees
-     * will be returned.
+     * Returns a dependency parse tree given a document text and a header.
      *
      * @param header The header text that should label each parsed tree
      * @param document The raw text to be parsed
      */
-    String parseText(String header, String document);
+    DependencyTreeNode[] parseText(String header, String document);
 
     /**
-     * Returns a dependency parse tree formatted in the default CoNLL format.
-     * The returned string will contain only one parse tree If {@code header} is
-     * not {@code null}, then it will be first line of the parse tree, otherwise
-     * only the parse tree will be returned.
+     * Returns a dependency parse tree given a tokenized words and a header.
      *
      * @param header The header text that should label each parsed tree
-     * @param sentence The part of speech tagged words in a sentence.
+     * @param tokens The tokens to be parsed
      */
-    String parseText(String header, StringPair[] sentence);
+    DependencyTreeNode[] parseText(String header, String[] tokens);
+
+    /**
+     * Returns a dependency parse tree given a tokenized words with their
+     * associated parts of speech.  and a header.
+     *
+     * @param header The header text that should label each parsed tree
+     * @param sentence The tokens and parts of speech for each word
+     */
+    DependencyTreeNode[] parseText(String header, StringPair[] sentence);
 }

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cp=target/extendOntology-1.0-jar-with-dependencies.jar
+extra=-Djava.library.path=/opt/mapr/lib 
+java -cp $cp $@
